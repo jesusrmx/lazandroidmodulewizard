@@ -64,6 +64,11 @@ type
 
 { TNativeMetodDesc }
 
+function CompareNativeMethods(Item1, Item2: Pointer): Integer;
+begin
+  result := CompareStr(TNativeMetodDesc(Item1).nativeName, TNativeMetodDesc(Item2).nativeName);
+end;
+
 constructor TNativeMetodDesc.Create(AMethodName, ASignature, AParams, AResultType: string);
 begin
   nativeName := AMethodName;
@@ -202,6 +207,9 @@ begin
   cls := StringReplace(FRootClass, '.', '_', [rfReplaceAll]);
   if FNativeMethods.Count = 0 then
     raise Exception.Create('[MakePascalJNI] No native methods in public class!');
+
+  FNativeMethods.Sort(@CompareNativeMethods);
+
   for i := 0 to FNativeMethods.Count - 1 do
     with TNativeMetodDesc(FNativeMethods[i]) do
     begin
