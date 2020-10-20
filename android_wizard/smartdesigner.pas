@@ -3104,6 +3104,7 @@ begin
       end;
 
       Beauty := SourceChangeCache.BeautifyCodeOptions;
+      Beauty.LineLength := 160;
       SourceChangeCache.MainScanner := CurCodeTool.Scanner;
 
       SourceChangeCache.Replace(gtEmptyLine, gtNewLine,
