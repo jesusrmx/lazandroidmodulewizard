@@ -142,24 +142,24 @@ procedure TryRunProcessChmod(path: string);
 var
   proc: TProcess;
 begin
-  {$ifdef UNIX}
-  try
-    proc := TProcess.Create(nil);
-    proc.Parameters.Add('777');
-    proc.Parameters.Add('-R');
-    Proc.Parameters.Add(path);
-    proc.Options:= proc.Options + [poWaitOnExit,poUsePipes];
-    proc.Executable:='chmod';
-    proc.Execute;
-  finally
-    Proc.Free;
-  end;
-  ShowMessage('Warning: Project files permissions changed to "R" and "W" !'+
-                   sLineBreak+
-                   'Maybe, You will need close and re-open the Lazurus IDE'+
-                   sLineBreak+ 'to build/run your modified project [sorry...]'+
-                   sLineBreak+ '[hint: when prompt to save project, choice "yes"]');
-  {$endif}
+  //{$ifdef UNIX}
+  //try
+  //  proc := TProcess.Create(nil);
+  //  proc.Parameters.Add('777');
+  //  proc.Parameters.Add('-R');
+  //  Proc.Parameters.Add(path);
+  //  proc.Options:= proc.Options + [poWaitOnExit,poUsePipes];
+  //  proc.Executable:='chmod';
+  //  proc.Execute;
+  //finally
+  //  Proc.Free;
+  //end;
+  //ShowMessage('Warning: Project files permissions changed to "R" and "W" !'+
+  //                 sLineBreak+
+  //                 'Maybe, You will need close and re-open the Lazurus IDE'+
+  //                 sLineBreak+ 'to build/run your modified project [sorry...]'+
+  //                 sLineBreak+ '[hint: when prompt to save project, choice "yes"]');
+  //{$endif}
 end;
 
 function ReplaceChar(const query: string; oldchar, newchar: char): string;
@@ -1242,6 +1242,7 @@ begin
 
     //gradle build scripts;
 
+    {$IFDEF WINDOWS}
     strList.Clear;
     strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
     if FPathToGradle = '' then
@@ -1261,6 +1262,7 @@ begin
     strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
     strList.Add('gradle run');
     strList.SaveToFile(FPathToAndroidProject+'gradle-local-run.bat');
+    {$ENDIF}
 
     linuxDirSeparator:= DirectorySeparator;
     linuxPathToAndroidSdk:= FPathToAndroidSDK;
@@ -1277,6 +1279,7 @@ begin
        linuxPathToGradle:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
     {$ENDIF}
 
+    {$IFNDEF WINDOWS}
     strList.Clear;
     strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
 
@@ -1304,6 +1307,7 @@ begin
     //strList.Add('.\gradle run');
     strList.Add('gradle run');
     SaveShellScript(strList, FPathToAndroidProject+'gradle-local-run.sh');
+    {$ENDIF}
 
     if not FileExists(FPathToAndroidProject + 'gradle.properties') then
     begin
@@ -2684,6 +2688,7 @@ begin
       end;
 
       Beauty := SourceChangeCache.BeautifyCodeOptions;
+      k := Beauty.LineLength;
       Beauty.LineLength := 160;
       SourceChangeCache.MainScanner := CurCodeTool.Scanner;
 
@@ -2692,6 +2697,7 @@ begin
         Beauty.BeautifyStatement(str, Beauty.Indent, [bcfDoNotIndentFirstLine]));
 
       SourceChangeCache.Apply;
+      Beauty.LineLength := k;
 
       //LAMW 0.8
       if (oldModuleName <> '') and (newModuleName <> '') then
@@ -3577,6 +3583,7 @@ begin
 
   strList:= TStringList.Create;
 
+  {$IFDEF WINDOWS}
   strList.Add('set Path=%PATH%;'+pathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
   strList.Add('set JAVA_HOME='+pathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
   strList.Add('cd '+androidProjectName);
@@ -3599,6 +3606,7 @@ begin
   strList.Add('cd ..');
   strList.Add('pause');
   strList.SaveToFile(androidProjectName+'adb-install.bat');
+  {$ENDIF}
 
   linuxDirSeparator:= DirectorySeparator;
   linuxPathToJavaJDK:= pathToJavaJDK;
@@ -3606,29 +3614,30 @@ begin
   linuxPathToAntBin:= pathToAntBin;
   linuxPathToAndroidSdk:= FPathToAndroidSDK;
 
-  {$IFDEF WINDOWS}
-     linuxDirSeparator:= '/';
-     tempStr:= pathToJavaJDK;
-     SplitStr(tempStr, ':');
-     linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+  //{$IFDEF WINDOWS}
+  //   linuxDirSeparator:= '/';
+  //   tempStr:= pathToJavaJDK;
+  //   SplitStr(tempStr, ':');
+  //   linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+  //
+  //   tempStr:= androidProjectName;
+  //   SplitStr(tempStr, ':');
+  //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+  //
+  //   tempStr:= pathToAntBin;
+  //   SplitStr(tempStr, ':');
+  //   linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+  //
+  //   tempStr:= FPathToAndroidSDK;
+  //   SplitStr(tempStr, ':');
+  //   linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+  //
+  //   tempStr:= androidProjectName;
+  //   SplitStr(tempStr, ':');
+  //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+  //{$ENDIF}
 
-     tempStr:= androidProjectName;
-     SplitStr(tempStr, ':');
-     linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-     tempStr:= pathToAntBin;
-     SplitStr(tempStr, ':');
-     linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-     tempStr:= FPathToAndroidSDK;
-     SplitStr(tempStr, ':');
-     linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-     tempStr:= androidProjectName;
-     SplitStr(tempStr, ':');
-     linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-  {$ENDIF}
-
+  {$IFNDEF WINDOWS}
   strList.Clear;
   if pathToAntBin <> '' then
     strList.Add('export PATH='+linuxPathToAntBin+':$PATH');
@@ -3637,9 +3646,10 @@ begin
   strList.Add('cd '+linuxAndroidProjectName);
   strList.Add('ant -Dtouchtest.enabled=true debug');
   SaveShellScript(strList, androidProjectName+'ant-build-debug.sh');
-
+  {$ENDIF}
 
   //MacOs
+  {$IFDEF DARWIN}
   strList.Clear;
   if pathToAntBin <> '' then
   begin
@@ -3650,7 +3660,9 @@ begin
      strList.Add('ant -Dtouchtest.enabled=true debug');
      SaveShellScript(strList, androidProjectName+'ant-build-debug-macos.sh');
   end;
+  {$ENDIF}
 
+  {$IFNDEF WINDOWS}
   strList.Clear;
   if pathToAntBin <> '' then
      strList.Add('export PATH='+linuxPathToAntBin+':$PATH'); //export PATH=/usr/bin/ant:PATH
@@ -3670,10 +3682,10 @@ begin
   *)
 
   tempStr:= androidProjectName;
-  {$ifdef windows}
-  tempStr:= StringReplace(androidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
-  tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
-  {$endif}
+  //{$ifdef windows}
+  //tempStr:= StringReplace(androidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
+  //tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
+  //{$endif}
 
   strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r ' + tempStr + 'bin' + linuxDirSeparator+FSmallProjName+'-'+antBuildMode+'.apk');
   //strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb logcat &');
@@ -3686,6 +3698,7 @@ begin
   strList.Clear;
   strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb logcat &');
   SaveShellScript(strList, androidProjectName+'logcat.sh');
+  {$ENDIF}
 
   strList.Free;
 end;
