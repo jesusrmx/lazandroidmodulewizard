@@ -1934,6 +1934,7 @@ begin
 
         if FModuleType < mtNoGUIConsole then
         begin
+          {$IFDEF WINDOWS}
           strList.Clear;
           strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
@@ -2045,6 +2046,7 @@ begin
           strList.Add('pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'aapt.bat'); //Android Asset Packaging Tool
           }
+          {$ENDIF}
 
           strList.Clear;
           strList.Add('<?xml version="1.0" encoding="UTF-8"?>');
@@ -2210,6 +2212,7 @@ begin
           strList.Add('123456'); //Enter key password for the Apk <aliasKey> <RETURN if same as keystore password>:
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
 
+          {$IFDEF WINDOWS}
           strList.Clear;
 
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
@@ -2243,6 +2246,7 @@ begin
           strList.Add('cd '+FAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-release.apk');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-jarsigner-verify.bat');
+          {$ENDIF}
 
           strList.Clear;
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
@@ -2317,33 +2321,34 @@ begin
           linuxPathToAndroidSdk:= FPathToAndroidSDK;
           linuxPathToGradle:= FPathToGradle;
 
-          {$IFDEF WINDOWS}
-             linuxDirSeparator:= '/';
-             tempStr:= FPathToJavaJDK;
-             SplitStr(tempStr, ':');
-             linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-             tempStr:= FAndroidProjectName;
-             SplitStr(tempStr, ':');
-             linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-             tempStr:= FPathToAntBin;
-             SplitStr(tempStr, ':');
-             linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-             tempStr:= FPathToAndroidSDK;
-             SplitStr(tempStr, ':');
-             linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-             tempStr:= FPathToGradle;
-             SplitStr(tempStr, ':');
-             linuxPathToGradle:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-             tempStr:= FAndroidProjectName;
-             SplitStr(tempStr, ':');
-             linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-
-          {$ENDIF}
+          {$IFNDEF WINDOWS}
+          //{$IFDEF WINDOWS}
+          //   linuxDirSeparator:= '/';
+          //   tempStr:= FPathToJavaJDK;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FAndroidProjectName;
+          //   SplitStr(tempStr, ':');
+          //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FPathToAntBin;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FPathToAndroidSDK;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FPathToGradle;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToGradle:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FAndroidProjectName;
+          //   SplitStr(tempStr, ':');
+          //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //{$ENDIF}
 
           //linux build Apk using "Ant"  ---- Thanks to Stephano!
           strList.Clear;
@@ -2465,6 +2470,7 @@ begin
           strList.Add('cd '+linuxAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'bin'+linuxDirSeparator+FSmallProjName+'-release.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'ant-jarsigner-verify-macos.sh');
+          {$ENDIF}
 
           strList.Clear;
           strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
@@ -2921,6 +2927,7 @@ begin
                 strList.Add('by jmpessoa_hotmail_com');
                 strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle_readme.txt');
 
+                {$IFDEF WINDOWS}
                 //Drafts Making gradlew (= gradle warapper)
                 strList.Clear;
                 strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
@@ -2932,6 +2939,7 @@ begin
                 strList.Add('gradle wrapper');
                 strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-making-wrapper.bat');
 
+                {$ELSE}
                 strList.Clear;
                 strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
                 if FPathToGradle = '' then
@@ -2943,9 +2951,10 @@ begin
                 //strList.Add('./gradle wrapper');
                 strList.Add('gradle wrapper');
                 SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-making-wrapper.sh');
-
+                {$ENDIF}
                 //Drafts Method II
 
+                {$IFDEF WINDOWS}
                 //build
                 strList.Clear;
                 strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
@@ -2957,6 +2966,7 @@ begin
                 strList.Add('gradlew build');
                 strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-build.bat');
 
+                {$ELSE}
                 strList.Clear;
                 strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
                 if FPathToGradle = '' then
@@ -2968,7 +2978,9 @@ begin
                 //strList.Add('./gradlew build');
                 strList.Add('gradlew build');
                 SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-build.sh');
+                {$ENDIF}
 
+                {$IFDEF WINDOWS}
                 //run
                 strList.Clear;
                 strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
@@ -2979,7 +2991,7 @@ begin
                 strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
                 strList.Add('gradlew run');
                 strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-run.bat');
-
+                {$ELSE}
                 strList.Clear;
                 strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
                 if FPathToGradle = '' then
@@ -2991,9 +3003,10 @@ begin
                 //strList.Add('./gradlew run');
                 strList.Add('gradlew run');
                 SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-run.sh');
-
+                {$ENDIF}
                 //Drafts Method I
 
+                {$IFDEF WINDOWS}
                 strList.Clear;
                 strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
                 if FPathToGradle = '' then
@@ -3046,7 +3059,7 @@ begin
                 strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
                 strList.Add('gradle run');
                 strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-run.bat');
-
+                {$ELSE}
                 strList.Clear;
                 strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
                 if FPathToGradle = '' then
@@ -3100,6 +3113,7 @@ begin
                 //strList.Add('.\gradle run');
                 strList.Add('gradle run');
                 SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-run.sh');
+                {$ENDIF}
             end  //gradle support ...
             else
             begin
