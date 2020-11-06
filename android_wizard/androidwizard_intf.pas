@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Controls, Forms, Dialogs, Graphics, laz2_XMLRead, Laz2_DOM,
-  LCLProc, LCLType, LCLIntf, LazIDEIntf, ProjectIntf, FormEditingIntf,
+  LCLProc, LCLType, LCLIntf, LazIDEIntf, ProjectIntf, uLamwTypes, FormEditingIntf,
   uFormAndroidProject, uformworkspace, FPimage, AndroidWidget, gdxform;
 
 type
@@ -41,7 +41,7 @@ type
      FPathToJavaTemplates: string;
      FPathToSmartDesigner: string;
      FAndroidProjectName: string;
-     FModuleType: integer;     {-1: Gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console; }
+     FModuleType: TModuleType;
      FSyntaxMode: TSyntaxMode;   {}
 
      FPieChecked: boolean;
@@ -89,9 +89,9 @@ type
      FIniFileSection: string;
 
      function SettingsFilename: string;
-     function TryNewJNIAndroidInterfaceCode(projectType: integer): boolean; //0: GUI  project --- 1:NoGUI project
+     function TryNewJNIAndroidInterfaceCode(projectType: TModuleType): boolean; //0: GUI  project --- 1:NoGUI project
      function GetPathToJNIFolder(fullPath: string): string;
-     function GetWorkSpaceFromForm(projectType: integer; out outTag: integer): boolean;
+     function GetWorkSpaceFromForm(projectType: TModuleType; out outTag: TModuleType): boolean;
      function GetAppName(className: string): string;
 
      function GetFolderFromApi(api: integer): string;
@@ -154,7 +154,7 @@ type
   public
     SyntaxMode: TSyntaxMode; {mdDelphi, mdObjFpc}
     PathToJNIFolder: string;
-    ModuleType: integer;   //-1:gdx 0: GUI; 1: No GUI ; 2: console executable App; 3: generic library
+    ModuleType: TModuleType;
 
     AndroidTheme: string;
 
@@ -187,7 +187,7 @@ type
   public
     SyntaxMode: TSyntaxMode; {mdDelphi, mdObjFpc}
     PathToJNIFolder: string;
-    ModuleType: integer;   //-1:gdx 0: GUI; 1: No GUI ; 2: console executable App; 3: generic library
+    ModuleType: TModuleType;   //-1:gdx 0: GUI; 1: No GUI ; 2: console executable App; 3: generic library
 
    //FSmallProjName: string;
 
@@ -293,17 +293,18 @@ function TAndroidGdxProjectDescriptor.DoInitDescriptor: TModalResult;
 var
   strAfterReplace, strPackName, aux: string;
   auxList, ControlsJava: TStringList;
-  outTag, i: integer;
+  outTag: TModuleType;
+  i: integer;
 begin
 
   ShowMessage('WARNING!!! libGDX Proof of Concept!! Go to "...demos/libGDX" !!');
   Exit;
 
   try
-    FModuleType := -1; //-1: gdx 0: GUI --- 1:NoGUI --- 2: NoGUI EXE Console
+    FModuleType := mtGDX; //-1: gdx 0: GUI --- 1:NoGUI --- 2: NoGUI EXE Console
     FJavaClassName := 'Controls';
     FPathToClassName := '';
-    if GetWorkSpaceFromForm(-1, outTag) then //Gdx
+    if GetWorkSpaceFromForm(mtGDX, outTag) then //Gdx
     begin
       strPackName := FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
       with TStringList.Create do
@@ -375,7 +376,7 @@ begin
 
       FPathToJNIFolder := FAndroidProjectName;
       AndroidFileDescriptorGDX.PathToJNIFolder:= FPathToJNIFolder;
-      AndroidFileDescriptorGDX.ModuleType:= -1;
+      AndroidFileDescriptorGDX.ModuleType:= mtGDX;
 
       with TJavaParser.Create(FFullJavaSrcPath + DirectorySeparator+  'Controls.java') do
       try         //"Controls.events" produced by FormWorkspace
@@ -395,7 +396,7 @@ begin
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs'+DirectorySeparator+'x86_64');
       CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
 
-      if  FModuleType < 2 then
+      if  FModuleType < mtNoGUIConsole then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
       if FProjectModel = 'Ant' then
@@ -555,22 +556,22 @@ end;
 function TAndroidNoGUIExeProjectDescriptor.DoInitDescriptor: TModalResult;    //NoGUI Exe
 var
   list: TStringList;
-  outTag: integer;
+  outTag: TModuleType;
 begin
   try
-    FModuleType := 2; //-1: gdx 0: GUI --- 1:NoGUI --- 2: NoGUI EXE Console  3: generic library
+    FModuleType := mtNoGUIConsole; //-1: gdx 0: GUI --- 1:NoGUI --- 2: NoGUI EXE Console  3: generic library
     FPathToClassName := '';
-    if GetWorkSpaceFromForm(2, outTag) then
+    if GetWorkSpaceFromForm(mtNoGUIConsole, outTag) then
     begin
 
       FPathToJNIFolder := FAndroidProjectName;
       AndroidFileDescriptor.PathToJNIFolder:= FPathToJNIFolder;
-      AndroidFileDescriptor.ModuleType:= 2; //Console
+      AndroidFileDescriptor.ModuleType:= mtNoGUIConsole; //Console
 
-      if outTag = 3 then
+      if outTag = mtLibrary then
       begin
-        FModuleType:= 3;
-        AndroidFileDescriptor.ModuleType:= 3; // generic/custom library
+        FModuleType:= mtLibrary;
+        AndroidFileDescriptor.ModuleType:= mtLibrary; // generic/custom library
       end;
 
       CreateDir(FAndroidProjectName+DirectorySeparator+'build-modes');
@@ -583,7 +584,7 @@ begin
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs'+DirectorySeparator+'x86_64');
       CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
 
-      if FModuleType = 2 then //default
+      if FModuleType = mtNoGUIConsole{2} then //default
       begin
         list:= TStringList.Create;
 
@@ -746,16 +747,16 @@ function TAndroidGUIProjectDescriptor.DoInitDescriptor: TModalResult;    //GUI
 var
   strAfterReplace, strPackName, aux, strMainActivity: string;
   auxList, providerList: TStringList;
-  outTag: integer;
+  outTag: TModuleType;
   supportProvider, tempStr, insertRef: string;
   p1: integer;
 begin
   try
-    FModuleType := 0; //0: GUI --- 1:NoGUI --- 2: NoGUI EXE Console
+    FModuleType := mtGUI;
     FJavaClassName := 'Controls';
     FPathToClassName := '';
 
-    if GetWorkSpaceFromForm(0, outTag) then //GUI
+    if GetWorkSpaceFromForm(mtGUI, outTag) then
     begin
      strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
 
@@ -850,8 +851,8 @@ begin
 
       FPathToJNIFolder := FAndroidProjectName;
       AndroidFileDescriptor.PathToJNIFolder:= FPathToJNIFolder;
+      AndroidFileDescriptor.ModuleType:= mtGUI;
       AndroidFileDescriptor.SmallProjName:=  FSmallProjName;
-      AndroidFileDescriptor.ModuleType:= 0;
 
       with TJavaParser.Create(FFullJavaSrcPath + DirectorySeparator+  'Controls.java') do
       try         //produce helper file [old] "ControlsEvents.txt"
@@ -871,7 +872,7 @@ begin
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs'+DirectorySeparator+'x86_64');
       CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
 
-      if  FModuleType < 2 then
+      if  FModuleType < mtNoGUIConsole then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
       auxList:= TStringList.Create;
@@ -1119,12 +1120,12 @@ begin
   else raise Exception.Create('src folder not found...');
 end;
 
-function TAndroidProjectDescriptor.TryNewJNIAndroidInterfaceCode(projectType: integer): boolean;
+function TAndroidProjectDescriptor.TryNewJNIAndroidInterfaceCode(projectType: TModuleType): boolean;
 var
   frm: TFormAndroidProject;
 begin
   Result := False;
-  FModuleType:= projectType; //-1:gdx 0:GUI <--> 1:NoGUI <--> 2:NoGUI console Exe
+  FModuleType:= projectType;
   frm:= TFormAndroidProject.Create(nil);  //Create Form
 
   frm.PathToJavaTemplates:= FPathToJavaTemplates;
@@ -1433,7 +1434,7 @@ begin
   else if grVer = '4.9.4' then Result:= '4.10.3';
 end;
 
-function TAndroidProjectDescriptor.GetWorkSpaceFromForm(projectType: integer; out outTag: integer): boolean;
+function TAndroidProjectDescriptor.GetWorkSpaceFromForm(projectType: TModuleType; out outTag: TModuleType): boolean;
 
   function MakeUniqueName(const Orig: string; sl: TStrings): string;
   var
@@ -1508,7 +1509,7 @@ begin
     frm.CheckBoxPIE.Visible:= False;
     frm.CheckBoxLibrary.Visible:= False;
 
-    if FModuleType = -1 then //Gdx
+    if projectType = mtGDX then //Gdx
     begin
       frm.Color:= clWhite;
       frm.PanelButtons.Color:= clWhite;
@@ -1529,7 +1530,7 @@ begin
       frm.SpeedButtonHintTheme.Visible:= False;
     end;
 
-    if FModuleType = 1 then //No GUI
+    if projectType = mtNoGUI then //No GUI
     begin
       frm.Color:= clWhite;
       frm.PanelButtons.Color:= clWhite;
@@ -1541,7 +1542,7 @@ begin
       frm.SpeedButtonHintTheme.Visible:= False;
     end;
 
-    if FModuleType = 2 then //No GUI console executable or generic library [.so]
+    if projectType = mtNoGUIConsole then //No GUI console executable or generic library [.so]
     begin
       frm.GroupBox1.Visible:= False;
       frm.GroupBox5.Visible:= False;
@@ -1625,8 +1626,8 @@ begin
 
       if FLibraryChecked then
       begin
-        outTag:= 3;
-        FModuleType:= 3;
+        outTag:= mtLibrary;
+        FModuleType:= mtLibrary;
       end;
 
       FMainActivity:= frm.MainActivity;  //App
@@ -1664,7 +1665,7 @@ begin
       try
         if  FProjectModel = 'Ant' then
         begin
-          if FModuleType < 2 then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
+          if FModuleType < mtNoGUIConsole then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin
             ForceDirectories(FAndroidProjectName + DirectorySeparator + 'src');
 
@@ -1803,7 +1804,7 @@ begin
 
           end;
 
-          if FModuleType <= 0  then  //Android Bridges Controls... [GUI] and Gdx
+          if FModuleType <= mtGUI then  //Android Bridges Controls... [GUI] and Gdx
           begin
             if not FileExists(FFullJavaSrcPath+DirectorySeparator+'App.java') then
             begin
@@ -1816,7 +1817,7 @@ begin
             end;
           end;
 
-          if FModuleType = 1 then     //[No GUI]
+          if FModuleType = mtNoGUI then     //[No GUI]
           begin
              if not FileExists(FFullJavaSrcPath+DirectorySeparator+'App.java') then
              begin
@@ -1931,7 +1932,7 @@ begin
 
         end; // Ant
 
-        if FModuleType < 2 then    {-1: Gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
+        if FModuleType < mtNoGUIConsole then
         begin
           strList.Clear;
           strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
@@ -3125,12 +3126,12 @@ end;
 function TAndroidProjectDescriptor.DoInitDescriptor: TModalResult;
 var
    auxList: TStringList;
-   outTag: integer;
+   outTag: TModuleType;
 begin
-   FModuleType := 1;
-   if GetWorkSpaceFromForm(1, outTag) then //1: noGUI project
+   FModuleType := mtNoGUI;
+   if GetWorkSpaceFromForm(mtNoGUI, outTag) then //1: noGUI project
    begin
-      if TryNewJNIAndroidInterfaceCode(1) then //1: noGUI project
+      if TryNewJNIAndroidInterfaceCode(mtNoGUI) then //1: noGUI project
       begin
         CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni');
         CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni'+DirectorySeparator+'build-modes');
@@ -3144,7 +3145,7 @@ begin
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
         CreateDir(FAndroidProjectName+DirectorySeparator+'lamwdesigner');
 
-        if FModuleType < 2 then
+        if FModuleType < mtNoGUIConsole then
            CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
         //eclispe compatibility!
@@ -3321,7 +3322,7 @@ begin
 
   inherited InitProject(AProject);
 
-  if  FModuleType < 2 then
+  if  FModuleType < mtNoGUIConsole then
     projName:= LowerCase(FJavaClassName) + '.lpr'
   else
     projName:= LowerCase(FSmallProjName) + '.lpr';
@@ -3329,18 +3330,18 @@ begin
   if   FPathToClassName = '' then
       FPathToClassName:= StringReplace(FPackagePrefaceName, '.', '/', [rfReplaceAll])+'/'+LowerCase(FSmallProjName)+'/'+ FJavaClassName; //ex. 'com/example/appasynctaskdemo1/Controls'
 
-  if  FModuleType < 2 then
+  if  FModuleType < mtNoGUIConsole then
      projDir:= FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator
   else
      projDir:= FPathToJNIFolder+DirectorySeparator;
 
-  if FModuleType = -1 then    {-1: gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
+  if FModuleType = mtGDX then    {-1: gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
   begin
     AProject.CustomData.Values['LAMW'] := 'GDX';
     AProject.CustomData.Values['Theme']:= 'GDXGame';
     AProject.CustomData['StartModule'] := 'GdxModule1';
   end
-  else if FModuleType = 0 then    {0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
+  else if FModuleType = mtGUI then    {0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
   begin
     AProject.CustomData.Values['LAMW'] := 'GUI';
 
@@ -3352,14 +3353,14 @@ begin
     else
       AProject.CustomData.Values['Support'] := 'FALSE';
   end
-  else if  FModuleType = 1 then
+  else if  FModuleType = mtGUI then
     AProject.CustomData.Values['LAMW'] := 'NoGUI'
-  else if FModuleType = 2 then
+  else if FModuleType = mtNoGUIConsole then
     AProject.CustomData.Values['LAMW'] := 'NoGUIConsoleApp'    // FModuleType =2
   else
     AProject.CustomData.Values['LAMW'] := 'NoGUIGenericLibrary';    // FModuleType = 3
 
-  if FModuleType < 2 then    {-1:gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
+  if FModuleType < mtNoGUIConsole then    {-1:gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
     AProject.CustomData.Values['Package']:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
 
   AProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
@@ -3377,16 +3378,16 @@ begin
   AProject.AddFile(MainFile, False);
   AProject.MainFileID := 0;
 
-  if FModuleType <= 0 then  //GUI
+  if FModuleType <= mtGUI then  //GUI
     AProject.AddPackageDependency('tfpandroidbridge_pack'); //GUI or gdx  controls
 
   sourceList:= TStringList.Create;              //FSmallProjName
   //sourceList.Add('{hint: save all files to location: ' + projDir + ' }');
   sourceList.Add('{hint: Pascal files location: ...'+DirectorySeparator+FSmallProjName+DirectorySeparator+'jni }');
 
-  if FModuleType = 2 then  //console executavel
+  if FModuleType = mtNoGUIConsole then  //console executavel
     sourceList.Add('program '+ LowerCase(FSmallProjName) +'; '+ ' //[by LAMW: Lazarus Android Module Wizard: '+DateTimeToStr(Now)+']')
-  else if  FModuleType = 3 then
+  else if  FModuleType = mtLibrary then
     sourceList.Add('library '+ LowerCase(FSmallProjName) +'; '+ ' //[by LAMW: Lazarus Android Module Wizard: '+DateTimeToStr(Now)+']')
   else
     sourceList.Add('library '+ LowerCase(FJavaClassName) +'; '+ ' //[by LAMW: Lazarus Android Module Wizard: '+DateTimeToStr(Now)+']');
@@ -3397,7 +3398,7 @@ begin
 
   sourceList.Add('uses');
 
-  if FModuleType <= 1 then  //-1:gdx    0:GUI or   1:noGUI controls
+  if FModuleType <= mtGUI then  //GUI or gdx controls
   begin
     //https://forum.lazarus.freepascal.org/index.php/topic,45715.msg386317
     sourceList.Add('  {$IFDEF UNIX}{$IFDEF UseCThreads}');
@@ -3411,7 +3412,7 @@ begin
     sourceList.Add('  Laz_And_Controls_Events;');
     sourceList.Add(' ');
   end
-  else if FModuleType = 1 then //NoGUI ---  Not Android Bridges Controls
+  else if FModuleType = mtNoGUI then //NoGUI ---  Not Android Bridges Controls
   begin
     sourceList.Add('  Classes, SysUtils, CustApp, jni;');
     sourceList.Add(' ');
@@ -3453,7 +3454,7 @@ begin
 
     sourceList.Add('');
   end
-  else if FModuleType = 2 then// 2 - NoGUI console executable
+  else if FModuleType = mtNoGUIConsole then// 2 - NoGUI console executable
   begin
     sourceList.Add('  Classes, SysUtils, CustApp;');
     sourceList.Add(' ');
@@ -3495,7 +3496,7 @@ begin
     sourceList.Add('  Unit1;');  //ok
   end;
 
-  if FModuleType <= 1 then //0:GUI    1:NoGUI    -1:gdx
+  if FModuleType <= mtGUI then //GUI
   begin
     sourceList.Add('{%region /fold ''LAMW generated code''}');
     sourceList.Add('');
@@ -3505,9 +3506,9 @@ begin
 
   sourceList.Add(' ');
 
-  if FModuleType < 3 then sourceList.Add('begin');
+  if FModuleType < mtLibrary then sourceList.Add('begin');
 
-  if FModuleType = -1 then  //Gdx Android Bridges controls...
+  if FModuleType = mtGDX then  //Gdx Android Bridges controls...
   begin
     sourceList.Add('  gApp:= jApp.Create(nil);');
     sourceList.Add('  gApp.Title:= ''LAMW GDX Android Bridges Library'';');
@@ -3518,7 +3519,7 @@ begin
     sourceList.Add('  gApp.Initialize;');
     sourceList.Add('  gApp.CreateForm(TGdxModule1, GdxModule1);');
   end
-  else if FModuleType = 0 then  //GUI Android Bridges controls...
+  else if FModuleType = mtGUI then  //GUI Android Bridges controls...
   begin
     sourceList.Add('  gApp:= jApp.Create(nil);');
     sourceList.Add('  gApp.Title:= ''LAMW JNI Android Bridges Library'';');
@@ -3529,7 +3530,7 @@ begin
     sourceList.Add('  gApp.Initialize;');
     sourceList.Add('  gApp.CreateForm(TAndroidModule1, AndroidModule1);');
   end
-  else if FModuleType = 1 then
+  else if FModuleType = mtNoGUI then
   begin
      sourceList.Add('  gNoGUIApp:= TNoGUIApp.Create(nil);');
      sourceList.Add('  gNoGUIApp.Title:= ''My Android Pure Library'';');
@@ -3542,7 +3543,7 @@ begin
      sourceList.Add('  gNoGUIApp.Initialize;');
      sourceList.Add('  gNoGUIApp.CreateForm(TNoGUIAndroidModule1, NoGUIAndroidModule1);');
   end
-  else if FModuleType = 2 then // 2  - console executable
+  else if FModuleType = mtNoGUIConsole then // 2  - console executable
   begin
      sourceList.Add('  AndroidConsoleApp:= TAndroidConsoleApp.Create(nil);');
      sourceList.Add('  AndroidConsoleApp.Title:= ''Android Executable Console App'';');
@@ -3875,7 +3876,7 @@ begin
   AProject.LazCompilerOptions.SmallerCode:= True;
   AProject.LazCompilerOptions.SmartLinkUnit:= True;
 
-  if FModuleType = 2 then
+  if FModuleType = mtNoGUIConsole then
   begin
     if FPieChecked then  //here PIE support .. ok sorry... :(  ...bad code reuse!
     begin
@@ -3933,7 +3934,7 @@ begin
   auxList.Add('<TargetCPU Value="i386"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_x86+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86.txt');
@@ -3943,7 +3944,7 @@ begin
   auxList.Add('<TargetCPU Value="x86_64"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_x86_64+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86_64.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86_64.txt');
@@ -3953,7 +3954,7 @@ begin
   auxList.Add('<TargetCPU Value="mipsel"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_mips+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_mipsel.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_mipsel.txt');
@@ -3963,7 +3964,7 @@ begin
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV6+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV6"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV6.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV6.txt');
@@ -3973,7 +3974,7 @@ begin
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV7a+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV7A"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a.txt')
   else
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a.txt');
@@ -3984,7 +3985,7 @@ begin
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV7a_VFPv3+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV7A"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a_VFPv3.txt')
   else
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a_VFPv3.txt');
@@ -3994,7 +3995,7 @@ begin
   auxList.Add('<TargetCPU Value="aarch64"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armv8+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMv8"/>');  //commented until lazarus fix bug for missing ARMv8  //again thanks to Stephano!
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_arm64.txt')
   else
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_arm64.txt');
@@ -4018,12 +4019,12 @@ begin
   auxList.Add('   > [LAMW] Build Android Apk and Run');
   auxList.Add(' ');
 
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'readme.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'readme.txt');
 
-  if FModuleType < 2 then
+  if FModuleType < mtNoGUIConsole then
   begin
     AProject.LazCompilerOptions.TargetFilename:=
           '..'+DirectorySeparator+'libs'+DirectorySeparator+auxStr+DirectorySeparator+'lib'+LowerCase(FJavaClassName){+'.so'};
@@ -4293,15 +4294,15 @@ begin
   end; //Template project
 
   case FModuleType of
-  -1: // Gdx Controls
+   mtGDX: // Gdx Controls
     AndroidFileDescriptor.ResourceClass:= TGdxModule;
-   0: // GUI Controls
+   mtGUI: // GUI Controls
     AndroidFileDescriptor.ResourceClass:= TAndroidModule;  //GUI
-   1: // NoGUI Controls
+   mtNoGUI: // NoGUI Controls
     AndroidFileDescriptor.ResourceClass:= TNoGUIAndroidModule;
-   2: // NoGUI Exe
+   mtNoGUIConsole: // NoGUI Exe
     AndroidFileDescriptor.ResourceClass:= TAndroidConsoleDataForm;
-   3: // NoGUI generic library
+   mtLibrary: // NoGUI generic library
     AndroidFileDescriptor.ResourceClass:= nil;
   end;
 
@@ -4310,7 +4311,7 @@ begin
   LazarusIDE.DoNewEditorFile(AndroidFileDescriptor, '', '',
                              [nfIsPartOfProject,nfOpenInEditor,nfCreateDefaultSrc]);
 
-  if FModuleType = 0 then // GUI
+  if FModuleType = mtGUI then // GUI
   begin
     // refresh theme
     with LazarusIDE do
@@ -4323,7 +4324,7 @@ begin
       end;
   end;
 
-  if FModuleType = -1 then // Gdx
+  if FModuleType = mtGDX then // Gdx
   begin
     // refresh theme
     with LazarusIDE do
@@ -4347,26 +4348,26 @@ constructor TAndroidFileDescPascalUnitWithResource.Create;
 begin
   inherited Create;
 
-  if  ModuleType < 3 then
+  if  ModuleType < mtLibrary then
   begin
     Name:= 'AndroidDataModule';
 
-    if ModuleType = -1 then
+    if ModuleType = mtGDX then
     begin
       Name:= 'AndroidGDXDataModule';
       ResourceClass := TGdxModule;
     end
-    else if ModuleType = 0 then
+    else if ModuleType = mtGUI then
     begin
       Name:= 'AndroidDataModule';
       ResourceClass := TAndroidModule
     end
-    else if ModuleType = 1 then
+    else if ModuleType = mtNoGUI then
     begin
        Name:= 'NoGUIAndroidDataModule';
        ResourceClass := TNoGUIAndroidModule
     end
-    else  if ModuleType = 2 then
+    else  if ModuleType = mtNoGUIConsole then
     begin
        Name:= 'AndroidConsoleDataForm';
        ResourceClass:= TAndroidConsoleDataForm;
@@ -4378,7 +4379,7 @@ end;
 constructor TAndroidFileDescPascalUnitWithResourceGDX.Create;
 begin
   inherited Create;
-    //if ModuleType = -1 then
+    //if ModuleType = mtGDX then
     //begin
       Name:= 'AndroidGDXDataModule';
       ResourceClass := TGdxModule;
@@ -4430,7 +4431,7 @@ begin
    uName:= SplitStr(uName,'.');
    sourceList:= TStringList.Create;
 
-   if ModuleType < 2 then
+   if ModuleType < mtNoGUIConsole then
      //sourceList.Add('{Hint: save all files to location: ' +PathToJNIFolder+DirectorySeparator+'jni }')
      sourceList.Add('{hint: Pascal files location: ...'+DirectorySeparator+SmallProjName+DirectorySeparator+'jni }')
    else
@@ -4447,7 +4448,7 @@ begin
    sourceList.Add('interface');
    sourceList.Add('');
 
-   if ModuleType = 3 then    sourceList.Add('{');
+   if ModuleType = mtLibrary then    sourceList.Add('{');
 
    sourceList.Add('uses');
 
@@ -4459,9 +4460,9 @@ begin
 
    sourceList.Add('  ' + GetInterfaceUsesSection);
 
-   if ModuleType = 3 then    sourceList.Add('}');
+   if ModuleType = mtLibrary then    sourceList.Add('}');
 
-   if ModuleType = 1 then //no GUI
+   if ModuleType = mtNoGUI then //no GUI
    begin
     sourceList.Add('');
     sourceList.Add('const');
@@ -4470,7 +4471,7 @@ begin
     sourceList.Add('  gNoGUIPDalvikVM: PJavaVM=nil;');
    end;
 
-   if ModuleType < 3 then
+   if ModuleType < mtLibrary then
    begin
      sourceList.Add(GetInterfaceSource(Filename, SourceName, ResourceName));
    end
@@ -4484,7 +4485,7 @@ begin
    sourceList.Add('implementation');
    sourceList.Add(' ');
 
-   if ModuleType < 3 then
+   if ModuleType < mtLibrary then
    begin
       sourceList.Add(GetImplementationSource(Filename, SourceName, ResourceName));
    end
@@ -4515,7 +4516,7 @@ begin
    uName:= SplitStr(uName,'.');
    sourceList:= TStringList.Create;
 
-   if ModuleType < 2 then
+   if ModuleType < mtNoGUIConsole then
      sourceList.Add('{Hint: save all files to location: ' +PathToJNIFolder+DirectorySeparator+'jni }')
      //sourceList.Add('{hint: Pascal files location: ...'+DirectorySeparator+FSmallProjName+DirectorySeparator+'jni }')
    else
@@ -4532,7 +4533,7 @@ begin
    sourceList.Add('interface');
    sourceList.Add('');
 
-   if ModuleType = 3 then    sourceList.Add('{');
+   if ModuleType = mtLibrary then    sourceList.Add('{');
 
    sourceList.Add('uses');
 
@@ -4543,9 +4544,9 @@ begin
 
    sourceList.Add('  ' + GetInterfaceUsesSection);
 
-   if ModuleType = 3 then    sourceList.Add('}');
+   if ModuleType = mtLibrary then    sourceList.Add('}');
 
-   if ModuleType = 1 then //no GUI
+   if ModuleType = mtNoGUI then //no GUI
    begin
     sourceList.Add('');
     sourceList.Add('const');
@@ -4554,7 +4555,7 @@ begin
     sourceList.Add('  gNoGUIPDalvikVM: PJavaVM=nil;');
    end;
 
-   if ModuleType < 3 then
+   if ModuleType < mtLibrary then
    begin
      sourceList.Add(GetInterfaceSource(Filename, SourceName, ResourceName));
    end
@@ -4568,7 +4569,7 @@ begin
    sourceList.Add('implementation');
    sourceList.Add(' ');
 
-   if ModuleType < 3 then
+   if ModuleType < mtLibrary then
    begin
       sourceList.Add(GetImplementationSource(Filename, SourceName, ResourceName));
    end
@@ -4590,12 +4591,11 @@ end;
 
 function TAndroidFileDescPascalUnitWithResource.GetInterfaceUsesSection: string;
 begin
-
-  if ModuleType = -1 then //GDX or GUI controls module
+  if ModuleType = mtGDX then //GDX or GUI controls module
      Result := 'Classes, SysUtils, AndroidWidget, GdxForm;'
-  else if ModuleType = 0 then //GDX or GUI controls module
+  else if ModuleType = mtGUI then //GDX or GUI controls module
      Result := 'Classes, SysUtils, AndroidWidget;'
-  else if ModuleType = 1  then  //generic module: No GUI Controls
+  else if ModuleType = mtNoGUI  then  //generic module: No GUI Controls
      Result := 'Classes, SysUtils, jni;'
   else // console app or generic library
      Result := 'Classes, SysUtils;'
@@ -4618,28 +4618,28 @@ begin
 
   strList.Add(' ');
   strList.Add('type');
-  if ModuleType = -1 then //Gdx controls module
+  if ModuleType = mtGDX then //Gdx controls module
   begin
     if ResourceName <> '' then
        strList.Add('  T' + ResourceName + ' = class(jGdxForm)')
     else
        strList.Add('  TGdxModuleXX = class(jGdxForm)');
   end
-  else if ModuleType = 0 then //GUI controls module
+  else if ModuleType = mtGUI then //GUI controls module
   begin
     if ResourceName <> '' then
        strList.Add('  T' + ResourceName + ' = class(jForm)')
     else
        strList.Add('  TAndroidModuleXX = class(jForm)'); //dummy
   end
-  else if ModuleType = 1 then//generic module
+  else if ModuleType = mtNoGUI then//generic module
   begin
     if ResourceName <> '' then
       strList.Add('  T' + ResourceName + ' = class(TDataModule)')
     else
       strList.Add('  TNoGUIAndroidModuleXX  = class(TDataModule)');
   end
-  else if ModuleType = 2 then //  console
+  else if ModuleType = mtNoGUIConsole then //  console
   begin
     if ResourceName <> '' then
       strList.Add('  T' + ResourceName + ' = class(TDataModule)')
@@ -4655,28 +4655,28 @@ begin
   strList.Add('');
   strList.Add('var');
 
-  if ModuleType = -1 then //GUI controls module
+  if ModuleType = mtGDX then //GUI controls module
   begin
     if ResourceName <> '' then
        strList.Add('  ' + ResourceName + ': T' + ResourceName + ';')
     else
        strList.Add('  GdxModuleXX: TDataMoule');
   end
-  else if ModuleType = 0 then //GUI controls module
+  else if ModuleType = mtGUI then //GUI controls module
   begin
     if ResourceName <> '' then
        strList.Add('  ' + ResourceName + ': T' + ResourceName + ';')
     else
        strList.Add('  AndroidModuleXX: TDataMoule');
   end
-  else if ModuleType = 1 then //generic module
+  else if ModuleType = mtNoGUI then //generic module
   begin
     if ResourceName <> '' then
       strList.Add('  ' + ResourceName + ': T' + ResourceName + ';')
     else
       strList.Add('  NoGUIAndroidModuleXX: TNoGUIDataMoule');
   end
-  else if ModuleType = 2 then//2  console
+  else if ModuleType = mtNoGUIConsole then//2  console
   begin
     if ResourceName <> '' then
      strList.Add('  ' + ResourceName + ': T' + ResourceName + ';')
@@ -4684,7 +4684,7 @@ begin
       strList.Add('  AndroidConsoleDataFormXX: TAndroidConsoleDataForm');
   end;
 
-  if ModuleType < 3 then
+  if ModuleType < mtLibrary then
     Result := strList.Text
   else
     Result:= '';
