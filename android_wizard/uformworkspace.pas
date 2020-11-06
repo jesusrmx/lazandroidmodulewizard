@@ -6,7 +6,7 @@ interface
 
 uses
   inifiles, Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, LazIDEIntf,
-  StdCtrls, Buttons, ExtCtrls, ComCtrls, FormPathMissing, PackageIntf;
+  StdCtrls, Buttons, ExtCtrls, ComCtrls, uLamwTypes, FormPathMissing, PackageIntf;
 
 type
 
@@ -91,7 +91,7 @@ type
     FPathToGradle: string;
 
     FProjectModel: string;
-    FModuleType: integer;  //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
+    FModuleType: TModuleType;
     FSmallProjName: string;
     FPackagePrefaceName: string;
 
@@ -177,7 +177,7 @@ type
     property PrebuildOSYS: string read FPrebuildOSYS write FPrebuildOSYS;
     property FullJavaSrcPath: string read FFullJavaSrcPath write FFullJavaSrcPath;
     property JavaClassName: string read   FJavaClassName write FJavaClassName;
-    property ModuleType: integer read FModuleType write FModuleType;  //-1: gdx 0: GUI project   1: NoGui project
+    property ModuleType: TModuleType read FModuleType write FModuleType;  //-1: gdx 0: GUI project   1: NoGui project
     property SmallProjName: string read FSmallProjName write FSmallProjName;
     property AndroidTheme: string read FAndroidTheme write FAndroidTheme;
     property PieChecked: boolean read FPieChecked write FPieChecked;
@@ -641,7 +641,7 @@ begin
      FAndroidProjectName:= FPathToWorkspace + DirectorySeparator+ FSmallProjName;
        FPackagePrefaceName:= LowerCase(Trim(EditPackagePrefaceName.Text));
        if EditPackagePrefaceName.Text = '' then EditPackagePrefaceName.Text:= 'org.lamw';
-       if FModuleType > 0 then //NoGUI
+       if FModuleType > mtGUI then //NoGUI
           FJavaClassName:=  FSmallProjName;
   end
   else
@@ -655,7 +655,7 @@ begin
      FSmallProjName:=  aList.Strings[aList.Count-1];; //ex. "AppTest1"
      FPackagePrefaceName:= '';
      aList.Free;
-     if FModuleType > 0 then  //NoGUI
+     if FModuleType > mtGUI then  //NoGUI
        FJavaClassName:=  FSmallProjName //ex. "AppTest1"
   end;
 
@@ -747,7 +747,7 @@ begin
     else
     begin
       CreateDir(FAndroidProjectName);
-      if FModuleType <> 2 then  //0: GUI project   1: NoGui project   2: NoGUI Exe
+      if FModuleType <> mtNoGUIConsole then  //0: GUI project   1: NoGui project   2: NoGUI Exe
       begin
         CreateDir(FAndroidProjectName+ DirectorySeparator + 'jni');
         CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni'+DirectorySeparator+'build-modes');
@@ -760,7 +760,7 @@ begin
       CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs');
       CreateDir(FAndroidProjectName+ DirectorySeparator + 'obj');
 
-      if FModuleType <> 2 then
+      if FModuleType <> mtNoGUIConsole then
       begin
         CreateDir(FAndroidProjectName+ DirectorySeparator + 'obj'+DirectorySeparator+LowerCase(FJavaClassName));
       end;
@@ -911,10 +911,10 @@ begin
   Result:= method+'=Java_Event_'+method+signature+');';
   if Pos('pAppOnCreate=', Result) > 0 then
   begin
-    if FModuleType = 0 then  //GUI
+    if FModuleType = mtGUI then  //GUI
       Result:= Result +  'AndroidModule1.Init(gApp);';
 
-    if FModuleType = -1 then //Gdx
+    if FModuleType = mtGDX then //Gdx
       Result:= Result +  'GdxModule1.Init(gApp);';
   end;
 
@@ -1055,7 +1055,7 @@ begin
         end;
 
         //if Pos('GDXGame', Self.ComboBoxTheme.Text) > 0 then
-        if FModuleType = -1 then //GDXGame;
+        if FModuleType = mtGDX then //GDXGame;
         begin
           gdxList:= TStringList.Create;
           if FileExists(FPathToJavaTemplates + DirectorySeparator + 'gdx'+DirectorySeparator+'jGdxForm.native') then

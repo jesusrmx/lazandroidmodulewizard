@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <Package Version="4">
+  <Package Version="5">
     <PathDelim Value="\"/>
     <Name Value="LazAndroidWizardPack"/>
     <Type Value="RunAndDesignTime"/>
@@ -11,11 +11,8 @@
         <IncludeFiles Value="."/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
-      <Other>
-        <CustomOptions Value="$(IDEBuildOptions)"/>
-      </Other>
     </CompilerOptions>
-    <Files Count="20">
+    <Files Count="21">
       <Item1>
         <Filename Value="androidwizard_intf.pas"/>
         <HasRegisterProc Value="True"/>
@@ -91,13 +88,18 @@
       </Item18>
       <Item19>
         <Filename Value="jimagelisteditdlg.pas"/>
-        <UnitName Value="jimagelisteditdlg"/>
+        <UnitName Value="jImageListEditDlg"/>
       </Item19>
       <Item20>
         <Filename Value="ninepatchpng.pas"/>
         <UnitName Value="NinePatchPNG"/>
       </Item20>
+      <Item21>
+        <Filename Value="ulamwtypes.pas"/>
+        <UnitName Value="ulamwtypes"/>
+      </Item21>
     </Files>
+    <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="5">
       <Item1>
         <PackageName Value="CodeTools"/>

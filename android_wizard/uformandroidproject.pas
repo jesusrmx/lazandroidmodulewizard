@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, SynMemo, SynHighlighterJava, SynHighlighterPas,
    Forms, Controls, Graphics, Dialogs, Buttons, ExtCtrls, ComCtrls,
-   Menus, Clipbrd, ActnList;
+   Menus, Clipbrd, ActnList, uLamwTypes;
 
 type
 
@@ -71,7 +71,7 @@ type
     FPascalJNIInterfaceCode: string;
     FPathToJavaClass: string;
     FImportsList: TStringLIst;
-    FModuleType: integer;
+    FModuleType: TModuleType;
     FSyntaxMode: TSyntaxMode;
     FPathToClassName: string;
 
@@ -122,7 +122,7 @@ type
     property HackJNIMethod: boolean read FHackJNIMethod write FHackJNIMethod;
     property ProjectModel: string read FProjectModel write FProjectModel;
     property PathToClassName: string read FPathToClassName write FPathToClassName;
-    property ModuleType: integer read FModuleType write FModuleType;
+    property ModuleType: TModuleType read FModuleType write FModuleType;
     property SyntaxMode: TSyntaxMode read FSyntaxMode write FSyntaxMode;
     property JavaClassName: string read FJavaClassName write FJavaClassName;
     property PascalJNIInterfaceCode: string read FPascalJNIInterfaceCode write FPascalJNIInterfaceCode;
@@ -410,7 +410,7 @@ begin
     signature:= 'procedure '+funcName+auxFuncParam+'; cdecl;';
     strList.Add(signature);
     strList.Add('begin');
-    if FModuleType = 0 then  //GUI controls
+    if FModuleType = mtGUI then  //GUI controls
     begin
         strAux:= FListJNIBridge.Values[funcName];
         strList.Add('  '+strAux);
@@ -426,7 +426,7 @@ begin
     signature:= 'function '+funcName+ auxFuncParam+': '+ GetFuncResult(funcResult);
     strList.Add(signature);
     strList.Add('begin');
-    if FModuleType = 0 then  //GUI controls
+    if FModuleType = mtGUI then  //GUI controls
     begin
         strAux:= FListJNIBridge.Values[funcName];
         strList.Add('  Result:='+strAux);
@@ -674,7 +674,7 @@ begin
       strOnLoadList.Add('     curEnv:= PJNIEnv(PEnv);');
       strOnLoadList.Add('     RegisterNativeMethods(curEnv, '''+PathToClassName+''');');
 
-      if FModuleType = 1 then //NoGUI
+      if FModuleType = mtNoGUI then //NoGUI
       begin
         strOnLoadList.Add('     gNoGUIPDalvikVM:= VM;{PJavaVM}');
         strOnLoadList.Add('     gNoGUIjClassPath:= '''+PathToClassName+''';');
@@ -683,7 +683,7 @@ begin
       end;
 
       strOnLoadList.Add('  end;');
-      if FModuleType = 0 then
+      if FModuleType = mtGUI then
       begin
          strOnLoadList.Add('  gVM:= VM;{And_jni_Bridge}');
       end;
@@ -701,7 +701,7 @@ begin
       strOnLoadList.Add('  begin');
       strOnLoadList.Add('    curEnv:= PJNIEnv(PEnv);');
 
-      if FModuleType = 1 then  //Not Android Bridges  Controls...
+      if FModuleType = mtNoGUI then  //Not Android Bridges  Controls...
       begin
       //strOnLoadList.Add('    (curEnv^).UnregisterNatives(curEnv, gNoGUIjClass);');
       strOnLoadList.Add('    (curEnv^).DeleteGlobalRef(curEnv, gNoGUIjClass);');
@@ -709,7 +709,7 @@ begin
       strOnLoadList.Add('    gNoGUIPDalvikVM:= nil;');
       end;
 
-      if FModuleType = 0 then
+      if FModuleType = mtGUI then
       begin
         strOnLoadList.Add('    (curEnv^).DeleteGlobalRef(curEnv, gjClass);');
         strOnLoadList.Add('    gjClass:= nil;');
@@ -718,7 +718,7 @@ begin
 
       strOnLoadList.Add('  end;');
 
-      if FModuleType = 0 then
+      if FModuleType = mtGUI then
       begin
       strOnLoadList.Add('  gApp.Terminate;');
       strOnLoadList.Add('  FreeAndNil(gApp);');
@@ -810,7 +810,7 @@ begin
 
    StatusBar1.Panels.Items[0].Text:= FFullJavaSrcPath;
 
-   if FModuleType = 1 then   //NoGUI
+   if FModuleType = mtNoGUI then   //NoGUI
    begin
 
      FJavaClassName:= FSmallProjName;
