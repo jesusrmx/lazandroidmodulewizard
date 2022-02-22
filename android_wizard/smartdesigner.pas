@@ -2667,7 +2667,7 @@ begin
           begin
             if CurCodeTool.CompareSrcIdentifiers(i + 2, 'endregion') then
             begin
-              ToPos := i - 1;
+              ToPos := i - Length(sLineBreak);
               PosFound := True;
               Break;
             end;
