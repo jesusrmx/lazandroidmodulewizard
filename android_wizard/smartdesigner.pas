@@ -3075,7 +3075,7 @@ begin
       begin
         if CurCodeTool.CompareSrcIdentifiers(i + 2, 'region') then
         begin
-          FromPos := PosEx('}', CurCodeTool.Src, i) + 1;
+          FromPos := PosEx('}', CurCodeTool.Src, i) + Length(sLineBreak);
           k := PosEx('/fold', CurCodeTool.Src, i);
           if (k = 0) or (k > FromPos) then
           begin
