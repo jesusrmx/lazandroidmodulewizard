@@ -98,7 +98,7 @@ begin
     Params.Add(fpcTrunkStorePath);       //https://github.com/graemeg/freepascal.git
 
     Tool.CmdLineParams := Params.DelimitedText;
-    Tool.Scanners.Add(SubToolDefault);  // deprecated use "Parsers"
+    Tool.Parsers.Add(SubToolDefault);  // deprecated use "Parsers"
 
     if not RunExternalTool(Tool) then
       raise Exception.Create('Cannot Run Extern [svn] Tool!');

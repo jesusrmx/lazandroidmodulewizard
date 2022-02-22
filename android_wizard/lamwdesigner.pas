@@ -60,7 +60,7 @@ type
     //procedure OnDesignerModified(Sender: TObject);
     procedure OnDesignerModified(Sender: TObject{$If lcl_fullversion=1070000}; {%H-}PropName: ShortString{$ENDIF});
     procedure OnPersistentAdded(APersistent: TPersistent; {%H-}Select: boolean);
-    procedure OnPersistentDeleted;
+    procedure OnPersistentDeleted(APersistent: TPersistent);
     procedure OnPersistentDeleting(APersistent: TPersistent);
     procedure OnSetSelection(const ASelection: TPersistentSelectionList);
     // tk
@@ -1971,7 +1971,7 @@ begin
   end else inherited GetBounds(AComponent,CurBounds);
 end;
 
-procedure TAndroidWidgetMediator.OnPersistentDeleted;
+procedure TAndroidWidgetMediator.OnPersistentDeleted(APersistent: TPersistent);
 begin
   if FjControlDeleted then
     UpdateJControlsList;

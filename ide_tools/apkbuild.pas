@@ -719,7 +719,7 @@ begin
     Tool.ShowConsole := True;
 {$endif}
     // end tk
-    Tool.Scanners.Add(SubToolAnt);
+    Tool.Parsers.Add(SubToolAnt);
     if not RunExternalTool(Tool) then
       raise Exception.Create('Cannot build APK!');
     Result := True;
@@ -880,7 +880,7 @@ begin
     Tool.ShowConsole := True;
 {$endif}
     // end tk
-    Tool.Scanners.Add(SubToolAnt);
+    Tool.Parsers.Add(SubToolAnt);
     if not RunExternalTool(Tool) then
       raise Exception.Create('Cannot install APK!');
     Result := True;
@@ -924,7 +924,7 @@ begin
     Tool.ResolveMacros := True;
     Tool.Executable := IncludeTrailingPathDelimiter(FSdkPath) + 'platform-tools' + PathDelim + 'adb$(ExeExt)';
     Tool.CmdLineParams := 'shell am start -n ' + proj + '/.App';
-    Tool.Scanners.Add(SubToolDefault);
+    Tool.Parsers.Add(SubToolDefault);
     if not RunExternalTool(Tool) then
       raise Exception.Create('Cannot run APK!');
   finally
@@ -956,7 +956,7 @@ begin
     Tool.ShowConsole := True;
 {$endif}
     // end tk
-    Tool.Scanners.Add(SubToolGradle);
+    Tool.Parsers.Add(SubToolGradle);
     if not RunExternalTool(Tool) then
       raise Exception.Create('Cannot build APK!');
     Result := True;
@@ -987,7 +987,7 @@ begin
     Tool.ShowConsole := True;
 {$endif}
     // end tk
-    Tool.Scanners.Add(SubToolGradle);
+    Tool.Parsers.Add(SubToolGradle);
     if not RunExternalTool(Tool) then
       raise Exception.Create('Cannot run APK!');
   finally

@@ -426,7 +426,7 @@ begin
       Tool.WorkingDirectory := pathToADB;
       Tool.Executable := pathToADB + DirectorySeparator+ 'adb'+strExt;
       Tool.CmdLineParams := paramText;
-      Tool.Scanners.Add(SubToolDefault);
+      Tool.Parsers.Add(SubToolDefault);
       if not RunExternalTool(Tool) then
         raise Exception.Create('Cannot Run Extern [adb] Tool!');
     finally

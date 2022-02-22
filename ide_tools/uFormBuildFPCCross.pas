@@ -367,7 +367,7 @@ begin
 
        Tool.Executable := AppendPathDelim(pathToFpcExecutables) + 'make'+strExt;
        Tool.CmdLineParams :=  Params.DelimitedText;
-       Tool.Scanners.Add(SubToolDefault);
+       Tool.Parsers.Add(SubToolDefault);
 
        if not RunExternalTool(Tool) then
        begin
@@ -473,7 +473,7 @@ begin
 
        Tool.Executable := pathToFpcExecutables + DirectorySeparator+ 'make'+strExt;
        Tool.CmdLineParams :=  Params.DelimitedText;
-       Tool.Scanners.Add(SubToolDefault);
+       Tool.Parsers.Add(SubToolDefault);
 
        if not RunExternalTool(Tool) then
        begin
@@ -562,7 +562,7 @@ begin
 
        Tool.Executable := pathToFpcExecutables + DirectorySeparator+ 'make'+strExt;
        Tool.CmdLineParams :=  Params.DelimitedText;
-       Tool.Scanners.Add(SubToolDefault);
+       Tool.Parsers.Add(SubToolDefault);
 
        if not RunExternalTool(Tool) then
        begin
