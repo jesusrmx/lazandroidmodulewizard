@@ -396,7 +396,7 @@ begin
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs'+DirectorySeparator+'x86_64');
       CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
 
-      if  FModuleType < mtNoGUIConsole then
+      if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
       if FProjectModel = 'Ant' then
@@ -584,7 +584,7 @@ begin
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs'+DirectorySeparator+'x86_64');
       CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
 
-      if FModuleType = mtNoGUIConsole{2} then //default
+      if FModuleType = mtNoGUIConsole then //default
       begin
         list:= TStringList.Create;
 
@@ -851,8 +851,8 @@ begin
 
       FPathToJNIFolder := FAndroidProjectName;
       AndroidFileDescriptor.PathToJNIFolder:= FPathToJNIFolder;
-      AndroidFileDescriptor.ModuleType:= mtGUI;
       AndroidFileDescriptor.SmallProjName:=  FSmallProjName;
+      AndroidFileDescriptor.ModuleType:= mtGUI;
 
       with TJavaParser.Create(FFullJavaSrcPath + DirectorySeparator+  'Controls.java') do
       try         //produce helper file [old] "ControlsEvents.txt"
@@ -872,7 +872,7 @@ begin
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs'+DirectorySeparator+'x86_64');
       CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
 
-      if  FModuleType < mtNoGUIConsole then
+      if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
       auxList:= TStringList.Create;
@@ -1665,7 +1665,7 @@ begin
       try
         if  FProjectModel = 'Ant' then
         begin
-          if FModuleType < mtNoGUIConsole then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
+          if FModuleType in [mtGDX, mtGUI, mtNoGUI] then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin
             ForceDirectories(FAndroidProjectName + DirectorySeparator + 'src');
 
@@ -1804,7 +1804,7 @@ begin
 
           end;
 
-          if FModuleType <= mtGUI then  //Android Bridges Controls... [GUI] and Gdx
+          if FModuleType in [mtGDX, mtGUI] then  //Android Bridges Controls... [GUI] and Gdx
           begin
             if not FileExists(FFullJavaSrcPath+DirectorySeparator+'App.java') then
             begin
@@ -1932,7 +1932,7 @@ begin
 
         end; // Ant
 
-        if FModuleType < mtNoGUIConsole then
+        if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         begin
           {$IFDEF WINDOWS}
           strList.Clear;
@@ -3159,7 +3159,7 @@ begin
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj');
         CreateDir(FAndroidProjectName+DirectorySeparator+'lamwdesigner');
 
-        if FModuleType < mtNoGUIConsole then
+        if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
            CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
         //eclispe compatibility!
@@ -3336,7 +3336,7 @@ begin
 
   inherited InitProject(AProject);
 
-  if  FModuleType < mtNoGUIConsole then
+  if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
     projName:= LowerCase(FJavaClassName) + '.lpr'
   else
     projName:= LowerCase(FSmallProjName) + '.lpr';
@@ -3344,7 +3344,7 @@ begin
   if   FPathToClassName = '' then
       FPathToClassName:= StringReplace(FPackagePrefaceName, '.', '/', [rfReplaceAll])+'/'+LowerCase(FSmallProjName)+'/'+ FJavaClassName; //ex. 'com/example/appasynctaskdemo1/Controls'
 
-  if  FModuleType < mtNoGUIConsole then
+  if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
      projDir:= FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator
   else
      projDir:= FPathToJNIFolder+DirectorySeparator;
@@ -3374,7 +3374,7 @@ begin
   else
     AProject.CustomData.Values['LAMW'] := 'NoGUIGenericLibrary';    // FModuleType = 3
 
-  if FModuleType < mtNoGUIConsole then    {-1:gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then    {-1:gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
     AProject.CustomData.Values['Package']:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
 
   AProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
@@ -3392,7 +3392,7 @@ begin
   AProject.AddFile(MainFile, False);
   AProject.MainFileID := 0;
 
-  if FModuleType <= mtGUI then  //GUI
+  if FModuleType in [mtGDX, mtGUI] then  //GUI
     AProject.AddPackageDependency('tfpandroidbridge_pack'); //GUI or gdx  controls
 
   sourceList:= TStringList.Create;              //FSmallProjName
@@ -3412,7 +3412,7 @@ begin
 
   sourceList.Add('uses');
 
-  if FModuleType <= mtGUI then  //GUI or gdx controls
+  if FModuleType in [mtGDX, mtGUI] then  //GUI or gdx controls
   begin
     //https://forum.lazarus.freepascal.org/index.php/topic,45715.msg386317
     sourceList.Add('  {$IFDEF UNIX}{$IFDEF UseCThreads}');
@@ -3510,7 +3510,7 @@ begin
     sourceList.Add('  Unit1;');  //ok
   end;
 
-  if FModuleType <= mtGUI then //GUI
+  if FModuleType in [mtGDX, mtGUI] then //GUI
   begin
     sourceList.Add('{%region /fold ''LAMW generated code''}');
     sourceList.Add('');
@@ -3520,7 +3520,7 @@ begin
 
   sourceList.Add(' ');
 
-  if FModuleType < mtLibrary then sourceList.Add('begin');
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then sourceList.Add('begin');
 
   if FModuleType = mtGDX then  //Gdx Android Bridges controls...
   begin
@@ -3948,7 +3948,7 @@ begin
   auxList.Add('<TargetCPU Value="i386"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_x86+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86.txt');
@@ -3958,7 +3958,7 @@ begin
   auxList.Add('<TargetCPU Value="x86_64"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_x86_64+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86_64.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86_64.txt');
@@ -3968,7 +3968,7 @@ begin
   auxList.Add('<TargetCPU Value="mipsel"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_mips+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_mipsel.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_mipsel.txt');
@@ -3978,7 +3978,7 @@ begin
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV6+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV6"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV6.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV6.txt');
@@ -3988,7 +3988,7 @@ begin
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV7a+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV7A"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a.txt')
   else
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a.txt');
@@ -3999,7 +3999,7 @@ begin
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV7a_VFPv3+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV7A"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a_VFPv3.txt')
   else
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a_VFPv3.txt');
@@ -4009,7 +4009,7 @@ begin
   auxList.Add('<TargetCPU Value="aarch64"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armv8+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMv8"/>');  //commented until lazarus fix bug for missing ARMv8  //again thanks to Stephano!
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_arm64.txt')
   else
      auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'build_arm64.txt');
@@ -4033,12 +4033,12 @@ begin
   auxList.Add('   > [LAMW] Build Android Apk and Run');
   auxList.Add(' ');
 
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'readme.txt')
   else
     auxList.SaveToFile(FPathToJNIFolder+DirectorySeparator+'build-modes'+DirectorySeparator+'readme.txt');
 
-  if FModuleType < mtNoGUIConsole then
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
   begin
     AProject.LazCompilerOptions.TargetFilename:=
           '..'+DirectorySeparator+'libs'+DirectorySeparator+auxStr+DirectorySeparator+'lib'+LowerCase(FJavaClassName){+'.so'};
@@ -4362,7 +4362,7 @@ constructor TAndroidFileDescPascalUnitWithResource.Create;
 begin
   inherited Create;
 
-  if  ModuleType < mtLibrary then
+  if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
   begin
     Name:= 'AndroidDataModule';
 
@@ -4445,7 +4445,7 @@ begin
    uName:= SplitStr(uName,'.');
    sourceList:= TStringList.Create;
 
-   if ModuleType < mtNoGUIConsole then
+   if ModuleType in [mtGDX, mtGUI, mtNoGUI] then
      //sourceList.Add('{Hint: save all files to location: ' +PathToJNIFolder+DirectorySeparator+'jni }')
      sourceList.Add('{hint: Pascal files location: ...'+DirectorySeparator+SmallProjName+DirectorySeparator+'jni }')
    else
@@ -4485,7 +4485,7 @@ begin
     sourceList.Add('  gNoGUIPDalvikVM: PJavaVM=nil;');
    end;
 
-   if ModuleType < mtLibrary then
+   if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
    begin
      sourceList.Add(GetInterfaceSource(Filename, SourceName, ResourceName));
    end
@@ -4499,7 +4499,7 @@ begin
    sourceList.Add('implementation');
    sourceList.Add(' ');
 
-   if ModuleType < mtLibrary then
+   if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
    begin
       sourceList.Add(GetImplementationSource(Filename, SourceName, ResourceName));
    end
@@ -4530,7 +4530,7 @@ begin
    uName:= SplitStr(uName,'.');
    sourceList:= TStringList.Create;
 
-   if ModuleType < mtNoGUIConsole then
+   if ModuleType in [mtGDX, mtGUI, mtNoGUI] then
      sourceList.Add('{Hint: save all files to location: ' +PathToJNIFolder+DirectorySeparator+'jni }')
      //sourceList.Add('{hint: Pascal files location: ...'+DirectorySeparator+FSmallProjName+DirectorySeparator+'jni }')
    else
@@ -4569,7 +4569,7 @@ begin
     sourceList.Add('  gNoGUIPDalvikVM: PJavaVM=nil;');
    end;
 
-   if ModuleType < mtLibrary then
+   if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
    begin
      sourceList.Add(GetInterfaceSource(Filename, SourceName, ResourceName));
    end
@@ -4583,7 +4583,7 @@ begin
    sourceList.Add('implementation');
    sourceList.Add(' ');
 
-   if ModuleType < mtLibrary then
+   if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
    begin
       sourceList.Add(GetImplementationSource(Filename, SourceName, ResourceName));
    end
@@ -4698,7 +4698,7 @@ begin
       strList.Add('  AndroidConsoleDataFormXX: TAndroidConsoleDataForm');
   end;
 
-  if ModuleType < mtLibrary then
+  if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
     Result := strList.Text
   else
     Result:= '';

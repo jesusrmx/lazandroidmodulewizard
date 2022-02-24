@@ -647,7 +647,7 @@ begin
      FAndroidProjectName:= FPathToWorkspace + DirectorySeparator+ FSmallProjName;
        FPackagePrefaceName:= LowerCase(Trim(EditPackagePrefaceName.Text));
        if EditPackagePrefaceName.Text = '' then EditPackagePrefaceName.Text:= 'org.lamw';
-       if FModuleType > mtGUI then //NoGUI
+       if FModuleType in [mtNoGUI, mtNoGUIConsole, mtLibrary] then //NoGUI
           FJavaClassName:=  FSmallProjName;
   end
   else
@@ -661,7 +661,7 @@ begin
      FSmallProjName:=  aList.Strings[aList.Count-1];; //ex. "AppTest1"
      FPackagePrefaceName:= '';
      aList.Free;
-     if FModuleType > mtGUI then  //NoGUI
+     if FModuleType in [mtNoGUI, mtNoGUIConsole, mtLibrary] then  //NoGUI
        FJavaClassName:=  FSmallProjName //ex. "AppTest1"
   end;
 
