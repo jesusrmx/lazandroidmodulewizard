@@ -153,6 +153,10 @@ procedure TryRunProcessChmod(path: string);
 var
   proc: TProcess;
 begin
+  //
+  // This hurts a lot when your project is under version controls
+  // Needs a justification why this is needed.
+  //
   //{$ifdef UNIX}
   //try
   //  proc := TProcess.Create(nil);
