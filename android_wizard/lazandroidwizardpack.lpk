@@ -11,6 +11,11 @@
         <IncludeFiles Value="."/>
         <UnitOutputDirectory Value="lib\$(TargetCPU)-$(TargetOS)"/>
       </SearchPaths>
+      <Linking>
+        <Debugging>
+          <DebugInfoType Value="dsDwarf2Set"/>
+        </Debugging>
+      </Linking>
     </CompilerOptions>
     <Files Count="21">
       <Item1>
@@ -96,7 +101,7 @@
       </Item20>
       <Item21>
         <Filename Value="ulamwtypes.pas"/>
-        <UnitName Value="ulamwtypes"/>
+        <UnitName Value="uLamwTypes"/>
       </Item21>
     </Files>
     <CompatibilityMode Value="True"/>
