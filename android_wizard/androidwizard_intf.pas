@@ -3420,7 +3420,7 @@ begin
     sourceList.Add('  {$ENDIF}{$ENDIF}');
   end;
 
-  if FModuleType <= 0 then  //-1:gdx    0:GUI or   1:noGUI controls
+  if FModuleType in [mtGDX, mtGUI] then  //-1:gdx    0:GUI or   1:noGUI controls
   begin
     sourceList.Add('  Classes, SysUtils, And_jni, And_jni_Bridge, AndroidWidget, Laz_And_Controls,');
     sourceList.Add('  Laz_And_Controls_Events;');
