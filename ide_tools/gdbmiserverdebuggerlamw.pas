@@ -31,7 +31,8 @@ unit GDBMIServerDebuggerLAMW;
 interface
 
 uses
-  Classes, SysUtils, GDBMIDebugger, GDBMIMiscClasses, DbgIntfDebuggerBase, LCLVersion;
+  Classes, SysUtils, GDBMIDebugger, GDBMIMiscClasses, LazDebuggerIntfBaseTypes,
+  DbgIntfDebuggerBase, LCLVersion;
 
 type
 
