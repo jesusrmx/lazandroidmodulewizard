@@ -758,8 +758,39 @@ begin
 
     if GetWorkSpaceFromForm(mtGUI, outTag) then
     begin
-     strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+      strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
 
+      // What it do:
+      //  * if FSupport is true:
+      //      if <JTMPL>/support/jSupported.java exists Loads it and save it in FFullJAvaSrcPath while updating "package name"
+      //      if <JTMPL>/support/support_provider_paths.xml exists but dest res/xml/support_provider_paths.xml not, it copies it
+      //  * if FSupport is false:
+      //      if <JTMPL>/jSupported.java it s copied to FFullJavaSrcPath/jSupported.java while updating "package name"
+      //  * Loads <JTMPL>/Controls.java
+      //      replaces "package name"
+      //      replaces template /*libsmartload* with some System.loadlibrary code
+      //      Save it as FFullJavaSrcPath/Controls.java
+      //  * Loads <JTMPL>/jForm.java updates "package name" save it as FFullJavaSrcPath/jForm.java
+      //  * if AppCompat in FAndroidTheme  Loads <JTMPL>/support/App.java
+      //    else                           Loads <JTMPL>/App.java
+      //        Updates "package name"
+      //        Save it as FFullJavaSrcPath/App.java
+      //  * Creates FAndroidProjectName/lamwdesigner
+      //       if Exists FPathToJavaTemplates/Controls.native its copied to FAndroidProjectName/lamwdesigner/Controls.native
+      //  * if AppCompat in FAndroidTheme
+      //        if exists <JTMPL>/support/jCommons.java, loads it, change pakage name, save it as FFullJavaSrcPath/jCommons;
+      //    else
+      //        if exists <JTMPL>/jCommons.java, loads it, change pakage name, save it as FFullJavaSrcPath/jCommons;
+      //
+      // Depends on:
+      //    FSupport, FPathToJavaTemplates, strPackName, FFullJavaSrcPath, FAndroidProjectName
+      //    FAndroidTheme
+      //
+      // Produces:
+      //    jSupported.java, support_provider_paths.xml, controls.java,
+      //    App.java, lamwdesigner/Controls.native, jCommons.java
+      //
+      {%region /fold}
       with TStringList.Create do
         try
           if FSupport then  // refactored by jmpessoa: UNIQUE "Controls.java" !!!
@@ -848,19 +879,46 @@ begin
       finally
           Free;
       end;
+      {%EndRegion}
 
       FPathToJNIFolder := FAndroidProjectName;
       AndroidFileDescriptor.PathToJNIFolder:= FPathToJNIFolder;
       AndroidFileDescriptor.SmallProjName:=  FSmallProjName;
       AndroidFileDescriptor.ModuleType:= mtGUI;
 
+      // what it does:
+      //    Parses the recent created FFullJavaSrcPath/Controls.java and extracts
+      //    the corresponding Pascal Jni Interface. This is later put in the header
+      //    of the main .lpr file that produces de library.so native file.
+      //
+      // Depends on:
+      //    FFullJavaSrcPath, FPathToJavaTemplates;
+      //
+      //Creates:
+      //    Parses Dest/Controls.java file, produces FPascalJniInterfaceCode
+      //
+      {%Region /fold}
       with TJavaParser.Create(FFullJavaSrcPath + DirectorySeparator+  'Controls.java') do
       try         //produce helper file [old] "ControlsEvents.txt"
         FPascalJNIInterfaceCode := GetPascalJNIInterfaceCode(FPathToJavaTemplates + DirectorySeparator + 'Controls.events');
       finally
         Free;
       end;
+      {%EndRegion}
 
+
+      // What it does:
+      //    Creates sevaral directories
+      //
+      // Depends on:
+      //    FAndroidProjectName, FModuleType;
+      //
+      // Produces:
+      //    <Proj>/jni, <Proj>/jni/build-modes, <Proj>/libs, <Proj>/libs/armeabi,
+      //    <Proj>/libs/armeabi-v7a, <Proj>/libs/x86, <Proj>/libs/mips,
+      //    <Proj>/libs/arm64-v8a, <Proj>/libs/x86_64, <Proj>/obj, <Proj>/obj/controls
+      //
+      {%Region /fold}
       CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni');
       CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni'+DirectorySeparator+'build-modes');
       CreateDir(FAndroidProjectName+DirectorySeparator+'libs');
@@ -874,11 +932,19 @@ begin
 
       if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
+      {%EndRegion}
 
       auxList:= TStringList.Create;
 
       if FProjectModel = 'Ant' then
       begin
+        // What it does:  For eclipse funcionality
+        //    Creates <Proj>/.settings
+        //    Creates <Proj>/.settings/org.eclipse.jdt.core.prefs
+        //
+        // Depends On:    FAndroidProjectName
+        //
+        {%Region /fold}
         //eclipe compatibility [Neon!]
         CreateDir(FAndroidProjectName+DirectorySeparator+'.settings');
         auxList.Add('eclipse.preferences.version=1');
@@ -886,18 +952,32 @@ begin
         auxList.Add('org.eclipse.jdt.core.compiler.compliance=1.7');
         auxList.Add('org.eclipse.jdt.core.compiler.source=1.7');
         auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.settings'+DirectorySeparator+'org.eclipse.jdt.core.prefs');
+        {%EndRegion}
+
+
+        // What it does:  Creates <Proj>/.classpath  For eclipse funcionality
+        //
+        // Depends On:    FAndroidProjectName
+        //
+        {%Region /fold}
         auxList.Clear;
         auxList.Add('<?xml version="1.0" encoding="UTF-8"?>');
         auxList.Add('<classpath>');
-	auxList.Add('<classpathentry kind="src" path="src"/>');
-	auxList.Add('<classpathentry kind="src" path="gen"/>');
-	auxList.Add('<classpathentry kind="con" path="org.eclipse.andmore.ANDROID_FRAMEWORK"/>');
-	auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.LIBRARIES"/>');
-	auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.DEPENDENCIES"/>');
-	auxList.Add('<classpathentry kind="output" path="bin/classes"/>');
+	      auxList.Add('<classpathentry kind="src" path="src"/>');
+	      auxList.Add('<classpathentry kind="src" path="gen"/>');
+	      auxList.Add('<classpathentry kind="con" path="org.eclipse.andmore.ANDROID_FRAMEWORK"/>');
+	      auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.LIBRARIES"/>');
+	      auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.DEPENDENCIES"/>');
+	      auxList.Add('<classpathentry kind="output" path="bin/classes"/>');
         auxList.Add('</classpath>');
         auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.classpath');
+        {%EndRegion}
 
+        // What it does:  Creates <Proj>/.project  a file For eclipse funcionality
+        //
+        // Depends On:    FAndroidProjectName, FSmalProjName
+        //
+        {%Region /fold}
         auxList.Clear;
         auxList.Add('<projectDescription>');
         auxList.Add('	<name>'+FSmallProjName+'</name>');
@@ -932,7 +1012,13 @@ begin
         auxList.Add('	</natures>');
         auxList.Add('</projectDescription>');
         auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.project');
+        {%EndRegion}
 
+        // What it does:  Creates <Proj>/proguard-project.txt  For eclipse funcionality?
+        //
+        // Depends On:    nothing
+        //
+        {%Region /fold}
         auxList.Clear;
         auxList.Add('# To enable ProGuard in your project, edit project.properties');
         auxList.Add('# to define the proguard.config property as described in that file.');
@@ -955,7 +1041,13 @@ begin
         auxList.Add('#   public *;');
         auxList.Add('#}');
         auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'proguard-project.txt');
+        {%EndRegion}
 
+        // What it does:  Creates <Proj>/project.properties  For eclipse funcionality?
+        //
+        // Depends On:    FAndroidTheme, FTargetApi
+        //
+        {%Region /fold}
         auxList.Clear;
         auxList.Add('# This file is automatically generated by Android Tools.');
         auxList.Add('# Do not modify this file -- YOUR CHANGES WILL BE ERASED!');
@@ -983,7 +1075,16 @@ begin
            auxList.Add('target=android-'+FTargetApi);
         end;
         auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'project.properties');
+        {%EndRegion}
       end;
+
+      // What it does:  Creates <Proj>/AndroidManifest.xml
+      //
+      // Depends On:
+      //    FPathToJavaTemplates, strPackName, FMainActivity, FMinApi, FTargetApi
+      //    FSupport,
+      //
+      {%Region /fold}
 
       //AndroidManifest.xml creation:
 
@@ -1024,6 +1125,7 @@ begin
 
       auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'AndroidManifest.xml');
       auxList.Free;
+      {%EndRegion}
 
       Result := mrOK
 
@@ -1570,6 +1672,11 @@ begin
     begin
       frm.SaveSettings(SettingsFilename);
 
+      // What it does:
+      //
+      //    Setup variables
+      //
+      {%Region /fold}
       FBuildSystem:= frm.BuildSystem;
 
       FAndroidTheme:= frm.AndroidTheme;
@@ -1661,17 +1768,36 @@ begin
         instructionChip:= ExtractFileDir(LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename);
         instructionChip:= ExtractFileName(instructionChip);
       end;
+      {%EndRegion}
 
       try
         if  FProjectModel = 'Ant' then
         begin
           if FModuleType in [mtGDX, mtGUI, mtNoGUI] then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin
-            ForceDirectories(FAndroidProjectName + DirectorySeparator + 'src');
 
-            FPathToJavaSrc:= FAndroidProjectName+DirectorySeparator+ 'src';
+            // What it does:
+            //  Creates project directories:
+            //    Creates FPathToJavaSrc   -> <ProjDir>/src
+            //    Creates FFullJavaSrcPath -> <ProjDir>/src/pkg/preface/name/and/proj/name
+            //    Creates <ProjDir>/res, <ProjDir>/res/drawable, <ProjDir>/res/xml
+            //    Creates/Copy  <JTPL>/drawable-hdpi/ic_launcher.png -> <ProjDir>/res/drawable-hdpi
+            //    Creates/Copy  <JTPL>/drawable-ldpi/ic_launcher.png -> <ProjDir>/res/drawable-ldpi
+            //    Creates/Copy  <JTPL>/drawable-mdpi/ic_launcher.png -> <ProjDir>/res/drawable-mdpi
+            //    Creates/Copy  <JTPL>/drawable-xdpi/ic_launcher.png -> <ProjDir>/res/drawable-xdpi
+            //    Creates/Copy <JTPL>/drawable-xxdpi/ic_launcher.png -> <ProjDir>/res/drawable-xxdpi
+            //    Dir=/values/colors[/FAndroidThemeColor] copy <JTPL>/<Dir>/colors.xml -> <ProjDir>/<Dir>/colors.xml
+            //    if AppCompat in FAndroidTheme: <JTPL>/values/FAndroidTheme.xml -> <ProjDir>/res/values/styles.xml
+            //    elif GDXGame in FAndroidTheme: <JTPL>/values/FAndroidTheme.xml -> <ProjDir>/res/values/styles.xml
+            //    else                           <JTPL>/values/styles.xml        -> <ProjDir>/res/values/styles.xml
+            // Depends on:
+            //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName, FAndroidTheme, FAndroidThemeColor
+            //
+            {%Region /fold}
+            FPathToJavaSrc:= FAndroidProjectName + DirectorySeparator + 'src';
+            ForceDirectories(FPathToJavaSrc);
+
             FFullJavaSrcPath:= FPathToJavaSrc;
-
             strList.Clear;
             strList.StrictDelimiter:= True;
             strList.Delimiter:= '.';
@@ -1733,7 +1859,13 @@ begin
                CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'styles.xml',
                          FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'styles.xml');
             end;
+            {%EndRegion}
 
+            // What it does:  Creates <Proj>/res/values/strings.xml
+            //
+            // Depends On:    FAndroidProjectName, FSmalProjName
+            //
+            {%Region /fold}
             strList.Clear;
             strList.Add('<?xml version="1.0" encoding="utf-8"?>');
             strList.Add('<resources>');
@@ -1741,12 +1873,21 @@ begin
             strList.Add('   <string name="hello_world">Hello world!</string>');
             strList.Add('</resources>');
             strList.SaveToFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'strings.xml');
+            {%EndRegion}
 
             {
             CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml',
                          FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
             }
 
+            // What it does:
+            //    Creates <Proj>/res/values-v11, <Proj>/res/values-v14, <Proj>/res/values-v21
+            //            Creates/Copy <JTPL>/layout/activity_app.xml -> <ProjDir>/res/layout/activity_app.xml
+            //            <Proj>/assets, <Proj>/bin, <Proj>/gen
+            //
+            // Depends On:    FAndroidProjectName, FTargetApi, FAndroidTheme, FMinAPi
+            //
+            {%Region /fold}
             CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v11');
 
             intTargetApi:= StrToInt(FTargetApi);
@@ -1801,11 +1942,18 @@ begin
             CreateDir(FAndroidProjectName+ DirectorySeparator + 'assets');
             CreateDir(FAndroidProjectName+ DirectorySeparator + 'bin');
             CreateDir(FAndroidProjectName+ DirectorySeparator + 'gen');
+            {%EndRegion}
 
           end;
 
           if FModuleType in [mtGDX, mtGUI] then  //Android Bridges Controls... [GUI] and Gdx
           begin
+            // What it does:
+            //    Creates FFullJavaSrcPath/App.java
+            //
+            // Depends On:    FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName
+            //
+            {%Region /fold}
             if not FileExists(FFullJavaSrcPath+DirectorySeparator+'App.java') then
             begin
                strList.Clear; //dummy App.java - will be replaced with simonsayz's "App.java" template!
@@ -1815,10 +1963,22 @@ begin
                strList.Add('}');
                strList.SaveToFile(FFullJavaSrcPath+DirectorySeparator+'App.java');
             end;
+            {%EndRegion}
           end;
 
           if FModuleType = mtNoGUI then     //[No GUI]
           begin
+             // What it does:
+             //   Creates FFullJavaSrcPath/App.java
+             //   Creates FFullJavaSrcPath/FSmallProjName.java
+             //   Creates FAndroidProjectName/AndroidManifest.xml
+             //   Creates FAndroidProjectName/packagename.txt
+             // Depends On:
+             //   FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FSmallProjName
+             //
+             // Produces: FVersionCode, FVersionName
+             //
+             {%Region /fold}
              if not FileExists(FFullJavaSrcPath+DirectorySeparator+'App.java') then
              begin
                strList.Clear;
@@ -1907,7 +2067,6 @@ begin
                strList.Add('    </application>');
                strList.Add('</manifest>');
                strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'AndroidManifest.xml');
-
                FVersionCode := 1;
                FVersionName := '1.0';
              end else
@@ -1927,6 +2086,7 @@ begin
              strList.Clear;
              strList.Add(FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
              strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'packagename.txt');
+             {%EndRegion}
 
           end; //just Ant NoGUI project
 
@@ -1935,6 +2095,11 @@ begin
         if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         begin
           {$IFDEF WINDOWS}
+
+          // BuildSys: 'Ant'
+          // Produces: FAndroidProjectName/ant-build-debug.bat
+          // Requires: FPathToAntBin, FPathToJavaJDK, FAndroidProjectName
+          {%Region /fold}
           strList.Clear;
           strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
@@ -1942,7 +2107,12 @@ begin
           strList.Add('call ant clean -Dtouchtest.enabled=true debug');
           strList.Add('if errorlevel 1 pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-build-debug.bat'); //build Apk using "Ant"
+          {%EndRegion}
 
+          // BuildSys: 'Ant'
+          // Produces: FAndroidProjectName/ant-build-release.bat
+          // Requires: FPathToAntBin, FPathToJavaJDK, FAndroidProjectName
+          {%Region /fold}
           strList.Clear;
           strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
@@ -1950,8 +2120,22 @@ begin
           strList.Add('call ant clean release');
           strList.Add('if errorlevel 1 pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-build-release.bat'); //build Apk using "Ant"
+          {%EndRegion}
 
-              //*.bat utils...
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/utils/list-target.bat,
+          //    FAndroidProjectName/utils/paused-list-target.bat,
+          //    FAndroidProjectName/utils/create-avd-default.bat,
+          //    FAndroidProjectName/utils/paused-create-avd-default.bat
+          //    FAndroidProjectName/launch-avd-default.bat
+          //
+          // Requires:
+          //    FAndroidProjectName, FPathToAndroidSDK, FMinApi
+          //
+          {%Region /fold}
+
+          //*.bat utils...
           CreateDir(FAndroidProjectName+ DirectorySeparator + 'utils');
 
           {"android list targets" to see the available targets...}
@@ -1987,7 +2171,12 @@ begin
             strList.Add('tools emulator -avd avd_api_'+FMinApi + ' &');
           strList.Add('cd '+FAndroidProjectName);
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'launch-avd-default.bat');
+          {%EndRegion}
 
+          // BuildSys: 'Ant'
+          // Produces: FAndroidProjectName/ant-adb-install-debug.bat
+          // Requires: FPathToAndroidSDK, FPathToAndroidSDK, FSmallProjName, FAndroidProjectName
+          {%Region /fold}
           strList.Clear;
           strList.Add(FPathToAndroidSDK+'platform-tools'+
                      DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
@@ -1995,6 +2184,12 @@ begin
                      DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-debug.apk');
           strList.Add('pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-adb-install-debug.bat');
+          {%EndRegion}
+
+          // BuildSys: 'Gradle'
+          // Produces: FAndroidProjectName/gradle-adb-install-debug.bat
+          // Requires: FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, FAndroidProjectName
+          {%Region /fold}
 
           strList.Clear;
           strList.Add(FPathToAndroidSDK+'platform-tools'+
@@ -2003,7 +2198,17 @@ begin
                      DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'debug'+DirectorySeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
           strList.Add('pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-adb-install-debug.bat');
+          {%EndRegion}
 
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/adb-uninstall.bat
+          //    FAndroidProjectName/logcat.bat
+          //    FAndroidProjectName/utils/logcat-error.bat
+          // Requires:
+          //    FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, FAndroidProjectName,
+          //    FAntBuildMode,
+          {%Region /fold}
           strList.Clear;
           strList.Add(FPathToAndroidSDK+'platform-tools'+
                      DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
@@ -2046,8 +2251,18 @@ begin
           strList.Add('pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'aapt.bat'); //Android Asset Packaging Tool
           }
+          {%EndRegion}
           {$ENDIF}
 
+          // BuildSys: 'Ant'
+          // Produces:
+          //    FAndroidProjectName/build.xml
+          //    FAndroidProjectName/readme.txt
+          //    FAndroidProjectName/ant.properties
+          // Requires:
+          //    FSmallProjName, FPathToAndroidSDK, FAndroidTheme, FTargetApi, FAntBuildMode,
+          //    FPackagePrefaceName, cMinAPI, cMaxAPI, intTargetApi, FAndroidProjectName
+          {%Region /fold}
           strList.Clear;
           strList.Add('<?xml version="1.0" encoding="UTF-8"?>');
           strList.Add('<project name="'+FSmallProjName+'" default="help">');
@@ -2174,6 +2389,7 @@ begin
           strList.Add('key.store.password=123456');
           strList.Add('key.alias.password=123456');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant.properties');
+          {%EndRegion}
 
           strList.Clear;  //if need, hiden info in "build.grade" source
 
@@ -2182,6 +2398,12 @@ begin
           //strList.Add('RELEASE_STORE_PASSWORD=123456');
           //strList.Add('RELEASE_KEY_PASSWORD=123456');
 
+          // BuildSys: 'Gradle'
+          // Produces:
+          //    FAndroidProjectName/gradle.properties
+          // Requires:
+          //    FAndroidTheme, FPathToJavaJDK, FAndroidProjectName
+          {%Region /fold}
           if Pos('AppCompat', FAndroidTheme) > 0 then
              strList.Add('android.useAndroidX=true');
 
@@ -2197,7 +2419,14 @@ begin
           end;
 
           strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle.properties');  //if need configure proxy here, too
+          {%EndRegion}
 
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/release-keystore.bat
+          // Requires:
+          //    FAndroidProjectName,
+          {%Region /fold}
           //keytool input [dammy] data!
           strList.Clear;
           strList.Add('123456');             //Enter keystore password:
@@ -2211,8 +2440,15 @@ begin
           strList.Add('y');  //Is <CN=FirstName LastName, OU=Development, O=MyExampleCompany, L=MyCity, ST=AK, C=WZ> correct?[no]:  y
           strList.Add('123456'); //Enter key password for the Apk <aliasKey> <RETURN if same as keystore password>:
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
+          {%EndRegion}
 
           {$IFDEF WINDOWS}
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/release-keystore.bat
+          // Requires:
+          //    FAndroidProjectName, FPathToJavaJDK, FSmallProjName
+          {%Region /fold}
           strList.Clear;
 
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
@@ -2239,22 +2475,44 @@ begin
           strList.Add('echo.');
           strList.Add('pause');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'release-keystore.bat');
+          {%EndRegion}
 
+          // BuildSys: 'Ant'
+          // Produces:
+          //    FAndroidProjectName/ant-jarsigner-verify.bat
+          // Requires:
+          //    FPathToJavaJDK, FAndroidProjectName, FSmallProjName
+          //    FPackagePrefaceName, cMinAPI, cMaxAPI, intTargetApi, FAndroidProjectName
+          {%Region /fold}
           strList.Clear;
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
           strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
           strList.Add('cd '+FAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-release.apk');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-jarsigner-verify.bat');
+          {%EndRegion}
           {$ENDIF}
 
+          // BuildSys: 'Gradle'
+          // Produces:
+          //    FAndroidProjectName/gradle-jarsigner-verify.bat
+          // Requires:
+          //    FPathToJavaJDK, FAndroidProjectName, FSmallProjName
+          {%Region /fold}
           strList.Clear;
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
           strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
           strList.Add('cd '+FAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-jarsigner-verify.bat');
+          {%EndRegion}
 
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/How_To_Get_Your_Signed_Release_Apk.txt
+          // Requires:
+          //    FAndroidProjectName, FSmallProjName
+          {%Region /fold}
           strList.Clear;
 
           strList.Add('       Tutorial: How to get your "signed" release Apk ['+ FSmallProjName +']');
@@ -2313,6 +2571,7 @@ begin
           strList.Add('');
           strList.Add('....  by jmpessoa_hotmail_com');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'How_To_Get_Your_Signed_Release_Apk.txt');
+          {%EndRegion}
 
           linuxDirSeparator:= DirectorySeparator;
           linuxPathToJavaJDK:= FPathToJavaJDK;
@@ -2350,6 +2609,17 @@ begin
           //
           //{$ENDIF}
 
+          // BuildSys: 'Ant'
+          // Produces:
+          //    FAndroidProjectName/ant-build-debug.sh
+          //    FAndroidProjectName/ant-build-debug-macos.sh
+          //    FAndroidProjectName/ant-build-release.sh
+          //    FAndroidProjectName/ant-build-release-macos.sh
+          //    FAndroidProjectName/ant-adb-install-debug.sh
+          // Requires:
+          //    FPathToAntBin, FPathToJavaJDK, FAndroidProjectName, FSmallProjName
+          //    FPathToAndroidSDK
+          {%Region /fold}
           //linux build Apk using "Ant"  ---- Thanks to Stephano!
           strList.Clear;
           if FPathToAntBin <> '' then //PATH=$PATH:/data/myscripts
@@ -2409,7 +2679,16 @@ begin
           strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r ' + tempStr +
                                   linuxDirSeparator+ 'bin' + linuxDirSeparator+FSmallProjName+'-debug.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'ant-adb-install-debug.sh');
+          {%EndRegion}
 
+          // BuildSys: 'Gradle'
+          // Produces:
+          //    FAndroidProjectName/gradle-adb-install-debug.sh
+          //    FAndroidProjectName/gradle-jarsigner-verify.sh
+          // Requires:
+          //    FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName,
+          //    FAndroidProjectName, instructionChip
+          {%Region /fold}
           strList.Clear;
           strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
           tempStr:= FAndroidProjectName;
@@ -2421,7 +2700,23 @@ begin
                                   linuxDirSeparator+ 'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'debug' + linuxDirSeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-adb-install-debug.sh');
 
+          strList.Clear;
+          strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+          strList.Add('cd '+linuxAndroidProjectName);
+          strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify.sh');
+          {%EndRegion}
 
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/adb-uninstall.sh
+          //    FAndroidProjectName/logcat.sh
+          //    FAndroidProjectName/release-keystore.sh
+          //    FAndroidProjectName/release-keystore-macos.sh
+          // Requires:
+          //    FAndroidProjectName, FSmallProjName, FPathToJavaJDK, FPathToAndroidSDK
+          //    FPackagePrefaceName
+          {%Region /fold}
           //linux uninstall  - thanks to Stephano!
           strList.Clear;
           strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
@@ -2450,18 +2745,20 @@ begin
           strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
                        linuxAndroidProjectName+'/keytool_input.txt');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore-macos.sh');
+          {%EndRegion}
 
+          // BuildSys: 'Ant'
+          // Produces:
+          //    FAndroidProjectName/ant-jarsigner-verify.sh
+          //    FAndroidProjectName/ant-jarsigner-verify-macos.sh
+          // Requires:
+          //    FAndroidProjectName, FSmallProjName, FPathToJavaJDK, FPathToAndroidSDK
+          {%Region /fold}
           strList.Clear;
           strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
           strList.Add('cd '+linuxAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'bin'+linuxDirSeparator+FSmallProjName+'-release.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'ant-jarsigner-verify.sh');
-
-          strList.Clear;
-          strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('cd '+linuxAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify.sh');
 
           //MacOs
           strList.Clear;
@@ -2470,15 +2767,30 @@ begin
           strList.Add('cd '+linuxAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'bin'+linuxDirSeparator+FSmallProjName+'-release.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'ant-jarsigner-verify-macos.sh');
+          {%EndRegion}
+
           {$ENDIF}
 
+          // BuildSys: 'Gradle'
+          // Produces:
+          //    FAndroidProjectName/gradle-jarsigner-verify-macos.sh
+          // Requires:
+          //    FPathToAndroidSDK, FSmallProjName,
+          {%Region /fold}
           strList.Clear;
           strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
           strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
           strList.Add('cd '+linuxAndroidProjectName);
           strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify-macos.sh');
+          {%EndRegion}
 
+          // BuildSys: 'All'
+          // Produces:
+          //    FAndroidProjectName/local.properties
+          // Requires:
+          //    FPathToAndroidSDK, FPathToAndroidNDK, FSmallProjName,
+          {%Region /fold}
           strList.Clear;
           strList.Add('sdk.dir=' + FPathToAndroidSDK);
           strList.Add('ndk.dir=' + FPathToAndroidNDK);
@@ -2490,7 +2802,38 @@ begin
           strList.Text:=tempStr;
           {$ENDIF}
           strList.SaveToFile(FAndroidProjectName+PathDelim+'local.properties');
+          {%EndRegion}
 
+
+          // BuildSys: 'Gradle'
+          // Produces:
+          //    FAndroidProjectName/build.gradle
+          //    FAndroidProjectName/gradle_readme.txt
+          //    FAndroidProjectName/gradle-making-wrapper.bat
+          //    FAndroidProjectName/gradle-making-wrapper.sh
+          //    FAndroidProjectName/gradlew-build.bat
+          //    FAndroidProjectName/gradle-making-wrapper.bat
+          //    FAndroidProjectName/gradle-making-wrapper.sh
+          //    FAndroidProjectName/gradlew-build.bat
+          //    FAndroidProjectName/gradlew-build.sh
+          //    FAndroidProjectName/gradlew-run.bat
+          //    FAndroidProjectName/gradlew-run.sh
+          //    FAndroidProjectName/gradle-local-build.bat
+          //    FAndroidProjectName/gradle-local-build-bundle.bat
+          //    FAndroidProjectName/gradle-local-apksigner.bat
+          //    FAndroidProjectName/gradle-local-universal-apksigner.bat
+          //    FAndroidProjectName/gradle-local-run.bat
+          //    FAndroidProjectName/gradle-local-build.sh
+          //    FAndroidProjectName/gradle-local-build-bundle.sh
+          //    FAndroidProjectName/gradle-local-apksigner.sh
+          //    FAndroidProjectName/gradle-local-universal-apksigner.sh
+          //    FAndroidProjectName/gradle-local-run.sh
+          // Requires:
+          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
+          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
+          //    FAndroidProjectName
+          //
+          {%Region /fold}
           //Add GRADLE support ... [... initial code ...]
           //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
 
@@ -2678,7 +3021,7 @@ begin
                 strList.Add('            debuggable false');
                 strList.Add('            jniDebuggable false');
                 strList.Add('        }');
-	        strList.Add('    }');
+	              strList.Add('    }');
                 strList.Add('}');
                 strList.Add('dependencies {');
 
@@ -3125,6 +3468,7 @@ begin
              ShowMessage('Fail! Sorry... You need install SDK "build-tools" ' +IntToStr(Self.FMaxSdkPlatform)+'.x.y');
           end;
         end;
+        {%EndRegion}
         Result := True;
       except
         on e: Exception do
