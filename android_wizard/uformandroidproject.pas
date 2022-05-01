@@ -92,7 +92,7 @@ type
 
     FHackJNIMethod: boolean;
 
-    FProjectModel: string;
+    FProjectModel: TProjectModel;
 
     FFullPackageName: string;
     FFullJavaSrcPath: string;
@@ -120,7 +120,7 @@ type
   public
     { public declarations }
     property HackJNIMethod: boolean read FHackJNIMethod write FHackJNIMethod;
-    property ProjectModel: string read FProjectModel write FProjectModel;
+    property ProjectModel: TProjectModel read FProjectModel write FProjectModel;
     property PathToClassName: string read FPathToClassName write FPathToClassName;
     property ModuleType: TModuleType read FModuleType write FModuleType;
     property SyntaxMode: TSyntaxMode read FSyntaxMode write FSyntaxMode;

@@ -57,7 +57,7 @@ type
      FPathToAntBin: string;
      FPathToGradle: string;
 
-     FProjectModel: string;
+     FProjectModel: TProjectModel;
      FPackagePrefaceName: string;
      FMinApi: string;
      FTargetApi: string;
@@ -399,7 +399,7 @@ begin
       if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
-      if FProjectModel = 'Ant' then
+      if FProjectModel = psAnt then
       begin
         auxList:= TStringList.Create;
         //eclipe compatibility [Neon!]
@@ -412,12 +412,12 @@ begin
         auxList.Clear;
         auxList.Add('<?xml version="1.0" encoding="UTF-8"?>');
         auxList.Add('<classpath>');
-	auxList.Add('<classpathentry kind="src" path="src"/>');
-	auxList.Add('<classpathentry kind="src" path="gen"/>');
-	auxList.Add('<classpathentry kind="con" path="org.eclipse.andmore.ANDROID_FRAMEWORK"/>');
-	auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.LIBRARIES"/>');
-	auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.DEPENDENCIES"/>');
-	auxList.Add('<classpathentry kind="output" path="bin/classes"/>');
+        auxList.Add('<classpathentry kind="src" path="src"/>');
+        auxList.Add('<classpathentry kind="src" path="gen"/>');
+        auxList.Add('<classpathentry kind="con" path="org.eclipse.andmore.ANDROID_FRAMEWORK"/>');
+        auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.LIBRARIES"/>');
+        auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.DEPENDENCIES"/>');
+        auxList.Add('<classpathentry kind="output" path="bin/classes"/>');
         auxList.Add('</classpath>');
         auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.classpath');
 
@@ -936,7 +936,7 @@ begin
 
       auxList:= TStringList.Create;
 
-      if FProjectModel = 'Ant' then
+      if FProjectModel = psAnt then
       begin
         // What it does:  For eclipse funcionality
         //    Creates <Proj>/.settings
@@ -1741,7 +1741,7 @@ begin
       FJavaClassName:= frm.JavaClassName;
 
       FProjectModel:= frm.ProjectModel;   //<-- output from [Eclipse or Ant Project]
-      if FProjectModel = 'Eclipse' then
+      if FProjectModel = psEclipse then
            FFullJavaSrcPath:= frm.FullJavaSrcPath;
 
       if  frm.TouchtestEnabled = 'True' then
@@ -1771,7 +1771,7 @@ begin
       {%EndRegion}
 
       try
-        if  FProjectModel = 'Ant' then
+        if FProjectModel = psAnt then
         begin
           if FModuleType in [mtGDX, mtGUI, mtNoGUI] then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin

@@ -96,7 +96,7 @@ type
     FPathToAntBin: string;
     FPathToGradle: string;
 
-    FProjectModel: string;
+    FProjectModel: TProjectModel;
     FModuleType: TModuleType;
     FSmallProjName: string;
     FPackagePrefaceName: string;
@@ -173,7 +173,7 @@ type
     property PathToAndroidNDK: string read FPathToAndroidNDK write FPathToAndroidNDK;
     property PathToAntBin: string read FPathToAntBin write FPathToAntBin;
     property PathToGradle: string read FPathToGradle write FPathToGradle;
-    property ProjectModel: string read FProjectModel write FProjectModel; {eclipse or ant}
+    property ProjectModel: TProjectModel read FProjectModel write FProjectModel;
     property PackagePrefaceName: string read FPackagePrefaceName write FPackagePrefaceName;
     property MinApi: string read FMinApi write FMinApi;
     property TargetApi: string read FTargetApi write FTargetApi;
@@ -642,7 +642,7 @@ begin
 
   if Pos(DirectorySeparator, ComboSelectProjectName.Text) <= 0 then
   begin
-     FProjectModel:= 'Ant';   //please, read as "project not exists or new project"!
+     FProjectModel:= psAnt;   //please, read as "project not exists or new project"!
      FSmallProjName:= StringReplace(ComboSelectProjectName.Text,' ','',[rfReplaceAll]);
      FAndroidProjectName:= FPathToWorkspace + DirectorySeparator+ FSmallProjName;
        FPackagePrefaceName:= LowerCase(Trim(EditPackagePrefaceName.Text));
@@ -652,7 +652,7 @@ begin
   end
   else
   begin
-     FProjectModel:= 'Eclipse';  //please, read as "project exists!"
+     FProjectModel:= psEclipse;  //please, read as "project exists!"
      FAndroidProjectName:= Trim(ComboSelectProjectName.Text); //full
      aList:= TStringList.Create;
      aList.StrictDelimiter:= True;
@@ -667,7 +667,7 @@ begin
 
   FNdkApi:= ListBoxNdkPlatform.Items.Strings[ListBoxNdkPlatform.ItemIndex];
 
-  if FProjectModel = 'Eclipse' then ////please, read as "project exists!"
+  if FProjectModel = psEclipse then ////please, read as "project exists!"
   begin
 
      strList:= TStringList.Create;
@@ -740,7 +740,7 @@ begin
 
   end;
 
-  if FProjectModel = 'Ant' then
+  if FProjectModel = psAnt then
   begin
     if DirectoryExists(FAndroidProjectName) then   //if project exits
     begin
