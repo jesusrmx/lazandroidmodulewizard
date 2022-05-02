@@ -642,7 +642,7 @@ begin
 
   if Pos(DirectorySeparator, ComboSelectProjectName.Text) <= 0 then
   begin
-     FProjectModel:= psAnt;   //please, read as "project not exists or new project"!
+     FProjectModel:= psNewProject;   //please, read as "project not exists or new project"!
      FSmallProjName:= StringReplace(ComboSelectProjectName.Text,' ','',[rfReplaceAll]);
      FAndroidProjectName:= FPathToWorkspace + DirectorySeparator+ FSmallProjName;
        FPackagePrefaceName:= LowerCase(Trim(EditPackagePrefaceName.Text));
@@ -652,7 +652,7 @@ begin
   end
   else
   begin
-     FProjectModel:= psEclipse;  //please, read as "project exists!"
+     FProjectModel:= psExistingProject;  //please, read as "project exists!"
      FAndroidProjectName:= Trim(ComboSelectProjectName.Text); //full
      aList:= TStringList.Create;
      aList.StrictDelimiter:= True;
@@ -667,7 +667,7 @@ begin
 
   FNdkApi:= ListBoxNdkPlatform.Items.Strings[ListBoxNdkPlatform.ItemIndex];
 
-  if FProjectModel = psEclipse then ////please, read as "project exists!"
+  if FProjectModel = psExistingProject then ////please, read as "project exists!"
   begin
 
      strList:= TStringList.Create;
@@ -744,7 +744,7 @@ begin
 
   end;
 
-  if (FProjectModel = psAnt) and DirectoryExists(FAndroidProjectName) then
+  if (FProjectModel = psNewProject) and DirectoryExists(FAndroidProjectName) then
   begin
     if MessageDlg('Projec/Directory already Exists!',
       'Re-Create "'+FAndroidProjectName+'" ?', mtConfirmation, [mbYes, mbNo],0) = mrNo then

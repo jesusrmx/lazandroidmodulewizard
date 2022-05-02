@@ -399,7 +399,7 @@ begin
       if  FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
 
-      if FProjectModel = psAnt then
+      if FProjectModel = psNewProject then
       begin
         auxList:= TStringList.Create;
         //eclipe compatibility [Neon!]
@@ -936,7 +936,7 @@ begin
 
       auxList:= TStringList.Create;
 
-      if FProjectModel = psAnt then
+      if FProjectModel = psNewProject then
       begin
         // What it does:  For eclipse funcionality
         //    Creates <Proj>/.settings
@@ -1735,7 +1735,7 @@ begin
       FJavaClassName:= frm.JavaClassName;
 
       FProjectModel:= frm.ProjectModel;   //<-- output from [Eclipse or Ant Project]
-      if FProjectModel = psEclipse then
+      if FProjectModel = psExistingProject then
            FFullJavaSrcPath:= frm.FullJavaSrcPath;
 
       if  frm.TouchtestEnabled = 'True' then
@@ -1765,7 +1765,7 @@ begin
       {%EndRegion}
 
       try
-        if FProjectModel = psAnt then
+        if FProjectModel = psNewProject then
         begin
           if FModuleType in [mtGDX, mtGUI, mtNoGUI] then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin
