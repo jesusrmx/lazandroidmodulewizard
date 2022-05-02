@@ -2406,6 +2406,8 @@ begin
 
           {$ENDIF}
 
+          if BuildSystem = 'Ant' then
+          begin
           //
           // ANT
           //
@@ -2706,7 +2708,10 @@ begin
           {%EndRegion}
 
           {$ENDIF}
+          end; // if "Ant"
 
+          if FBuildSystem = 'Gradle' then
+          begin
           //
           // GRADLE
           //
@@ -3458,6 +3463,7 @@ begin
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-run.sh');
           {%EndRegion}
           {$ENDIF}
+          end; // if "Gradle"
         end;
 
         Result := True;
