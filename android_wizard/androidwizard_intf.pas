@@ -1776,6 +1776,9 @@ begin
           if FModuleType in [mtGDX, mtGUI, mtNoGUI] then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin
 
+            // BuildSys: 'All'
+            //       OS: 'All'
+            //
             // What it does:
             //  Creates project directories:
             //    Creates FPathToJavaSrc   -> <ProjDir>/src
@@ -1861,6 +1864,9 @@ begin
             end;
             {%EndRegion}
 
+            // BuildSys: 'All'
+            //       OS: 'All'
+            //
             // What it does:  Creates <Proj>/res/values/strings.xml
             //
             // Depends On:    FAndroidProjectName, FSmalProjName
@@ -1880,6 +1886,9 @@ begin
                          FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
             }
 
+            // BuildSys: 'All'
+            //       OS: 'All'
+            //
             // What it does:
             //    Creates <Proj>/res/values-v11, <Proj>/res/values-v14, <Proj>/res/values-v21
             //            Creates/Copy <JTPL>/layout/activity_app.xml -> <ProjDir>/res/layout/activity_app.xml
@@ -1948,6 +1957,9 @@ begin
 
           if FModuleType in [mtGDX, mtGUI] then  //Android Bridges Controls... [GUI] and Gdx
           begin
+            // BuildSys: 'All'
+            //       OS: 'All'
+            //
             // What it does:
             //    Creates FFullJavaSrcPath/App.java
             //
@@ -1968,6 +1980,9 @@ begin
 
           if FModuleType = mtNoGUI then     //[No GUI]
           begin
+             // BuildSys: 'All'
+             //       OS: 'All'
+             //
              // What it does:
              //   Creates FFullJavaSrcPath/App.java
              //   Creates FFullJavaSrcPath/FSmallProjName.java
@@ -2094,35 +2109,157 @@ begin
 
         if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
         begin
-          {$IFDEF WINDOWS}
 
-          // BuildSys: 'Ant'
-          // Produces: FAndroidProjectName/ant-build-debug.bat
-          // Requires: FPathToAntBin, FPathToJavaJDK, FAndroidProjectName
-          {%Region /fold}
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
-          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('call ant clean -Dtouchtest.enabled=true debug');
-          strList.Add('if errorlevel 1 pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-build-debug.bat'); //build Apk using "Ant"
-          {%EndRegion}
+          linuxDirSeparator:= DirectorySeparator;
+          linuxPathToJavaJDK:= FPathToJavaJDK;
+          linuxAndroidProjectName:= FAndroidProjectName;
+          linuxPathToAntBin:= FPathToAntBin;
+          linuxPathToAndroidSdk:= FPathToAndroidSDK;
+          linuxPathToGradle:= FPathToGradle;
 
-          // BuildSys: 'Ant'
-          // Produces: FAndroidProjectName/ant-build-release.bat
-          // Requires: FPathToAntBin, FPathToJavaJDK, FAndroidProjectName
+          //{$IFDEF WINDOWS}
+          //   linuxDirSeparator:= '/';
+          //   tempStr:= FPathToJavaJDK;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FAndroidProjectName;
+          //   SplitStr(tempStr, ':');
+          //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FPathToAntBin;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FPathToAndroidSDK;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FPathToGradle;
+          //   SplitStr(tempStr, ':');
+          //   linuxPathToGradle:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //   tempStr:= FAndroidProjectName;
+          //   SplitStr(tempStr, ':');
+          //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
+          //
+          //{$ENDIF}
+
+          //
+          //  All (Ant + Gradle)
+          //
+
+          // BuildSys: 'All'
+          //       OS: 'All'
+          // Produces:
+          //    FAndroidProjectName/keytool_input.txt
+          // Requires:
+          //    FAndroidProjectName,
           {%Region /fold}
+          //keytool input [dammy] data!
           strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !
-          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('call ant clean release');
-          strList.Add('if errorlevel 1 pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-build-release.bat'); //build Apk using "Ant"
+          strList.Add('123456');             //Enter keystore password:
+          strList.Add('123456');             //Re-enter new password:
+          strList.Add('MyFirstName MyLastName'); //What is your first and last name?
+          strList.Add('MyDevelopmentUnitName');        //What is the name of your organizational unit?
+          strList.Add('MyCompanyName');   //What is the name of your organization?
+          strList.Add('MyCity');             //What is the name of your City or Locality?
+          strList.Add('MT');                 //What is the name of your State or Province?
+          strList.Add('BR');                 //What is the two-letter country code for this unit?
+          strList.Add('y');  //Is <CN=FirstName LastName, OU=Development, O=MyExampleCompany, L=MyCity, ST=AK, C=WZ> correct?[no]:  y
+          strList.Add('123456'); //Enter key password for the Apk <aliasKey> <RETURN if same as keystore password>:
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
           {%EndRegion}
 
           // BuildSys: 'All'
+          //       OS: 'All'
+          // Produces:
+          //    FAndroidProjectName/How_To_Get_Your_Signed_Release_Apk.txt
+          // Requires:
+          //    FAndroidProjectName, FSmallProjName
+          {%Region /fold}
+          strList.Clear;
+          strList.Add('       Tutorial: How to get your "signed" release Apk ['+ FSmallProjName +']');
+          strList.Add(' ');
+          strList.Add('    NEW! ');
+          strList.Add('    "Tools"  --> "[LAMW] ..." --> "Build Release Signed Apk  ..."');
+          strList.Add('    "Tools"  --> "[LAMW] ..." --> "Build Release Signed Bundle ..."');
+          strList.Add(' ');
+          strList.Add(' ');
+          strList.Add(' OR: ');
+          strList.Add(' ');
+          strList.Add('1)Edit/change the project file "keytool_input.txt" to more representative informations:"');
+          strList.Add('');
+          strList.Add('.Your keystore password [--ks-pass pass] : 123456');
+          strList.Add('.Re-enter/confirm the keystore password: 123456');
+          strList.Add(' ');
+          strList.Add('.Your first and last name: MyFirstName MyLastName');
+          strList.Add('');
+          strList.Add('.Your Organizational unit: MyDevelopmentUnit');
+          strList.Add('');
+          strList.Add('.Your Organization name: MyCompany');
+          strList.Add('');
+          strList.Add('.Your City or Locality: MyCity');
+          strList.Add('');
+          strList.Add('.Your State or Province: MT' );
+          strList.Add('');
+          strList.Add('.The two-letter country code: BR');
+          strList.Add('');
+          strList.Add('.All correct: y');
+          strList.Add('');
+          strList.Add('.Your key password for this Apk alias [--key-pass pass]: 123456 ');
+          strList.Add('');
+          strList.Add('');
+          strList.Add('2)If you are using "Ant" then edit/change "ant.properties" according, too!');
+          strList.Add('');
+          strList.Add('');
+          strList.Add('3) Execute the [project] command "release-keystore.bat" or "release-keystore.sh" or "release-keystore-macos.sh" to get the "'+Lowercase(FSmallProjName)+'-release.keystore"');
+          strList.Add('           warning: the file "'+Lowercase(FSmallProjName)+'-release.keystore" should be created only once [per application] otherwise it will fail [and NEVER delete it!]');
+          strList.Add(' ');
+          strList.Add('4) [Gradle]: Edit/change the values [123456] "--ks-pass pass:" and "--key-pass pass:" in project file "gradle-local-apksigner.bat" [or .sh]  according "keytool_input.txt" file');
+          strList.Add('             Edit/change the values [123456] "--ks-pass pass:" and "--key-pass pass:" in project file "gradle-local-universal-apksigner.bat" [or .sh]  according "keytool_input.txt" file');
+          strList.Add('');
+          strList.Add('5) [Gradle]: Execute the [project] command "gradle-local-apksigner.bat" [.sh] to get the [release] signed Apk!');
+          strList.Add('             OR execute "gradle-local-universal-apksigner.bat" [.sh] if your are supporting multi-architecture (ex.: armeabi-v7a + arm64-v8a + ...) ');
+          strList.Add('             hint: look for your generated "'+FSmallProjName+'-release.apk" in [project] folder "...\build\outputs\apk\release"');
+          strList.Add(' ');
+          strList.Add('');
+          strList.Add('6) [Ant]: Execute the [project] command "ant-build-release.bat" [.sh] to get the [release] signed Apk!"');
+          strList.Add('          hint: look for your generated "'+FSmallProjName+'-release.apk" in [project] folder "...\bin"');
+          strList.Add('');
+          strList.Add('');
+          strList.Add('Success! You can now upload your nice "'+FSmallProjName+'-release.apk" to "Google Play" [or others stores...]!');
+          strList.Add('');
+          strList.Add('....  Thanks to All!');
+          strList.Add('....  Special thanks to ADiV/TR3E!');
+          strList.Add('');
+          strList.Add('....  by jmpessoa_hotmail_com');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'How_To_Get_Your_Signed_Release_Apk.txt');
+          {%EndRegion}
+
+          // BuildSys: 'All'
+          //       OS: 'All'
+          // Produces:
+          //    FAndroidProjectName/local.properties
+          // Requires:
+          //    FPathToAndroidSDK, FPathToAndroidNDK, FSmallProjName,
+          {%Region /fold}
+          strList.Clear;
+          strList.Add('sdk.dir=' + FPathToAndroidSDK);
+          strList.Add('ndk.dir=' + FPathToAndroidNDK);
+
+          {$IFDEF WINDOWS}
+          tempStr:= strList.Text;
+          tempStr:= StringReplace(tempStr, '\', '\\', [rfReplaceAll]);
+          tempStr:= StringReplace(tempStr, ':', '\:', [rfReplaceAll]);
+          strList.Text:=tempStr;
+          {$ENDIF}
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'local.properties');
+          {%EndRegion}
+
+          {$IFDEF WINDOWS}
+          // BuildSys: 'All'
+          //       OS: 'Windows'
           // Produces:
           //    FAndroidProjectName/utils/list-target.bat,
           //    FAndroidProjectName/utils/paused-list-target.bat,
@@ -2173,38 +2310,13 @@ begin
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'launch-avd-default.bat');
           {%EndRegion}
 
-          // BuildSys: 'Ant'
-          // Produces: FAndroidProjectName/ant-adb-install-debug.bat
-          // Requires: FPathToAndroidSDK, FPathToAndroidSDK, FSmallProjName, FAndroidProjectName
-          {%Region /fold}
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-debug.apk');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-adb-install-debug.bat');
-          {%EndRegion}
-
-          // BuildSys: 'Gradle'
-          // Produces: FAndroidProjectName/gradle-adb-install-debug.bat
-          // Requires: FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, FAndroidProjectName
-          {%Region /fold}
-
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'debug'+DirectorySeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-adb-install-debug.bat');
-          {%EndRegion}
-
           // BuildSys: 'All'
+          //       OS: 'Windows'
           // Produces:
           //    FAndroidProjectName/adb-uninstall.bat
           //    FAndroidProjectName/logcat.bat
           //    FAndroidProjectName/utils/logcat-error.bat
+          //    FAndroidProjectName/utils/logcat-app-perform.bat
           // Requires:
           //    FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, FAndroidProjectName,
           //    FAntBuildMode,
@@ -2252,9 +2364,93 @@ begin
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'aapt.bat'); //Android Asset Packaging Tool
           }
           {%EndRegion}
+
+          // BuildSys: 'All'
+          //       OS: 'Windows'
+          // Produces:
+          //    FAndroidProjectName/release-keystore.bat
+          // Requires:
+          //    FAndroidProjectName, FPathToJavaJDK, FSmallProjName
+          {%Region /fold}
+          strList.Clear;
+
+          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+          strList.Add('set PATH=%JAVA_HOME%'+PathDelim+'bin;%PATH%');
+          strList.Add('set JAVA_TOOL_OPTIONS=-Duser.language=en');
+          strList.Add('cd '+FAndroidProjectName);
+          //strList.Add('if exist "'+Lowercase(FSmallProjName)+'-release.keystore" goto Error');
+
+          //https://forum.lazarus.freepascal.org/index.php/topic,56830.0.html  [by guaracy]
+          {
+          strList.Add('LC_ALL=C keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
+                      FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
+          }
+          //roolback
+          //https://forum.lazarus.freepascal.org/index.php/topic,57735.0.html
+          strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
+                      FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
+
+          strList.Add(':Error');
+          strList.Add('echo off');
+          strList.Add('cls');
+          strList.Add('echo.');
+          strList.Add('echo Signature file created previously, remember that if you delete this file and it was uploaded to Google Play, you will not be able to upload another app without this signature.');
+          strList.Add('echo.');
+          strList.Add('pause');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'release-keystore.bat');
+          {%EndRegion}
+
+          {$ELSE}
+
+          // BuildSys: 'All'
+          //       OS: 'Unix'
+          // Produces:
+          //    FAndroidProjectName/adb-uninstall.sh
+          //    FAndroidProjectName/logcat.sh
+          //    FAndroidProjectName/release-keystore.sh
+          //    FAndroidProjectName/release-keystore-macos.sh
+          // Requires:
+          //    FAndroidProjectName, FSmallProjName, FPathToJavaJDK, FPathToAndroidSDK
+          //    FPackagePrefaceName
+          {%Region /fold}
+          //linux uninstall  - thanks to Stephano!
+          strList.Clear;
+          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'adb-uninstall.sh');
+
+          //linux logcat  - thanks to Stephano!
+          strList.Clear;
+          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb logcat &');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'logcat.sh');
+
+          strList.Clear;
+          strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+          strList.Add('cd '+linuxAndroidProjectName);
+
+          ////https://forum.lazarus.freepascal.org/index.php/topic,57735.0.html
+          strList.Add('LC_ALL=C keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
+                       linuxAndroidProjectName+'/keytool_input.txt');
+
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore.sh');
+
+          //MacOs
+          strList.Clear;
+          strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');
+          strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
+          strList.Add('cd '+linuxAndroidProjectName);
+          strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
+                       linuxAndroidProjectName+'/keytool_input.txt');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore-macos.sh');
+          {%EndRegion}
+
           {$ENDIF}
 
+          //
+          // ANT
+          //
+
           // BuildSys: 'Ant'
+          //       OS: 'All'
           // Produces:
           //    FAndroidProjectName/build.xml
           //    FAndroidProjectName/readme.txt
@@ -2391,93 +2587,52 @@ begin
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant.properties');
           {%EndRegion}
 
-          strList.Clear;  //if need, hiden info in "build.grade" source
-
-          //strList.Add('RELEASE_STORE_FILE='+LowerCase(FSmallProjName)+'-release.keystore');
-          //strList.Add('RELEASE_KEY_ALIAS='+apk_aliaskey);
-          //strList.Add('RELEASE_STORE_PASSWORD=123456');
-          //strList.Add('RELEASE_KEY_PASSWORD=123456');
-
-          // BuildSys: 'Gradle'
-          // Produces:
-          //    FAndroidProjectName/gradle.properties
-          // Requires:
-          //    FAndroidTheme, FPathToJavaJDK, FAndroidProjectName
-          {%Region /fold}
-          if Pos('AppCompat', FAndroidTheme) > 0 then
-             strList.Add('android.useAndroidX=true');
-
-          if DirectoryExists(FPathToJavaJDK) then
-          begin
-            tempStr:=FPathToJavaJDK;
-            {$ifdef MSWindows}
-            tempStr:=StringReplace(tempStr,'\','\\',[rfReplaceAll]);
-            tempStr:=StringReplace(tempStr,':','\:',[]);
-            //tempStr:=StringReplace(tempStr,' ','\ ',[rfReplaceAll]); //fix "invalid string escape"
-            {$endif}
-            strList.Add('org.gradle.java.home='+tempStr);
-          end;
-
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle.properties');  //if need configure proxy here, too
-          {%EndRegion}
-
-          // BuildSys: 'All'
-          // Produces:
-          //    FAndroidProjectName/release-keystore.bat
-          // Requires:
-          //    FAndroidProjectName,
-          {%Region /fold}
-          //keytool input [dammy] data!
-          strList.Clear;
-          strList.Add('123456');             //Enter keystore password:
-          strList.Add('123456');             //Re-enter new password:
-          strList.Add('MyFirstName MyLastName'); //What is your first and last name?
-          strList.Add('MyDevelopmentUnitName');        //What is the name of your organizational unit?
-          strList.Add('MyCompanyName');   //What is the name of your organization?
-          strList.Add('MyCity');             //What is the name of your City or Locality?
-          strList.Add('MT');                 //What is the name of your State or Province?
-          strList.Add('BR');                 //What is the two-letter country code for this unit?
-          strList.Add('y');  //Is <CN=FirstName LastName, OU=Development, O=MyExampleCompany, L=MyCity, ST=AK, C=WZ> correct?[no]:  y
-          strList.Add('123456'); //Enter key password for the Apk <aliasKey> <RETURN if same as keystore password>:
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
-          {%EndRegion}
-
           {$IFDEF WINDOWS}
-          // BuildSys: 'All'
-          // Produces:
-          //    FAndroidProjectName/release-keystore.bat
-          // Requires:
-          //    FAndroidProjectName, FPathToJavaJDK, FSmallProjName
+
+          // BuildSys: 'Ant'
+          //       OS: 'Windows'
+          // Produces: FAndroidProjectName/ant-build-debug.bat
+          // Requires: FPathToAntBin, FPathToJavaJDK, FAndroidProjectName
           {%Region /fold}
           strList.Clear;
-
+          strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
           strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-          strList.Add('set PATH=%JAVA_HOME%'+PathDelim+'bin;%PATH%');
-          strList.Add('set JAVA_TOOL_OPTIONS=-Duser.language=en');
           strList.Add('cd '+FAndroidProjectName);
-          //strList.Add('if exist "'+Lowercase(FSmallProjName)+'-release.keystore" goto Error');
-
-          //https://forum.lazarus.freepascal.org/index.php/topic,56830.0.html  [by guaracy]
-          {
-          strList.Add('LC_ALL=C keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                      FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
-          }
-          //roolback
-          //https://forum.lazarus.freepascal.org/index.php/topic,57735.0.html
-          strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                      FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
-
-          strList.Add(':Error');
-          strList.Add('echo off');
-          strList.Add('cls');
-          strList.Add('echo.');
-          strList.Add('echo Signature file created previously, remember that if you delete this file and it was uploaded to Google Play, you will not be able to upload another app without this signature.');
-          strList.Add('echo.');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'release-keystore.bat');
+          strList.Add('call ant clean -Dtouchtest.enabled=true debug');
+          strList.Add('if errorlevel 1 pause');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-build-debug.bat'); //build Apk using "Ant"
           {%EndRegion}
 
           // BuildSys: 'Ant'
+          //       OS: 'Windows'
+          // Produces: FAndroidProjectName/ant-build-release.bat
+          // Requires: FPathToAntBin, FPathToJavaJDK, FAndroidProjectName
+          {%Region /fold}
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !
+          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+          strList.Add('cd '+FAndroidProjectName);
+          strList.Add('call ant clean release');
+          strList.Add('if errorlevel 1 pause');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-build-release.bat'); //build Apk using "Ant"
+          {%EndRegion}
+
+          // BuildSys: 'Ant'
+          //       OS: 'Windows'
+          // Produces: FAndroidProjectName/ant-adb-install-debug.bat
+          // Requires: FPathToAndroidSDK, FPathToAndroidSDK, FSmallProjName, FAndroidProjectName
+          {%Region /fold}
+          strList.Clear;
+          strList.Add(FPathToAndroidSDK+'platform-tools'+
+                     DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
+          strList.Add(FPathToAndroidSDK+'platform-tools'+
+                     DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-debug.apk');
+          strList.Add('pause');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-adb-install-debug.bat');
+          {%EndRegion}
+
+          // BuildSys: 'Ant'
+          //       OS: 'Windows'
           // Produces:
           //    FAndroidProjectName/ant-jarsigner-verify.bat
           // Requires:
@@ -2491,125 +2646,11 @@ begin
           strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-release.apk');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant-jarsigner-verify.bat');
           {%EndRegion}
-          {$ENDIF}
 
-          // BuildSys: 'Gradle'
-          // Produces:
-          //    FAndroidProjectName/gradle-jarsigner-verify.bat
-          // Requires:
-          //    FPathToJavaJDK, FAndroidProjectName, FSmallProjName
-          {%Region /fold}
-          strList.Clear;
-          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-          strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-jarsigner-verify.bat');
-          {%EndRegion}
-
-          // BuildSys: 'All'
-          // Produces:
-          //    FAndroidProjectName/How_To_Get_Your_Signed_Release_Apk.txt
-          // Requires:
-          //    FAndroidProjectName, FSmallProjName
-          {%Region /fold}
-          strList.Clear;
-
-          strList.Add('       Tutorial: How to get your "signed" release Apk ['+ FSmallProjName +']');
-          strList.Add(' ');
-          strList.Add('    NEW! ');
-          strList.Add('    "Tools"  --> "[LAMW] ..." --> "Build Release Signed Apk  ..."');
-          strList.Add('    "Tools"  --> "[LAMW] ..." --> "Build Release Signed Bundle ..."');
-          strList.Add(' ');
-          strList.Add(' ');
-          strList.Add(' OR: ');
-          strList.Add(' ');
-          strList.Add('1)Edit/change the project file "keytool_input.txt" to more representative informations:"');
-          strList.Add('');
-          strList.Add('.Your keystore password [--ks-pass pass] : 123456');
-          strList.Add('.Re-enter/confirm the keystore password: 123456');
-          strList.Add(' ');
-          strList.Add('.Your first and last name: MyFirstName MyLastName');
-          strList.Add('');
-          strList.Add('.Your Organizational unit: MyDevelopmentUnit');
-          strList.Add('');
-          strList.Add('.Your Organization name: MyCompany');
-          strList.Add('');
-          strList.Add('.Your City or Locality: MyCity');
-          strList.Add('');
-          strList.Add('.Your State or Province: MT' );
-          strList.Add('');
-          strList.Add('.The two-letter country code: BR');
-          strList.Add('');
-          strList.Add('.All correct: y');
-          strList.Add('');
-          strList.Add('.Your key password for this Apk alias [--key-pass pass]: 123456 ');
-          strList.Add('');
-          strList.Add('');
-          strList.Add('2)If you are using "Ant" then edit/change "ant.properties" according, too!');
-          strList.Add('');
-          strList.Add('');
-          strList.Add('3) Execute the [project] command "release-keystore.bat" or "release-keystore.sh" or "release-keystore-macos.sh" to get the "'+Lowercase(FSmallProjName)+'-release.keystore"');
-          strList.Add('           warning: the file "'+Lowercase(FSmallProjName)+'-release.keystore" should be created only once [per application] otherwise it will fail [and NEVER delete it!]');
-          strList.Add(' ');
-          strList.Add('4) [Gradle]: Edit/change the values [123456] "--ks-pass pass:" and "--key-pass pass:" in project file "gradle-local-apksigner.bat" [or .sh]  according "keytool_input.txt" file');
-          strList.Add('             Edit/change the values [123456] "--ks-pass pass:" and "--key-pass pass:" in project file "gradle-local-universal-apksigner.bat" [or .sh]  according "keytool_input.txt" file');
-          strList.Add('');
-          strList.Add('5) [Gradle]: Execute the [project] command "gradle-local-apksigner.bat" [.sh] to get the [release] signed Apk!');
-          strList.Add('             OR execute "gradle-local-universal-apksigner.bat" [.sh] if your are supporting multi-architecture (ex.: armeabi-v7a + arm64-v8a + ...) ');
-          strList.Add('             hint: look for your generated "'+FSmallProjName+'-release.apk" in [project] folder "...\build\outputs\apk\release"');
-          strList.Add(' ');
-          strList.Add('');
-          strList.Add('6) [Ant]: Execute the [project] command "ant-build-release.bat" [.sh] to get the [release] signed Apk!"');
-          strList.Add('          hint: look for your generated "'+FSmallProjName+'-release.apk" in [project] folder "...\bin"');
-          strList.Add('');
-          strList.Add('');
-          strList.Add('Success! You can now upload your nice "'+FSmallProjName+'-release.apk" to "Google Play" [or others stores...]!');
-          strList.Add('');
-          strList.Add('....  Thanks to All!');
-          strList.Add('....  Special thanks to ADiV/TR3E!');
-          strList.Add('');
-          strList.Add('....  by jmpessoa_hotmail_com');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'How_To_Get_Your_Signed_Release_Apk.txt');
-          {%EndRegion}
-
-          linuxDirSeparator:= DirectorySeparator;
-          linuxPathToJavaJDK:= FPathToJavaJDK;
-          linuxAndroidProjectName:= FAndroidProjectName;
-          linuxPathToAntBin:= FPathToAntBin;
-          linuxPathToAndroidSdk:= FPathToAndroidSDK;
-          linuxPathToGradle:= FPathToGradle;
-
-          {$IFNDEF WINDOWS}
-          //{$IFDEF WINDOWS}
-          //   linuxDirSeparator:= '/';
-          //   tempStr:= FPathToJavaJDK;
-          //   SplitStr(tempStr, ':');
-          //   linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-          //
-          //   tempStr:= FAndroidProjectName;
-          //   SplitStr(tempStr, ':');
-          //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-          //
-          //   tempStr:= FPathToAntBin;
-          //   SplitStr(tempStr, ':');
-          //   linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-          //
-          //   tempStr:= FPathToAndroidSDK;
-          //   SplitStr(tempStr, ':');
-          //   linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-          //
-          //   tempStr:= FPathToGradle;
-          //   SplitStr(tempStr, ':');
-          //   linuxPathToGradle:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-          //
-          //   tempStr:= FAndroidProjectName;
-          //   SplitStr(tempStr, ':');
-          //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-          //
-          //{$ENDIF}
+          {$ELSE}
 
           // BuildSys: 'Ant'
+          //       OS: 'Unix'
           // Produces:
           //    FAndroidProjectName/ant-build-debug.sh
           //    FAndroidProjectName/ant-build-debug-macos.sh
@@ -2671,83 +2712,18 @@ begin
           strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
 
           tempStr:= FAndroidProjectName;
-          {$ifdef windows}
-          tempStr:= StringReplace(FAndroidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
-          tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
-          {$endif}
+          //{$ifdef windows}
+          //tempStr:= StringReplace(FAndroidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
+          //tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
+          //{$endif}
 
           strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r ' + tempStr +
                                   linuxDirSeparator+ 'bin' + linuxDirSeparator+FSmallProjName+'-debug.apk');
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'ant-adb-install-debug.sh');
           {%EndRegion}
 
-          // BuildSys: 'Gradle'
-          // Produces:
-          //    FAndroidProjectName/gradle-adb-install-debug.sh
-          //    FAndroidProjectName/gradle-jarsigner-verify.sh
-          // Requires:
-          //    FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName,
-          //    FAndroidProjectName, instructionChip
-          {%Region /fold}
-          strList.Clear;
-          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          tempStr:= FAndroidProjectName;
-          {$ifdef windows}
-          tempStr:= StringReplace(FAndroidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
-          tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
-          {$endif}
-          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r ' + tempStr +
-                                  linuxDirSeparator+ 'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'debug' + linuxDirSeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-adb-install-debug.sh');
-
-          strList.Clear;
-          strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('cd '+linuxAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify.sh');
-          {%EndRegion}
-
-          // BuildSys: 'All'
-          // Produces:
-          //    FAndroidProjectName/adb-uninstall.sh
-          //    FAndroidProjectName/logcat.sh
-          //    FAndroidProjectName/release-keystore.sh
-          //    FAndroidProjectName/release-keystore-macos.sh
-          // Requires:
-          //    FAndroidProjectName, FSmallProjName, FPathToJavaJDK, FPathToAndroidSDK
-          //    FPackagePrefaceName
-          {%Region /fold}
-          //linux uninstall  - thanks to Stephano!
-          strList.Clear;
-          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'adb-uninstall.sh');
-
-          //linux logcat  - thanks to Stephano!
-          strList.Clear;
-          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb logcat &');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'logcat.sh');
-
-          strList.Clear;
-          strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('cd '+linuxAndroidProjectName);
-
-          ////https://forum.lazarus.freepascal.org/index.php/topic,57735.0.html
-          strList.Add('LC_ALL=C keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                       linuxAndroidProjectName+'/keytool_input.txt');
-
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore.sh');
-
-          //MacOs
-          strList.Clear;
-          strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');
-          strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
-          strList.Add('cd '+linuxAndroidProjectName);
-          strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                       linuxAndroidProjectName+'/keytool_input.txt');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore-macos.sh');
-          {%EndRegion}
-
           // BuildSys: 'Ant'
+          //       OS: 'Unix'
           // Produces:
           //    FAndroidProjectName/ant-jarsigner-verify.sh
           //    FAndroidProjectName/ant-jarsigner-verify-macos.sh
@@ -2771,72 +2747,38 @@ begin
 
           {$ENDIF}
 
-          // BuildSys: 'Gradle'
-          // Produces:
-          //    FAndroidProjectName/gradle-jarsigner-verify-macos.sh
-          // Requires:
-          //    FPathToAndroidSDK, FSmallProjName,
-          {%Region /fold}
-          strList.Clear;
-          strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
-          strList.Add('cd '+linuxAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify-macos.sh');
-          {%EndRegion}
-
-          // BuildSys: 'All'
-          // Produces:
-          //    FAndroidProjectName/local.properties
-          // Requires:
-          //    FPathToAndroidSDK, FPathToAndroidNDK, FSmallProjName,
-          {%Region /fold}
-          strList.Clear;
-          strList.Add('sdk.dir=' + FPathToAndroidSDK);
-          strList.Add('ndk.dir=' + FPathToAndroidNDK);
-
-          {$IFDEF WINDOWS}
-          tempStr:= strList.Text;
-          tempStr:= StringReplace(tempStr, '\', '\\', [rfReplaceAll]);
-          tempStr:= StringReplace(tempStr, ':', '\:', [rfReplaceAll]);
-          strList.Text:=tempStr;
-          {$ENDIF}
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'local.properties');
-          {%EndRegion}
-
-
-          // BuildSys: 'Gradle'
-          // Produces:
-          //    FAndroidProjectName/build.gradle
-          //    FAndroidProjectName/gradle_readme.txt
-          //    FAndroidProjectName/gradle-making-wrapper.bat
-          //    FAndroidProjectName/gradle-making-wrapper.sh
-          //    FAndroidProjectName/gradlew-build.bat
-          //    FAndroidProjectName/gradle-making-wrapper.bat
-          //    FAndroidProjectName/gradle-making-wrapper.sh
-          //    FAndroidProjectName/gradlew-build.bat
-          //    FAndroidProjectName/gradlew-build.sh
-          //    FAndroidProjectName/gradlew-run.bat
-          //    FAndroidProjectName/gradlew-run.sh
-          //    FAndroidProjectName/gradle-local-build.bat
-          //    FAndroidProjectName/gradle-local-build-bundle.bat
-          //    FAndroidProjectName/gradle-local-apksigner.bat
-          //    FAndroidProjectName/gradle-local-universal-apksigner.bat
-          //    FAndroidProjectName/gradle-local-run.bat
-          //    FAndroidProjectName/gradle-local-build.sh
-          //    FAndroidProjectName/gradle-local-build-bundle.sh
-          //    FAndroidProjectName/gradle-local-apksigner.sh
-          //    FAndroidProjectName/gradle-local-universal-apksigner.sh
-          //    FAndroidProjectName/gradle-local-run.sh
-          // Requires:
-          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
-          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
-          //    FAndroidProjectName
           //
+          // GRADLE
+          //
+
+          // BuildSys: 'Gradle'
+          //       OS: 'All'
+          // Produces:
+          //    FAndroidProjectName/gradle.properties
+          // Requires:
+          //    FAndroidTheme, FPathToJavaJDK, FAndroidProjectName
           {%Region /fold}
+          if Pos('AppCompat', FAndroidTheme) > 0 then
+             strList.Add('android.useAndroidX=true');
+
+          if DirectoryExists(FPathToJavaJDK) then
+          begin
+            tempStr:=FPathToJavaJDK;
+            {$ifdef MSWindows}
+            tempStr:=StringReplace(tempStr,'\','\\',[rfReplaceAll]);
+            tempStr:=StringReplace(tempStr,':','\:',[]);
+            //tempStr:=StringReplace(tempStr,' ','\ ',[rfReplaceAll]); //fix "invalid string escape"
+            {$endif}
+            strList.Add('org.gradle.java.home='+tempStr);
+          end;
+
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle.properties');  //if need configure proxy here, too
+          {%EndRegion}
+
           //Add GRADLE support ... [... initial code ...]
           //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
 
+          {%Region /fold Gradle Setup}
           compileSdkVersion:= IntToStr(FMaxSdkPlatform);
           sdkBuildTools:= GetBuildTool(FMaxSdkPlatform);
 
@@ -2846,629 +2788,718 @@ begin
             compileSdkVersion:= Copy(sdkBuildTools,1,2);
           end;
 
-          if sdkBuildTools <> '' then
+          if sdkBuildTools = '' then
+          begin
+            ShowMessage('Fail! Sorry... You need install SDK "build-tools" ' +IntToStr(Self.FMaxSdkPlatform)+'.x.y');
+            result := true;
+            exit;
+          end;
+
+          if StrToInt(compileSdkVersion) > 25 then
+            pluginVersion:= GetPluginVersion(sdkBuildTools)
+          else
+            pluginVersion:= '2.3.3';
+
+          if pluginVersion = '' then
+          begin
+            // TODO
+            Result := true;
+            exit;
+          end;
+
+          outgradleCompatible:= '';
+          gradleCompatible:= FGradleVersion;
+          if not TryGradleCompatibility(pluginVersion, FGradleVersion, outgradleCompatible) then
+          begin
+              if MessageDlg('Warning ','plugin "'+pluginVersion+'", "build-tools "'+sdkBuildTools+ '" require Gradle "'+outgradleCompatible+'"' +sLineBreak + '[current: "'+FGradleVersion+'"]',
+                 mtConfirmation, [mbOk, mbIgnore], 0) = mrOk then
+                 begin
+                    gradleCompatible:= outgradleCompatible;
+                    ShowMessage('Please, update to Gradle "'+outgradleCompatible+'" ' + sLineBreak + 'https://gradle.org/releases/');
+                 end
+                 else
+                    pluginVersion:= TryPluginCompatibility(FGradleVersion);
+          end;
+
+          androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
+          gradleCompatibleAsNumber:= GetVerAsNumber(TryPluginCompatibility(FGradleVersion));
+          if gradleCompatibleAsNumber>androidPluginNumber then
+          begin
+            pluginVersion:= TryPluginCompatibility(FGradleVersion);
+            androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
+          end;
+          {%EndRegion Gradle Setup}
+
+          // BuildSys: 'Gradle'
+          //       OS: 'All'
+          // Produces:
+          //    FAndroidProjectName/build.gradle
+          //    FAndroidProjectName/gradle_readme.txt
+          // Requires:
+          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
+          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
+          //    FAndroidProjectName
+          //
+          {%Region /fold}
+          strList.Clear;
+          strList.Add('buildscript {');
+          strList.Add('    repositories {');
+          strList.Add('        jcenter()');
+          strList.Add('        //android plugin version >= 3.0.0 [in classpath] need gradle version >= 4.1 and google() method');
+          if androidPluginNumber >= 3000 then
+             strList.Add('        google()')
+          else
+             strList.Add('        //google()');
+          strList.Add('    }');
+          strList.Add('    dependencies {');
+          strList.Add('        classpath ''com.android.tools.build:gradle:'+pluginVersion+'''');
+          strList.Add('    }');
+          strList.Add('}');
+
+          strList.Add('allprojects {');
+          strList.Add('    repositories {');
+
+          if androidPluginNumber >= 3000 then
+            strList.Add('       google()')
+          else
+            strList.Add('     //google()');
+
+          strList.Add('       jcenter()');
+
+          if Pos('GDXGame', FAndroidTheme) > 0 then
+          begin
+            strList.Add('       mavenLocal()');
+            strList.Add('       mavenCentral()');
+            strList.Add('       maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }');
+            strList.Add('       maven { url "https://oss.sonatype.org/content/repositories/releases/" }');
+          end;
+
+          strList.Add('       maven { url ''https://jitpack.io'' }');
+
+          strList.Add('    }');
+          strList.Add('}');
+
+          strList.Add('apply plugin: ''com.android.application''');
+          strList.Add('android {');
+          strList.Add('    lintOptions {');
+          strList.Add('       abortOnError false');
+          strList.Add('    }');
+
+          if (Length(instructionChip)>0) then
+          begin
+          strList.Add('    splits {');
+          strList.Add('        abi {');
+          strList.Add('            enable true');
+          strList.Add('            reset()');
+          strList.Add('            include '''+instructionChip+'''');
+            //strList.Add('            include ''x86'', ''x86_64'', ''armeabi'', ''armeabi-v7a'', ''mips'', ''mips64'', ''arm64-v8a''');
+          strList.Add('            universalApk false');
+          strList.Add('        }');
+          strList.Add('    }');
+          end;
+          strList.Add('    compileOptions {');
+          strList.Add('        sourceCompatibility 1.8');
+          strList.Add('        targetCompatibility 1.8');
+          strList.Add('    }');
+          if Pos('AppCompat', FAndroidTheme) > 0 then
           begin
 
-            if StrToInt(compileSdkVersion) > 25 then
-              pluginVersion:= GetPluginVersion(sdkBuildTools)
-            else
-              pluginVersion:= '2.3.3';
+            strList.Add('    compileSdkVersion '+compileSdkVersion);
 
-            if pluginVersion <> '' then
+            if androidPluginNumber < 3000 then
             begin
-                outgradleCompatible:= '';
-                gradleCompatible:= FGradleVersion;
-                if not TryGradleCompatibility(pluginVersion, FGradleVersion, outgradleCompatible) then
-                begin
-                    if MessageDlg('Warning ','plugin "'+pluginVersion+'", "build-tools "'+sdkBuildTools+ '" require Gradle "'+outgradleCompatible+'"' +sLineBreak + '[current: "'+FGradleVersion+'"]',
-                       mtConfirmation, [mbOk, mbIgnore], 0) = mrOk then
-                       begin
-                          gradleCompatible:= outgradleCompatible;
-                          ShowMessage('Please, update to Gradle "'+outgradleCompatible+'" ' + sLineBreak + 'https://gradle.org/releases/');
-                       end
-                       else
-                          pluginVersion:= TryPluginCompatibility(FGradleVersion);
-                end;
+               strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
+            end
+            //else: each version of the Android Gradle Plugin now has a default version of the build tools
 
-                androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
-                gradleCompatibleAsNumber:= GetVerAsNumber(TryPluginCompatibility(FGradleVersion));
-                if gradleCompatibleAsNumber>androidPluginNumber then
-                begin
-                  pluginVersion:= TryPluginCompatibility(FGradleVersion);
-                  androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
-                end;
-
-                strList.Clear;
-                strList.Add('buildscript {');
-                strList.Add('    repositories {');
-                strList.Add('        jcenter()');
-                strList.Add('        //android plugin version >= 3.0.0 [in classpath] need gradle version >= 4.1 and google() method');
-                if androidPluginNumber >= 3000 then
-                   strList.Add('        google()')
-                else
-                   strList.Add('        //google()');
-                strList.Add('    }');
-                strList.Add('    dependencies {');
-                strList.Add('        classpath ''com.android.tools.build:gradle:'+pluginVersion+'''');
-                strList.Add('    }');
-                strList.Add('}');
-
-                strList.Add('allprojects {');
-                strList.Add('    repositories {');
-
-                if androidPluginNumber >= 3000 then
-                  strList.Add('       google()')
-                else
-                  strList.Add('     //google()');
-
-                strList.Add('       jcenter()');
-
-                if Pos('GDXGame', FAndroidTheme) > 0 then
-                begin
-                  strList.Add('       mavenLocal()');
-                  strList.Add('       mavenCentral()');
-                  strList.Add('       maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }');
-                  strList.Add('       maven { url "https://oss.sonatype.org/content/repositories/releases/" }');
-                end;
-
-                strList.Add('       maven { url ''https://jitpack.io'' }');
-
-                strList.Add('    }');
-                strList.Add('}');
-
-                strList.Add('apply plugin: ''com.android.application''');
-                strList.Add('android {');
-                strList.Add('    lintOptions {');
-                strList.Add('       abortOnError false');
-                strList.Add('    }');
-
-                if (Length(instructionChip)>0) then
-                begin
-                strList.Add('    splits {');
-                strList.Add('        abi {');
-                strList.Add('            enable true');
-                strList.Add('            reset()');
-                strList.Add('            include '''+instructionChip+'''');
-                  //strList.Add('            include ''x86'', ''x86_64'', ''armeabi'', ''armeabi-v7a'', ''mips'', ''mips64'', ''arm64-v8a''');
-                strList.Add('            universalApk false');
-                strList.Add('        }');
-                strList.Add('    }');
-                end;
-                strList.Add('    compileOptions {');
-                strList.Add('        sourceCompatibility 1.8');
-                strList.Add('        targetCompatibility 1.8');
-                strList.Add('    }');
-                if Pos('AppCompat', FAndroidTheme) > 0 then
-                begin
-
-                  strList.Add('    compileSdkVersion '+compileSdkVersion);
-
-                  if androidPluginNumber < 3000 then
-                  begin
-                     strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
-                  end
-                  //else: each version of the Android Gradle Plugin now has a default version of the build tools
-
-               end
-               else
-               begin
-                 strList.Add('    compileSdkVersion '+compileSdkVersion);
-                 if androidPluginNumber < 3000 then
-                    strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
-                 //else: each version of the Android Gradle Plugin now has a default version of the build tools
-               end;
-
-                strList.Add('    defaultConfig {');
-
-                if Pos('AppCompat', FAndroidTheme) > 0 then
-                begin
-
-                  if StrToInt(FMinApi) >= 14 then
-                     strList.Add('            minSdkVersion '+FMinApi)
-                  else
-                     strList.Add('            minSdkVersion 14');
-
-                  if StrToInt(FTargetApi) <= StrToInt(compileSdkVersion)  then
-                    strList.Add('            targetSdkVersion '+ FTargetApi)  //compileSdkVersion
-                  else
-                    strList.Add('            targetSdkVersion '+compileSdkVersion);
-
-                end
-                else
-                begin
-                  strList.Add('            minSdkVersion '+FMinApi);
-
-                  if StrToInt(FTargetApi) <= StrToInt(compileSdkVersion)  then
-                    strList.Add('            targetSdkVersion '+ FTargetApi)  //compileSdkVersion
-                  else
-                    strList.Add('            targetSdkVersion '+compileSdkVersion);
-
-                end;
-
-                //strList.Add('            versionCode 1');
-                //strList.Add('            versionName "1.0"');
-                if FVersionCode =  0 then
-                begin
-                  FVersionCode:= 1;
-                  FVersionName:= '1.0';
-                end;
-
-                if FVersionName = '' then  FVersionName:= '1.0';
-                strList.Add('            versionCode ' + intToStr(FVersionCode));
-                strList.Add('            versionName "' + FVersionName + '"');
-                strList.Add('    }');
-                strList.Add('    sourceSets {');
-                strList.Add('        main {');
-                strList.Add('            manifest.srcFile ''AndroidManifest.xml''');
-                strList.Add('            java.srcDirs = [''src'']');
-                strList.Add('            resources.srcDirs = [''src'']');
-                strList.Add('            aidl.srcDirs = [''src'']');
-                strList.Add('            renderscript.srcDirs = [''src'']');
-                strList.Add('            res.srcDirs = [''res'']');
-                strList.Add('            assets.srcDirs = [''assets'']');
-                strList.Add('            jni.srcDirs = []');
-                strList.Add('            jniLibs.srcDirs = [''libs'']');
-                strList.Add('        }');
-                strList.Add('        debug.setRoot(''build-types/debug'')');
-                strList.Add('        release.setRoot(''build-types/release'')');
-                strList.Add('    }');
-                strList.Add('    buildTypes {');
-                strList.Add('        debug {');
-                strList.Add('            debuggable true');
-                strList.Add('            jniDebuggable true');
-                strList.Add('        }');
-                strList.Add('        release {');
-                strList.Add('            debuggable false');
-                strList.Add('            jniDebuggable false');
-                strList.Add('        }');
-	              strList.Add('    }');
-                strList.Add('}');
-                strList.Add('dependencies {');
-
-                if androidPluginNumber < 3000 then
-                  directive:='compile'
-                else
-                  directive:='implementation';
-
-                strList.Add('    '+directive+' fileTree(include: [''*.jar''], dir: ''libs'')');
-
-                innerSupported:= False;
-
-                if Pos('AppCompat', FAndroidTheme) > 0 then
-                begin
-                   innerSupported:= True;
-                   for aAppCompatLib in AppCompatLibs do
-                   begin
-                     strList.Add('    '+directive+' '''+aAppCompatLib.Name+'''');
-                     if aAppCompatLib.MinAPI > StrToInt(compileSdkVersion) then
-                         ShowMessage('Warning: AppCompat theme need Android SDK >= ' +
-                                      IntToStr(aAppCompatLib.MinAPI));
-                   end;
-                   //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
-                end else
-                 if FSupport and (not innerSupported) then
-                 begin
-                   for aSupportLib in SupportLibs do
-                   begin
-                     strList.Add('    '+directive+' '''+aSupportLib.Name+'''');
-                     if aSupportLib.MinAPI > StrToInt(compileSdkVersion) then
-                       ShowMessage('Warning: Support library need Android SDK >= ' +
-                                    IntToStr(aSupportLib.MinAPI));
-                   end;
-                   //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
-                 end;
-
-                if Pos('GDXGame', FAndroidTheme) > 0 then     //just a conceptual project....
-                begin
-                   if androidPluginNumber >=  3000 then directive:= 'api';
-                   strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx:1.9.10''');
-                   strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx-box2d:1.9.10''');
-                   strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx-backend-android:1.9.10''');
-                   strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx-box2d:1.9.10''');
-                end;
-
-                strList.Add('}');
-                strList.Add(' ');
-                strList.Add('task run(type: Exec, dependsOn: '':installDebug'') {');
-                strList.Add('	if (System.properties[''os.name''].toLowerCase().contains(''windows'')) {');
-                strList.Add('	    commandLine ''cmd'', ''/c'', ''adb'', ''shell'', ''am'', ''start'', ''-n'', "'+strPack+'/.App"');
-                strList.Add('	} else {');
-                strList.Add('	    commandLine ''adb'', ''shell'', ''am'', ''start'', ''-n'', "'+strPack+'/.App"');
-                strList.Add('	}');
-                strList.Add('}');
-                strList.Add(' ');
-
-                gradleCompatibleAsNumber:= Self.GetVerAsNumber(gradleCompatible);
-
-                if  gradleCompatibleAsNumber < 5000 then
-                begin
-                  strList.Add('task wrapper(type: Wrapper) {');
-                  strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
-                  strList.Add('}');
-                end
-                else
-                begin
-                  strList.Add('wrapper {');
-                  strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
-                  strList.Add('}');
-                end;
-                strList.Add('//how to use: look for "gradle_readme.txt"');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'build.gradle');
-
-                strList.Clear;
-                strList.Add(' ');
-                strList.Add(' ');
-                strList.Add('HOW TO use "gradle.build" file');
-                strList.Add(' ');
-                strList.Add('       ::by jmpessoa');
-                strList.Add(' ');
-                strList.Add('references:');
-                strList.Add('   http://spring.io/guides/gs/gradle-android/');
-                strList.Add('   https://paulemtz.blogspot.com.br/2013/04/automating-android-builds-with-gradle.html');
-                strList.Add(' ');
-                strList.Add('   WARNING: you will need INTERNET CONNECTION!!');
-                strList.Add(' ');
-                strList.Add('***SYSTEM INFRASTRUCTURE');
-                strList.Add(' ');
-                strList.Add('(1) Look for the highest "...\sdk\build-tools" version');
-                strList.Add('        The table point out gradle and "sdk\build-tools" versions compatibility');
-                strList.Add(' ');
-                strList.Add('        plugin [in classpath]           gradle        sdk\build-tools');
-                strList.Add('                   2.0.0                2.10          21.1.2');
-                strList.Add('                   2.2.0                2.14.1        23.0.2');
-                strList.Add('                   2.3.3                3.3           25.0.3');
-                strList.Add('                   3.0.1                4.1           26.0.2');
-                strList.Add(' ');
-                strList.Add('        Note 1. You can interpolate to some value other than these.');
-                strList.Add('        Ex. If in your system the highest "sdk\build-tools" is "22.0.1", so downloaded/Installed gradle 2.1.0, etc..');
-                strList.Add(' ');
-                strList.Add('        Note 2. In "build.gradle" file, the gradle version is set to be compatible with the highest "sdk\build-tools" found in your system');
-                strList.Add('        as a consequence, it is this version of gradle that you must download/install.');
-                strList.Add(' ');
-                strList.Add('        reference:');
-                strList.Add('           https://developer.android.com/studio/releases/gradle-plugin.html#2-3-0');
-                strList.Add('           https://gradle.org/releases/');
-                strList.Add('           Hint: downloading just "binary-only" is OK!');
-                strList.Add(' ');
-                strList.Add('        Note 3. You should set the gradle path in Lazarus menu "Tools --> LAMW --> Paths Settings..."');
-                strList.Add(' ');
-                strList.Add('        Note 4. If your connection has a proxy, edit the "gradle.properties" file content. Example: ');
-                strList.Add(' ');
-                strList.Add('             systemProp.http.proxyHost=10.0.16.1');
-                strList.Add('             systemProp.http.proxyPort=3128');
-                strList.Add('             systemProp.https.proxyHost=10.0.16.1');
-                strList.Add('             systemProp.https.proxyPort=3128');
-                strList.Add(' ');
-                strList.Add('        Note 5. Java Jdk 1.8, Android SDK "platform" 29 [or up],  "build-tools" 29.0.3, Android SDK Extra "support library/repository" and "Gradle 6.6.1" are "must have" to support AppCompat material theme in LAMW 0.8.6.1');
-                strList.Add(' ');
-                strList.Add(' ');
-                strList.Add('***SETTING ENVIRONMENT VARIABLES...');
-                strList.Add(' ');
-                strList.Add('[windows] cmd line prompt:');
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                   strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                   strList.Add('set GRADLE_HOME='+FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add(' ');
-
-                strList.Add('[linux] cmd line prompt:');
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                   strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                strList.Add(' ');
-                strList.Add('WARNING: The following tasks assume that you have:');
-                strList.Add('         .Internet connection;');
-                strList.Add('         .Set the environment variables;');
-                strList.Add('         .Installed gradle version compatible with your highest "sdk\build-tools"');
-                strList.Add(' ');
-                strList.Add('***BUILDING AND RUNNING APK ....');
-                strList.Add(' ');
-                strList.Add('.METHOD - I.');
-                strList.Add('    Running installed local version of gradle');
-                strList.Add(' ');
-                strList.Add('    ::Go to your project folder....');
-                strList.Add(' ');
-                strList.Add('[windows] cmd line prompt:');
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools'); //
-                if FPathToGradle = '' then
-                   strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add(' ');
-                strList.Add('[windows] cmd line prompt:');
-                strList.Add('gradle clean build --info');
-                strList.Add('gradle run');
-                strList.Add(' ');
-                strList.Add(' ');
-                strList.Add('[linux] cmd line prompt:');
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                  strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('export GRADLE_HOME='+linuxPathToGradle);
-
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                strList.Add(' ');
-                strList.Add('[linux] cmd line prompt:');
-                //strList.Add('.\gradle clean build --info');
-                strList.Add('gradle clean build --info');
-                //strList.Add('.\gradle run');
-                strList.Add('gradle run');
-                strList.Add(' ');
-                strList.Add('Congratulation!');
-                strList.Add(' ');
-                strList.Add('    :: Where is my Apk? here: "'+FAndroidProjectName+'\build\outputs\apk"!');
-                strList.Add('       IMPORTANT: You need to sign your [release] apk for "Google Play" store!');
-                strList.Add('                  Please, read the "How_To_Get_Your_Signed_Release_Apk.txt"');
-                strList.Add(' ');
-                strList.Add('hint: you can try edit and run:');
-                strList.Add('[windows] "gradle-local-build.bat"');
-                strList.Add('[linux] "gradle-local-build.sh"');
-
-                strList.Add('[windows] "gradle-local-run.bat"');
-                strList.Add('[linux] "gradle-local-run.sh"');
-
-                strList.Add(' ');
-                strList.Add(' ');
-                strList.Add('.METHOD - II.');
-                strList.Add(' ');
-                strList.Add('(1) Making "gradlew" (gradle wrapper) available for building your project');
-                strList.Add('    ::Go to your project folder....');
-                strList.Add(' ');
-                strList.Add('[windows] cmd line prompt:');
-                strList.Add('gradle wrapper');
-                strList.Add(' ');
-                strList.Add('[linux] cmd line prompt:');
-                strList.Add('./gradle wrapper');
-                strList.Add(' ');
-                strList.Add('hint: you can try edit and run:');
-                strList.Add('[windows] "gradle-making-wrapper.bat"');
-                strList.Add('[linux] "gradle-making-wrapper.sh"');
-
-                strList.Add(' ');
-                strList.Add('(2) Building your project with "gradlew" [gradle wrapper]');
-                strList.Add(' ');
-                strList.Add('[windows] cmd line prompt:');
-                strList.Add('gradlew build');
-                strList.Add(' ');
-                strList.Add('[linux] cmd line prompt:');
-                strList.Add('./gradlew build');
-                strList.Add(' ');
-                strList.Add('hint: you can try edit and "build" with gradle wrapper:');
-                strList.Add('      [windows] "gradlew-build.bat"');
-                strList.Add('      [linux]   "gradlew-build.sh"');
-                strList.Add(' ');
-                strList.Add('(3) Installing and Runing Apk');
-                strList.Add(' ');
-                strList.Add('[windows] cmd line prompt:');
-                strList.Add('gradlew install');
-                strList.Add(' ');
-                strList.Add('[linux] cmd line prompt:');
-                strList.Add('./gradlew run');
-                strList.Add(' ');
-                strList.Add('Congratulation!');
-                strList.Add(' ');
-                strList.Add('hint: where is my Apk? here: "'+FAndroidProjectName+'\build\outputs\apk"');
-                strList.Add(' ');
-                strList.Add('hint: you can try edit and "run" with gradle wrapper:');
-                strList.Add('      [windows] "gradlew-run.bat"');
-                strList.Add('      [linux] "gradlew-run.sh"');
-                strList.Add(' ');
-                strList.Add(' ');
-                strList.Add('hint: how can I  produce a signed release Apk? read "How_To_Get_Your_Signed_Release_Apk.txt');
-                strList.Add(' ');
-                strList.Add('Thanks to All!');
-                strList.Add(' ');
-                strList.Add('by jmpessoa_hotmail_com');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle_readme.txt');
-
-                {$IFDEF WINDOWS}
-                //Drafts Making gradlew (= gradle warapper)
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                  strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('gradle wrapper');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-making-wrapper.bat');
-
-                {$ELSE}
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                  strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                //strList.Add('./gradle wrapper');
-                strList.Add('gradle wrapper');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-making-wrapper.sh');
-                {$ENDIF}
-                //Drafts Method II
-
-                {$IFDEF WINDOWS}
-                //build
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                  strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+ FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('gradlew build');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-build.bat');
-
-                {$ELSE}
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                   strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                   strList.Add('export GRADLE_HOME='+linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                //strList.Add('./gradlew build');
-                strList.Add('gradlew build');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-build.sh');
-                {$ENDIF}
-
-                {$IFDEF WINDOWS}
-                //run
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                  strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+ FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('gradlew run');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-run.bat');
-                {$ELSE}
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                   strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                   strList.Add('export GRADLE_HOME='+linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                //strList.Add('./gradlew run');
-                strList.Add('gradlew run');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-run.sh');
-                {$ENDIF}
-                //Drafts Method I
-
-                {$IFDEF WINDOWS}
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                  strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+ FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('gradle clean build --info');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-build.bat');
-
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                  strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+ FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('gradle clean bundle --info');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-build-bundle.bat');
-
-                //thanks to TR3E!
-                strList.Clear;
-                sdkBuildTools:= GetBuildTool(FMaxSdkPlatform);
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
-                strList.Add('set GRADLE_HOME='+FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-
-                //fixed! thanks do @pasquale!
-                apkName:= FSmallProjName+ '-' + instructionChip;
-
-                strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
-                strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-apksigner.bat');
-
-                strList.Clear;  //multi-arch :: armeabi-v7a + arm64-v8a + ...
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
-                strList.Add('set GRADLE_HOME='+FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-                strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.bat');
-
-                strList.Clear;
-                strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-                if FPathToGradle = '' then
-                  strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('set GRADLE_HOME='+ FPathToGradle);
-                strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-                strList.Add('gradle run');
-                strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-run.bat');
-                {$ELSE}
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                  strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                strList.Add('gradle clean build --info');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-build.sh');
-
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                if FPathToGradle = '' then
-                  strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                strList.Add('gradle clean bundle --info');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-build-bundle.sh');
-
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'build-tools/'+sdkBuildTools+':$PATH');
-                strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('zipalign -v -p 4 '+linuxAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned-aligned.apk');
-                strList.Add('apksigner sign --ks '+linuxAndroidProjectName+'/'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-release.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned-aligned.apk');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-apksigner.sh');
-
-                strList.Clear;  //multi-arch :: armeabi-v7a + arm64-v8a + ...
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'build-tools/'+sdkBuildTools+':$PATH');
-                strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('zipalign -v -p 4 '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-                strList.Add('apksigner sign --ks '+linuxAndroidProjectName+'/'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-release.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.sh');
-
-                strList.Clear;
-                strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
-
-                if FPathToGradle = '' then
-                  strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-                else
-                  strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
-
-                strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-                strList.Add('source ~/.bashrc');
-                //strList.Add('.\gradle run');
-                strList.Add('gradle run');
-                SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-run.sh');
-                {$ENDIF}
-            end  //gradle support ...
-            else
-            begin
-              // TODO
-            end;
           end
           else
           begin
-             ShowMessage('Fail! Sorry... You need install SDK "build-tools" ' +IntToStr(Self.FMaxSdkPlatform)+'.x.y');
+           strList.Add('    compileSdkVersion '+compileSdkVersion);
+           if androidPluginNumber < 3000 then
+              strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
+           //else: each version of the Android Gradle Plugin now has a default version of the build tools
           end;
+
+          strList.Add('    defaultConfig {');
+
+          if Pos('AppCompat', FAndroidTheme) > 0 then
+          begin
+
+            if StrToInt(FMinApi) >= 14 then
+               strList.Add('            minSdkVersion '+FMinApi)
+            else
+               strList.Add('            minSdkVersion 14');
+
+            if StrToInt(FTargetApi) <= StrToInt(compileSdkVersion)  then
+              strList.Add('            targetSdkVersion '+ FTargetApi)  //compileSdkVersion
+            else
+              strList.Add('            targetSdkVersion '+compileSdkVersion);
+
+          end
+          else
+          begin
+            strList.Add('            minSdkVersion '+FMinApi);
+
+            if StrToInt(FTargetApi) <= StrToInt(compileSdkVersion)  then
+              strList.Add('            targetSdkVersion '+ FTargetApi)  //compileSdkVersion
+            else
+              strList.Add('            targetSdkVersion '+compileSdkVersion);
+
+          end;
+
+          //strList.Add('            versionCode 1');
+          //strList.Add('            versionName "1.0"');
+          if FVersionCode =  0 then
+          begin
+            FVersionCode:= 1;
+            FVersionName:= '1.0';
+          end;
+
+          if FVersionName = '' then  FVersionName:= '1.0';
+          strList.Add('            versionCode ' + intToStr(FVersionCode));
+          strList.Add('            versionName "' + FVersionName + '"');
+          strList.Add('    }');
+          strList.Add('    sourceSets {');
+          strList.Add('        main {');
+          strList.Add('            manifest.srcFile ''AndroidManifest.xml''');
+          strList.Add('            java.srcDirs = [''src'']');
+          strList.Add('            resources.srcDirs = [''src'']');
+          strList.Add('            aidl.srcDirs = [''src'']');
+          strList.Add('            renderscript.srcDirs = [''src'']');
+          strList.Add('            res.srcDirs = [''res'']');
+          strList.Add('            assets.srcDirs = [''assets'']');
+          strList.Add('            jni.srcDirs = []');
+          strList.Add('            jniLibs.srcDirs = [''libs'']');
+          strList.Add('        }');
+          strList.Add('        debug.setRoot(''build-types/debug'')');
+          strList.Add('        release.setRoot(''build-types/release'')');
+          strList.Add('    }');
+          strList.Add('    buildTypes {');
+          strList.Add('        debug {');
+          strList.Add('            debuggable true');
+          strList.Add('            jniDebuggable true');
+          strList.Add('        }');
+          strList.Add('        release {');
+          strList.Add('            debuggable false');
+          strList.Add('            jniDebuggable false');
+          strList.Add('        }');
+          strList.Add('    }');
+          strList.Add('}');
+          strList.Add('dependencies {');
+
+          if androidPluginNumber < 3000 then
+            directive:='compile'
+          else
+            directive:='implementation';
+
+          strList.Add('    '+directive+' fileTree(include: [''*.jar''], dir: ''libs'')');
+
+          innerSupported:= False;
+
+          if Pos('AppCompat', FAndroidTheme) > 0 then
+          begin
+             innerSupported:= True;
+             for aAppCompatLib in AppCompatLibs do
+             begin
+               strList.Add('    '+directive+' '''+aAppCompatLib.Name+'''');
+               if aAppCompatLib.MinAPI > StrToInt(compileSdkVersion) then
+                   ShowMessage('Warning: AppCompat theme need Android SDK >= ' +
+                                IntToStr(aAppCompatLib.MinAPI));
+             end;
+             //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
+          end else
+           if FSupport and (not innerSupported) then
+           begin
+             for aSupportLib in SupportLibs do
+             begin
+               strList.Add('    '+directive+' '''+aSupportLib.Name+'''');
+               if aSupportLib.MinAPI > StrToInt(compileSdkVersion) then
+                 ShowMessage('Warning: Support library need Android SDK >= ' +
+                              IntToStr(aSupportLib.MinAPI));
+             end;
+             //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
+           end;
+
+          if Pos('GDXGame', FAndroidTheme) > 0 then     //just a conceptual project....
+          begin
+             if androidPluginNumber >=  3000 then directive:= 'api';
+             strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx:1.9.10''');
+             strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx-box2d:1.9.10''');
+             strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx-backend-android:1.9.10''');
+             strList.Add('    '+directive+' ''com.badlogicgames.gdx:gdx-box2d:1.9.10''');
+          end;
+
+          strList.Add('}');
+          strList.Add(' ');
+          strList.Add('task run(type: Exec, dependsOn: '':installDebug'') {');
+          strList.Add('	if (System.properties[''os.name''].toLowerCase().contains(''windows'')) {');
+          strList.Add('	    commandLine ''cmd'', ''/c'', ''adb'', ''shell'', ''am'', ''start'', ''-n'', "'+strPack+'/.App"');
+          strList.Add('	} else {');
+          strList.Add('	    commandLine ''adb'', ''shell'', ''am'', ''start'', ''-n'', "'+strPack+'/.App"');
+          strList.Add('	}');
+          strList.Add('}');
+          strList.Add(' ');
+
+          gradleCompatibleAsNumber:= Self.GetVerAsNumber(gradleCompatible);
+
+          if  gradleCompatibleAsNumber < 5000 then
+          begin
+            strList.Add('task wrapper(type: Wrapper) {');
+            strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
+            strList.Add('}');
+          end
+          else
+          begin
+            strList.Add('wrapper {');
+            strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
+            strList.Add('}');
+          end;
+          strList.Add('//how to use: look for "gradle_readme.txt"');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'build.gradle');
+
+          strList.Clear;
+          strList.Add(' ');
+          strList.Add(' ');
+          strList.Add('HOW TO use "gradle.build" file');
+          strList.Add(' ');
+          strList.Add('       ::by jmpessoa');
+          strList.Add(' ');
+          strList.Add('references:');
+          strList.Add('   http://spring.io/guides/gs/gradle-android/');
+          strList.Add('   https://paulemtz.blogspot.com.br/2013/04/automating-android-builds-with-gradle.html');
+          strList.Add(' ');
+          strList.Add('   WARNING: you will need INTERNET CONNECTION!!');
+          strList.Add(' ');
+          strList.Add('***SYSTEM INFRASTRUCTURE');
+          strList.Add(' ');
+          strList.Add('(1) Look for the highest "...\sdk\build-tools" version');
+          strList.Add('        The table point out gradle and "sdk\build-tools" versions compatibility');
+          strList.Add(' ');
+          strList.Add('        plugin [in classpath]           gradle        sdk\build-tools');
+          strList.Add('                   2.0.0                2.10          21.1.2');
+          strList.Add('                   2.2.0                2.14.1        23.0.2');
+          strList.Add('                   2.3.3                3.3           25.0.3');
+          strList.Add('                   3.0.1                4.1           26.0.2');
+          strList.Add(' ');
+          strList.Add('        Note 1. You can interpolate to some value other than these.');
+          strList.Add('        Ex. If in your system the highest "sdk\build-tools" is "22.0.1", so downloaded/Installed gradle 2.1.0, etc..');
+          strList.Add(' ');
+          strList.Add('        Note 2. In "build.gradle" file, the gradle version is set to be compatible with the highest "sdk\build-tools" found in your system');
+          strList.Add('        as a consequence, it is this version of gradle that you must download/install.');
+          strList.Add(' ');
+          strList.Add('        reference:');
+          strList.Add('           https://developer.android.com/studio/releases/gradle-plugin.html#2-3-0');
+          strList.Add('           https://gradle.org/releases/');
+          strList.Add('           Hint: downloading just "binary-only" is OK!');
+          strList.Add(' ');
+          strList.Add('        Note 3. You should set the gradle path in Lazarus menu "Tools --> LAMW --> Paths Settings..."');
+          strList.Add(' ');
+          strList.Add('        Note 4. If your connection has a proxy, edit the "gradle.properties" file content. Example: ');
+          strList.Add(' ');
+          strList.Add('             systemProp.http.proxyHost=10.0.16.1');
+          strList.Add('             systemProp.http.proxyPort=3128');
+          strList.Add('             systemProp.https.proxyHost=10.0.16.1');
+          strList.Add('             systemProp.https.proxyPort=3128');
+          strList.Add(' ');
+          strList.Add('        Note 5. Java Jdk 1.8, Android SDK "platform" 29 [or up],  "build-tools" 29.0.3, Android SDK Extra "support library/repository" and "Gradle 6.6.1" are "must have" to support AppCompat material theme in LAMW 0.8.6.1');
+          strList.Add(' ');
+          strList.Add(' ');
+          strList.Add('***SETTING ENVIRONMENT VARIABLES...');
+          strList.Add(' ');
+          strList.Add('[windows] cmd line prompt:');
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+             strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+             strList.Add('set GRADLE_HOME='+FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add(' ');
+
+          strList.Add('[linux] cmd line prompt:');
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+             strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          strList.Add(' ');
+          strList.Add('WARNING: The following tasks assume that you have:');
+          strList.Add('         .Internet connection;');
+          strList.Add('         .Set the environment variables;');
+          strList.Add('         .Installed gradle version compatible with your highest "sdk\build-tools"');
+          strList.Add(' ');
+          strList.Add('***BUILDING AND RUNNING APK ....');
+          strList.Add(' ');
+          strList.Add('.METHOD - I.');
+          strList.Add('    Running installed local version of gradle');
+          strList.Add(' ');
+          strList.Add('    ::Go to your project folder....');
+          strList.Add(' ');
+          strList.Add('[windows] cmd line prompt:');
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools'); //
+          if FPathToGradle = '' then
+             strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add(' ');
+          strList.Add('[windows] cmd line prompt:');
+          strList.Add('gradle clean build --info');
+          strList.Add('gradle run');
+          strList.Add(' ');
+          strList.Add(' ');
+          strList.Add('[linux] cmd line prompt:');
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('export GRADLE_HOME='+linuxPathToGradle);
+
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          strList.Add(' ');
+          strList.Add('[linux] cmd line prompt:');
+          //strList.Add('.\gradle clean build --info');
+          strList.Add('gradle clean build --info');
+          //strList.Add('.\gradle run');
+          strList.Add('gradle run');
+          strList.Add(' ');
+          strList.Add('Congratulation!');
+          strList.Add(' ');
+          strList.Add('    :: Where is my Apk? here: "'+FAndroidProjectName+'\build\outputs\apk"!');
+          strList.Add('       IMPORTANT: You need to sign your [release] apk for "Google Play" store!');
+          strList.Add('                  Please, read the "How_To_Get_Your_Signed_Release_Apk.txt"');
+          strList.Add(' ');
+          strList.Add('hint: you can try edit and run:');
+          strList.Add('[windows] "gradle-local-build.bat"');
+          strList.Add('[linux] "gradle-local-build.sh"');
+
+          strList.Add('[windows] "gradle-local-run.bat"');
+          strList.Add('[linux] "gradle-local-run.sh"');
+
+          strList.Add(' ');
+          strList.Add(' ');
+          strList.Add('.METHOD - II.');
+          strList.Add(' ');
+          strList.Add('(1) Making "gradlew" (gradle wrapper) available for building your project');
+          strList.Add('    ::Go to your project folder....');
+          strList.Add(' ');
+          strList.Add('[windows] cmd line prompt:');
+          strList.Add('gradle wrapper');
+          strList.Add(' ');
+          strList.Add('[linux] cmd line prompt:');
+          strList.Add('./gradle wrapper');
+          strList.Add(' ');
+          strList.Add('hint: you can try edit and run:');
+          strList.Add('[windows] "gradle-making-wrapper.bat"');
+          strList.Add('[linux] "gradle-making-wrapper.sh"');
+
+          strList.Add(' ');
+          strList.Add('(2) Building your project with "gradlew" [gradle wrapper]');
+          strList.Add(' ');
+          strList.Add('[windows] cmd line prompt:');
+          strList.Add('gradlew build');
+          strList.Add(' ');
+          strList.Add('[linux] cmd line prompt:');
+          strList.Add('./gradlew build');
+          strList.Add(' ');
+          strList.Add('hint: you can try edit and "build" with gradle wrapper:');
+          strList.Add('      [windows] "gradlew-build.bat"');
+          strList.Add('      [linux]   "gradlew-build.sh"');
+          strList.Add(' ');
+          strList.Add('(3) Installing and Runing Apk');
+          strList.Add(' ');
+          strList.Add('[windows] cmd line prompt:');
+          strList.Add('gradlew install');
+          strList.Add(' ');
+          strList.Add('[linux] cmd line prompt:');
+          strList.Add('./gradlew run');
+          strList.Add(' ');
+          strList.Add('Congratulation!');
+          strList.Add(' ');
+          strList.Add('hint: where is my Apk? here: "'+FAndroidProjectName+'\build\outputs\apk"');
+          strList.Add(' ');
+          strList.Add('hint: you can try edit and "run" with gradle wrapper:');
+          strList.Add('      [windows] "gradlew-run.bat"');
+          strList.Add('      [linux] "gradlew-run.sh"');
+          strList.Add(' ');
+          strList.Add(' ');
+          strList.Add('hint: how can I  produce a signed release Apk? read "How_To_Get_Your_Signed_Release_Apk.txt');
+          strList.Add(' ');
+          strList.Add('Thanks to All!');
+          strList.Add(' ');
+          strList.Add('by jmpessoa_hotmail_com');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle_readme.txt');
+          {%EndRegion}
+
+          {$IFDEF WINDOWS}
+          // BuildSys: 'Gradle'
+          //       OS: 'Windows'
+          // Produces:
+          //    FAndroidProjectName/gradle-adb-install-debug.bat
+          //    FAndroidProjectName/gradle-jarsigner-verify.bat
+          //    FAndroidProjectName/gradle-making-wrapper.bat
+          //    FAndroidProjectName/gradlew-build.bat
+          //    FAndroidProjectName/gradlew-run.bat
+          //    FAndroidProjectName/gradle-local-build.bat
+          //    FAndroidProjectName/gradle-local-build-bundle.bat
+          //    FAndroidProjectName/gradle-local-apksigner.bat
+          //    FAndroidProjectName/gradle-local-universal-apksigner.bat
+          //    FAndroidProjectName/gradle-local-run.bat
+          // Requires:
+          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
+          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
+          //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName,
+          //
+          {%Region /fold}
+          {$IFDEF WINDOWS}
+          strList.Clear;
+          strList.Add(FPathToAndroidSDK+'platform-tools'+
+                     DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
+          strList.Add(FPathToAndroidSDK+'platform-tools'+
+                     DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'debug'+DirectorySeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
+          strList.Add('pause');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-adb-install-debug.bat');
+
+          strList.Clear;
+          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+          strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
+          strList.Add('cd '+FAndroidProjectName);
+          strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
+          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-jarsigner-verify.sbat');
+
+          //Drafts Making gradlew (= gradle warapper)
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('gradle wrapper');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-making-wrapper.bat');
+
+          //Drafts Method II
+          //build
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+ FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('gradlew build');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-build.bat');
+
+          //run
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+ FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('gradlew run');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-run.bat');
+
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+ FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('gradle clean build --info');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-build.bat');
+
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+ FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('gradle clean bundle --info');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-build-bundle.bat');
+
+          //thanks to TR3E!
+          strList.Clear;
+          sdkBuildTools:= GetBuildTool(FMaxSdkPlatform);
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
+          strList.Add('set GRADLE_HOME='+FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+
+          //fixed! thanks do @pasquale!
+          apkName:= FSmallProjName+ '-' + instructionChip;
+
+          strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
+          strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-apksigner.bat');
+
+          strList.Clear;  //multi-arch :: armeabi-v7a + arm64-v8a + ...
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
+          strList.Add('set GRADLE_HOME='+FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
+          strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.bat');
+
+          strList.Clear;
+          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+          if FPathToGradle = '' then
+            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('set GRADLE_HOME='+ FPathToGradle);
+          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+          strList.Add('gradle run');
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-run.bat');
+          {$ENDIF}
+          {%EndRegion}
+
+          {$ELSE}
+
+          // BuildSys: 'Gradle'
+          //       OS: 'Unix'
+          // Produces:
+          //    FAndroidProjectName/gradle-adb-install-debug.sh
+          //    FAndroidProjectName/gradle-jarsigner-verify.sh
+          //    FAndroidProjectName/gradle-jarsigner-verify-macos.sh
+          //    FAndroidProjectName/gradle-making-wrapper.sh
+          //    FAndroidProjectName/gradlew-build.sh
+          //    FAndroidProjectName/gradlew-run.sh
+          //    FAndroidProjectName/gradle-local-build.sh
+          //    FAndroidProjectName/gradle-local-build-bundle.sh
+          //    FAndroidProjectName/gradle-local-apksigner.sh
+          //    FAndroidProjectName/gradle-local-universal-apksigner.sh
+          //    FAndroidProjectName/gradle-local-run.sh
+          // Requires:
+          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
+          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
+          //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName,
+          //
+          {%Region /fold}
+          strList.Clear;
+          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
+          tempStr:= FAndroidProjectName;
+          //{$ifdef windows}
+          //tempStr:= StringReplace(FAndroidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
+          //tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
+          //{$endif}
+          strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r ' + tempStr +
+                                  linuxDirSeparator+ 'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'debug' + linuxDirSeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-adb-install-debug.sh');
+
+          strList.Clear;
+          strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+          strList.Add('cd '+linuxAndroidProjectName);
+          strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify.sh');
+
+          strList.Clear;
+          strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+          strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
+          strList.Add('cd '+linuxAndroidProjectName);
+          strList.Add('jarsigner -verify -verbose -certs '+linuxAndroidProjectName+linuxDirSeparator+'build'+linuxDirSeparator+'outputs'+linuxDirSeparator+'apk'+linuxDirSeparator+'release'+linuxDirSeparator+FSmallProjName+'-release.apk');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify-macos.sh');
+
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          //strList.Add('./gradle wrapper');
+          strList.Add('gradle wrapper');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-making-wrapper.sh');
+
+          //Drafts Method II
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+             strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+             strList.Add('export GRADLE_HOME='+linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          //strList.Add('./gradlew build');
+          strList.Add('gradlew build');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-build.sh');
+
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+             strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+             strList.Add('export GRADLE_HOME='+linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          //strList.Add('./gradlew run');
+          strList.Add('gradlew run');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-run.sh');
+
+          //Drafts Method I
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          strList.Add('gradle clean build --info');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-build.sh');
+
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          if FPathToGradle = '' then
+            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          strList.Add('gradle clean bundle --info');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-build-bundle.sh');
+
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'build-tools/'+sdkBuildTools+':$PATH');
+          strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('zipalign -v -p 4 '+linuxAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned-aligned.apk');
+          strList.Add('apksigner sign --ks '+linuxAndroidProjectName+'/'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-release.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned-aligned.apk');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-apksigner.sh');
+
+          strList.Clear;  //multi-arch :: armeabi-v7a + arm64-v8a + ...
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'build-tools/'+sdkBuildTools+':$PATH');
+          strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('zipalign -v -p 4 '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
+          strList.Add('apksigner sign --ks '+linuxAndroidProjectName+'/'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-release.apk '+linuxAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.sh');
+
+          strList.Clear;
+          strList.Add('export PATH='+linuxPathToAndroidSDK+'platform-tools'+':$PATH');
+
+          if FPathToGradle = '' then
+            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
+          else
+            strList.Add('export GRADLE_HOME='+ linuxPathToGradle);
+
+          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
+          strList.Add('source ~/.bashrc');
+          //strList.Add('.\gradle run');
+          strList.Add('gradle run');
+          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-run.sh');
+          {%EndRegion}
+          {$ENDIF}
         end;
-        {%EndRegion}
+
         Result := True;
       except
         on e: Exception do
