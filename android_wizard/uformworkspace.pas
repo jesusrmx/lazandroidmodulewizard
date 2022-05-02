@@ -671,6 +671,7 @@ begin
   begin
 
      strList:= TStringList.Create;
+     {$IFDEF FULL}
      if not DirectoryExists(FAndroidProjectName+DirectorySeparator+'.settings') then
      begin
        CreateDir(FAndroidProjectName+DirectorySeparator+'.settings');
@@ -680,6 +681,7 @@ begin
        strList.Add('org.eclipse.jdt.core.compiler.source=1.7');
        strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.settings'+DirectorySeparator+'org.eclipse.jdt.core.prefs');
      end;
+     {$ENDIF}
 
      strList.Clear;
      path:= FAndroidProjectName+DirectorySeparator+'src';
@@ -717,6 +719,7 @@ begin
 
      FFullJavaSrcPath:=GetFullJavaSrcPath(FAndroidProjectName);
 
+     {$IFDEF FULL}
      CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml',
                  FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
 
@@ -737,50 +740,51 @@ begin
        CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+tempStr+'.xml',
                   FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'styles.xml');
      end;
+     {$ENDIF}
 
   end;
 
-  if FProjectModel = psAnt then
+  if (FProjectModel = psAnt) and DirectoryExists(FAndroidProjectName) then
   begin
-    if DirectoryExists(FAndroidProjectName) then   //if project exits
+    if MessageDlg('Projec/Directory already Exists!',
+      'Re-Create "'+FAndroidProjectName+'" ?', mtConfirmation, [mbYes, mbNo],0) = mrNo then
     begin
-       if MessageDlg('Projec/Directory already Exists!',
-         'Re-Create "'+FAndroidProjectName+'" ?', mtConfirmation, [mbYes, mbNo],0) = mrNo then
-       begin
-         ModalResult:= mrCancel;
-       end;
+      ModalResult:= mrCancel;
+    end;
+  end;
+
+  {$IFDEF FULL}
+  if (FProjectModel = psAnt) and not DirectoryExists(FAndroidProjectName) then
+  begin
+
+    CreateDir(FAndroidProjectName);
+    if FModuleType <> mtNoGUIConsole then  //0: GUI project   1: NoGui project   2: NoGUI Exe
+    begin
+      CreateDir(FAndroidProjectName+ DirectorySeparator + 'jni');
+      CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni'+DirectorySeparator+'build-modes');
     end
-    else
+    else  //console executable app
     begin
-      CreateDir(FAndroidProjectName);
-      if FModuleType <> mtNoGUIConsole then  //0: GUI project   1: NoGui project   2: NoGUI Exe
-      begin
-        CreateDir(FAndroidProjectName+ DirectorySeparator + 'jni');
-        CreateDir(FAndroidProjectName+DirectorySeparator+ 'jni'+DirectorySeparator+'build-modes');
-      end
-      else  //console executable app
-      begin
-        CreateDir(FAndroidProjectName+DirectorySeparator+'build-modes');
-      end;
-
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs');
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'obj');
-
-      if FModuleType <> mtNoGUIConsole then
-      begin
-        CreateDir(FAndroidProjectName+ DirectorySeparator + 'obj'+DirectorySeparator+LowerCase(FJavaClassName));
-      end;
-
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'x86');
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'armeabi');
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'armeabi-v7a');
-
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'arm64-v8a');
-      CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'x86_64');
-
+      CreateDir(FAndroidProjectName+DirectorySeparator+'build-modes');
     end;
 
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs');
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'obj');
+
+    if FModuleType <> mtNoGUIConsole then
+    begin
+      CreateDir(FAndroidProjectName+ DirectorySeparator + 'obj'+DirectorySeparator+LowerCase(FJavaClassName));
+    end;
+
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'x86');
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'armeabi');
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'armeabi-v7a');
+
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'arm64-v8a');
+    CreateDir(FAndroidProjectName+ DirectorySeparator + 'libs'+DirectorySeparator+'x86_64');
+
   end;
+  {$ENDIF}
 
 end;
 
