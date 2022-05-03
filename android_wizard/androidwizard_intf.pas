@@ -2406,7 +2406,7 @@ begin
 
           {$ENDIF}
 
-          if BuildSystem = 'Ant' then
+          if FBuildSystem = 'Ant' then
           begin
           //
           // ANT
@@ -2809,7 +2809,7 @@ begin
           strList.Clear;
           strList.Add('buildscript {');
           strList.Add('    repositories {');
-          strList.Add('        jcenter()');
+          strList.Add('        mavenCentral()');
           strList.Add('        //android plugin version >= 3.0.0 [in classpath] need gradle version >= 4.1 and google() method');
           if androidPluginNumber >= 3000 then
              strList.Add('        google()')
@@ -2829,14 +2829,16 @@ begin
           else
             strList.Add('     //google()');
 
-          strList.Add('       jcenter()');
-
           if Pos('GDXGame', FAndroidTheme) > 0 then
           begin
             strList.Add('       mavenLocal()');
             strList.Add('       mavenCentral()');
             strList.Add('       maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }');
             strList.Add('       maven { url "https://oss.sonatype.org/content/repositories/releases/" }');
+          end
+          else
+          begin
+            strList.Add('       mavenCentral()');
           end;
 
           strList.Add('       maven { url ''https://jitpack.io'' }');
