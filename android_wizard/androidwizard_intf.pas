@@ -2530,6 +2530,8 @@ begin
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'ant.properties');
           {%EndRegion}
 
+          {$IFDEF FULL}
+          {%Region /fold Full Ant region}
           {$IFDEF WINDOWS}
 
           // BuildSys: 'Ant'
@@ -2689,6 +2691,8 @@ begin
 
           {$ENDIF}
           end; // if "Ant"
+          {%EndRegion Full Ant Region}
+          {$ENDIF FULL}
 
           if FBuildSystem = 'Gradle' then
           begin
@@ -3201,6 +3205,8 @@ begin
           strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle_readme.txt');
           {%EndRegion}
 
+          {$IFDEF FULL}
+          {%Region /fold Full Gradle Region}
           {$IFDEF WINDOWS}
           // BuildSys: 'Gradle'
           //       OS: 'Windows'
@@ -3465,6 +3471,8 @@ begin
           SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-run.sh');
           {%EndRegion}
           {$ENDIF}
+          {%EndRegion Full Gradle Region}
+          {$ENDIF FULL}
           end; // if "Gradle"
         end;
 
