@@ -2707,6 +2707,7 @@ begin
           // Requires:
           //    FAndroidTheme, FPathToJavaJDK, FAndroidProjectName
           {%Region /fold}
+          strList.Clear;
           if Pos('AppCompat', FAndroidTheme) > 0 then
              strList.Add('android.useAndroidX=true');
 
