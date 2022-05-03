@@ -2105,6 +2105,8 @@ begin
         begin
 
           pathToAdbBin:= FPathToAndroidSdk+'platform-tools';
+          apk_aliaskey:= LowerCase(FSmallProjName)+'.keyalias';
+
 
           //
           //  All (Ant + Gradle)
@@ -2518,8 +2520,6 @@ begin
           strList.Add(' ');
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'readme.txt');
 
-          apk_aliaskey:= LowerCase(FSmallProjName)+'.keyalias';
-
           strList.Clear;
           strList.Add('java.source=1.8');
           strList.Add('java.target=1.8');
@@ -2690,9 +2690,9 @@ begin
           {%EndRegion}
 
           {$ENDIF}
-          end; // if "Ant"
           {%EndRegion Full Ant Region}
           {$ENDIF FULL}
+          end; // if "Ant"
 
           if FBuildSystem = 'Gradle' then
           begin
