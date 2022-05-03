@@ -2198,26 +2198,6 @@ begin
           strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'How_To_Get_Your_Signed_Release_Apk.txt');
           {%EndRegion}
 
-          // BuildSys: 'All'
-          //       OS: 'All'
-          // Produces:
-          //    FAndroidProjectName/local.properties
-          // Requires:
-          //    FPathToAndroidSDK, FPathToAndroidNDK, FSmallProjName,
-          {%Region /fold}
-          strList.Clear;
-          strList.Add('sdk.dir=' + FPathToAndroidSDK);
-          strList.Add('ndk.dir=' + FPathToAndroidNDK);
-
-          {$IFDEF WINDOWS}
-          tempStr:= strList.Text;
-          tempStr:= StringReplace(tempStr, '\', '\\', [rfReplaceAll]);
-          tempStr:= StringReplace(tempStr, ':', '\:', [rfReplaceAll]);
-          strList.Text:=tempStr;
-          {$ENDIF}
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'local.properties');
-          {%EndRegion}
-
           {$IFDEF WINDOWS}
           // BuildSys: 'All'
           //       OS: 'Windows'
@@ -2738,6 +2718,26 @@ begin
           end;
 
           strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle.properties');  //if need configure proxy here, too
+          {%EndRegion}
+
+          // BuildSys: 'Gradle'
+          //       OS: 'All'
+          // Produces:
+          //    FAndroidProjectName/local.properties
+          // Requires:
+          //    FPathToAndroidSDK, FPathToAndroidNDK, FSmallProjName,
+          {%Region /fold}
+          strList.Clear;
+          strList.Add('sdk.dir=' + FPathToAndroidSDK);
+          strList.Add('ndk.dir=' + FPathToAndroidNDK);
+
+          {$IFDEF WINDOWS}
+          tempStr:= strList.Text;
+          tempStr:= StringReplace(tempStr, '\', '\\', [rfReplaceAll]);
+          tempStr:= StringReplace(tempStr, ':', '\:', [rfReplaceAll]);
+          strList.Text:=tempStr;
+          {$ENDIF}
+          strList.SaveToFile(FAndroidProjectName+PathDelim+'local.properties');
           {%EndRegion}
 
           //Add GRADLE support ... [... initial code ...]
