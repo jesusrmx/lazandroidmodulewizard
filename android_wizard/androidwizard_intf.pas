@@ -90,15 +90,10 @@ type
 
      function SettingsFilename: string;
      function TryNewJNIAndroidInterfaceCode(projectType: TModuleType): boolean; //0: GUI  project --- 1:NoGUI project
-     function GetPathToJNIFolder(fullPath: string): string;
      function GetWorkSpaceFromForm(projectType: TModuleType; out outTag: TModuleType): boolean;
-     function GetAppName(className: string): string;
 
-     function GetFolderFromApi(api: integer): string;
-
-     function GetPluginVersion(buildTool: string): string;
-     function GetBuildTool(sdkApi: integer): string;
-     function HasBuildTools(platform: integer;  out outBuildTool: string): boolean;
+     //function GetBuildTool(sdkApi: integer): string;
+     //function HasBuildTools(platform: integer;  out outBuildTool: string): boolean;
 
      function DoNewPathToJavaTemplate(): string;
      function GetPathToSmartDesigner(): string;
@@ -207,7 +202,7 @@ type
                                      const ResourceName : string): string; override;
   end;
 
-   function IsAllCharNumber(pcString: PChar): Boolean;
+
 
 var
   AndroidProjectDescriptor: TAndroidProjectDescriptor;
@@ -1146,17 +1141,6 @@ begin
 
 end;
 
-function TAndroidProjectDescriptor.GetPathToJNIFolder(fullPath: string): string;
-var
-  i: integer;
-begin
-  //fix by Leledumbo - for linux compatility
-  i:= Pos('src'+DirectorySeparator,fullPath);
-  if i > 2 then
-    Result:= Copy(fullPath,1,i - 2)// we don't need the trailing slash
-  else raise Exception.Create('src folder not found...');
-end;
-
 function TAndroidProjectDescriptor.TryNewJNIAndroidInterfaceCode(projectType: TModuleType): boolean;
 var
   frm: TFormAndroidProject;
@@ -1217,143 +1201,6 @@ begin
             'using datamodule like form.'+ LineEnding +
             'No[!] Form Designer/Android and no Components Bridges!'+ LineEnding +
             'The project and library are maintained by Lazarus.'
-end;
-
-     //just for test!  not realistic!
-function TAndroidProjectDescriptor.GetFolderFromApi(api: integer): string;
-begin
-  Result:= 'android-x.y';
-  case api of
-     17: Result:= 'android-4.2.2';
-     18: Result:= 'android-4.3';
-     19: Result:= 'android-4.4';
-     20: Result:= 'android-4.4W';
-     21: Result:= 'Lollipop-5.0';
-     22: Result:= 'Lollipop-5.1';
-     23: Result:= 'Marshmallow-6.0';
-     24: Result:= 'Nougat-7.0';
-     25: Result:= 'Nougat-7.1';
-     26: Result:= 'Oreo-8.0';
-     27: Result:= 'Oreo-8.1';
-     28: Result:= 'Pie';
-     29: Result:= 'Android-10.0';
-  end;
-end;
-
-function TAndroidProjectDescriptor.HasBuildTools(platform: integer;  out outBuildTool: string): boolean;
-var
-  lisDir: TStringList;
-  numberAsString, auxStr: string;
-  i, builderNumber: integer;
-  savedBuilder: integer;
-begin
-  Result:= False;
-  savedBuilder:= 0;
-  lisDir:= TStringList.Create;   //C:\adt32\sdk\build-tools\19.1.0
-  FindAllDirectories(lisDir, IncludeTrailingPathDelimiter(FPathToAndroidSDK)+'build-tools', False);
-  if lisDir.Count > 0 then
-  begin
-    for i:=0 to lisDir.Count-1 do
-    begin
-       auxStr:= ExtractFileName(lisDir.Strings[i]);
-       lisDir.Strings[i]:=auxStr;
-    end;
-    lisDir.Sorted:=True;
-    for i:= 0 to lisDir.Count-1 do
-    begin
-       auxStr:= lisDir.Strings[i];
-       if auxStr <> '' then    //19.1.0
-       begin
-           numberAsString:= Copy(auxStr, 1 , 2);  //19
-           if IsAllCharNumber(PChar(numberAsString)) then
-           begin
-             builderNumber:=  StrToInt(numberAsString);
-             if savedBuilder < builderNumber then
-             begin
-               savedBuilder:= builderNumber;
-               if builderNumber > platform then FCandidateSdkBuild:= auxStr;
-             end;
-             if  platform <= builderNumber then
-             begin
-               outBuildTool:= auxStr; //25.0.3
-               Result:= True;
-               break;
-             end;
-           end;
-       end;
-    end;
-  end;
-  lisDir.free;
-end;
-
-function TAndroidProjectDescriptor.GetBuildTool(sdkApi: integer): string;
-var
-  tempOutBuildTool: string;
-begin
-  Result:= '';
-  if HasBuildTools(sdkApi, tempOutBuildTool) then
-  begin
-     Result:= tempOutBuildTool;  //25.0.3    //***
-  end;
-end;
-
-function TAndroidProjectDescriptor.GetPluginVersion(buildTool: string): string;
-var
-  maxBuilderNumber: integer;
-  numberAsString: string;
-begin
-  Result:= '';
-
-  if (buildTool = '') then Exit;
-
-  numberAsString:= StringReplace(buildTool,'.', '', [rfReplaceAll]); //25.0.3
-  maxBuilderNumber:= StrToInt(Trim(numberAsString));  //2503
-
-  if (maxBuilderNumber >= 2111) and (maxBuilderNumber < 2112) then
-  begin
-    Result:= '2.0.0';
-  end
-  else if (maxBuilderNumber >= 2112) and (maxBuilderNumber < 2302) then
-  begin
-    Result:= '2.0.0';
-  end
-  else if (maxBuilderNumber >= 2302) and (maxBuilderNumber < 2500) then
-  begin
-      Result:= '2.2.0';
-  end
-  else if (maxBuilderNumber >= 2500) and (maxBuilderNumber < 2602) then   //<<---- good performance !!!
-  begin
-      Result:= '2.3.3';
-      //gradleVer:= '3.3';
-  end
-  else if (maxBuilderNumber >= 2602) and (maxBuilderNumber < 2700)  then
-  begin
-      Result:= '3.0.1';
-      //gradleVer:= '4.1';
-  end
-  else if (maxBuilderNumber >= 2700) and (maxBuilderNumber < 2703)   then
-  begin
-      Result:= '3.1.0';
-      //gradleVer:= '4.4';
-  end
-  else if (maxBuilderNumber >= 2703) and (maxBuilderNumber < 2803)   then
-  begin
-      //Result:= '3.2.0';   //need build-tools 28.0.2 and need drop minSdk/targetSdk from AndroidManifest!!
-      //gradleVer:= '4.6';
-
-       Result:= '3.1.0'; //just to support minSdk/targetSdk in AndroidManifest!!
-  end
-  else if maxBuilderNumber >= 2803   then
-  begin
-      //Result:= '3.3.0';    //need droped minSdk/targetSdk in AndroidManifest!!
-      //gradleVer:= 'Gradle 4.10.1';
-
-      //Result:= '3.4.0';
-      //gradleVer:= 'Gradle Gradle 5.1.1'
-
-      Result:= '3.1.0'; //just to support minSdk/targetSdk in AndroidManifest!!
-  end;
-
 end;
 
 function TAndroidProjectDescriptor.GetWorkSpaceFromForm(projectType: TModuleType; out outTag: TModuleType): boolean;
@@ -2597,57 +2444,6 @@ begin
           //Add GRADLE support ... [... initial code ...]
           //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
 
-          {%Region /fold Gradle Setup}
-          compileSdkVersion:= IntToStr(FMaxSdkPlatform);
-          sdkBuildTools:= GetBuildTool(FMaxSdkPlatform);
-
-          if sdkBuildTools = '' then
-          begin
-            sdkBuildTools:= FCandidateSdkBuild;
-            compileSdkVersion:= Copy(sdkBuildTools,1,2);
-          end;
-
-          if sdkBuildTools = '' then
-          begin
-            ShowMessage('Fail! Sorry... You need install SDK "build-tools" ' +IntToStr(Self.FMaxSdkPlatform)+'.x.y');
-            result := true;
-            exit;
-          end;
-
-          if StrToInt(compileSdkVersion) > 25 then
-            pluginVersion:= GetPluginVersion(sdkBuildTools)
-          else
-            pluginVersion:= '2.3.3';
-
-          if pluginVersion = '' then
-          begin
-            // TODO
-            Result := true;
-            exit;
-          end;
-
-          outgradleCompatible:= '';
-          gradleCompatible:= FGradleVersion;
-          if not TryGradleCompatibility(pluginVersion, FGradleVersion, outgradleCompatible) then
-          begin
-              if MessageDlg('Warning ','plugin "'+pluginVersion+'", "build-tools "'+sdkBuildTools+ '" require Gradle "'+outgradleCompatible+'"' +sLineBreak + '[current: "'+FGradleVersion+'"]',
-                 mtConfirmation, [mbOk, mbIgnore], 0) = mrOk then
-                 begin
-                    gradleCompatible:= outgradleCompatible;
-                    ShowMessage('Please, update to Gradle "'+outgradleCompatible+'" ' + sLineBreak + 'https://gradle.org/releases/');
-                 end
-                 else
-                    pluginVersion:= TryPluginCompatibility(FGradleVersion);
-          end;
-
-          androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
-          gradleCompatibleAsNumber:= GetVerAsNumber(TryPluginCompatibility(FGradleVersion));
-          if gradleCompatibleAsNumber>androidPluginNumber then
-          begin
-            pluginVersion:= TryPluginCompatibility(FGradleVersion);
-            androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
-          end;
-          {%EndRegion Gradle Setup}
 
           // BuildSys: 'Gradle'
           //       OS: 'All'
@@ -2656,17 +2452,18 @@ begin
           //    FAndroidProjectName/gradle_readme.txt
           // Requires:
           //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
-          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
-          //    FAndroidProjectName
-          //
+          //    FAndroidTheme, FMinApi, FTargetApi, FPathToAndroidSDK, FVersionCode
+          //    FVersionName, FPackagePrefaceName, FSmallProjName, FAndroidProjectName
+          //    FPathToGradle,
           {%Region /fold}
-          CreateBuildGradle(FAndroidProjectName, androidPluginNumber, FAndroidTheme,
-            pluginVersion, instructionChip, compileSdkVersion, sdkBuildTools,
-            FMinApi, FTargetApi, FVersionCode, FVersionName, FSupport,
-            FPackagePrefaceName, FSmallProjName, gradleCompatibleAsNumber,
-            gradleCompatible );
-
-          CreateGradleReadme(FAndroidProjectName, FPathToGradle, FPathToAndroidSDK)
+          if not CreateBuildGradle(FAndroidProjectName, FPathToAndroidSDK, FMaxSdkPlatform,
+              FGradleVersion, FAndroidTheme, instructionChip, FMinApi, FTargetApi,
+              FVersionCode, FVersionName, FSupport, FPackagePrefaceName, FSmallProjName) then
+          begin
+            result := true;
+            exit;
+          end;
+          CreateGradleReadme(FAndroidProjectName, FPathToGradle, FPathToAndroidSDK);
           {%EndRegion}
 
           {$IFDEF FULL}
@@ -3088,21 +2885,6 @@ begin
    else Result := mrAbort;
 end;
 
-
-function TAndroidProjectDescriptor.GetAppName(className: string): string;
-var
-  listAux: TStringList;
-  lastIndex: integer;
-begin
-  listAux:= TStringList.Create;
-  listAux.StrictDelimiter:= True;
-  listAux.Delimiter:= '.';
-  listAux.DelimitedText:= StringReplace(className,'/','.',[rfReplaceAll]);
-  lastIndex:= listAux.Count-1;
-  listAux.Delete(lastIndex);
-  Result:= listAux.DelimitedText;
-  listAux.Free;
-end;
 
 function TAndroidProjectDescriptor.InitProject(AProject: TLazProject): TModalResult;
 var
@@ -4603,18 +4385,6 @@ begin
        theString:= '';
     end;
   end;
-end;
-
-function IsAllCharNumber(pcString: PChar): Boolean;
-begin
-  Result := False;
-  if StrLen(pcString)=0 then exit;
-  while pcString^ <> #0 do // 0 indicates the end of a PChar string
-  begin
-    if not (pcString^ in ['0'..'9']) then Exit;
-    Inc(pcString);
-  end;
-  Result := True;
 end;
 
 end.
