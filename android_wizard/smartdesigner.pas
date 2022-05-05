@@ -47,6 +47,7 @@ type
     FMinSdkControl: integer;
     FNdkApi: string;
     FAndroidTheme: string;
+    FBuildSystem: string;
 
     procedure CleanupAllJControlsSource;
     procedure GetAllJControlsFromForms(jControlsList: TStrings);
@@ -759,9 +760,16 @@ begin
 
   strList:= TStringList.Create;
 
-  if not FileExists(FPathToAndroidProject + 'gradle.properties') then
+  if FBuildSystem = 'Gradle' then
   begin
-    strList.SaveToFile(FPathToAndroidProject+'gradle.properties');
+    if not FileExists(FPathToAndroidProject + 'gradle.properties') then
+    begin
+      if Pos('AppCompat', FAndroidTheme) > 0 then
+        StrList.Add('');
+      strList.Add('org.gradle.java.home=' + FPathToJavaJDK);
+      strList.SaveToFile(FPathToAndroidProject+'gradle.properties');
+    end;
+
   end;
   strList.Clear;
 
@@ -1723,218 +1731,221 @@ var
   projectTarget, projectCustom, alertMsg: string;
   ndkRelease, aux: string;
 begin
-  if AProject.CustomData.Contains('LAMW') then
+  if not Aproject.CustomData.Contains('LAMW') then
+    exit;
+
+  FPathToAndroidSDK := LamwGlobalSettings.PathToAndroidSDK; //Included Path Delimiter!
+  FPathToAndroidNDK := LamwGlobalSettings.PathToAndroidNDK; //Included Path Delimiter!
+  FPathToJavaJDK:=     LamwGlobalSettings.PathToJavaJDK;    //Included Path Delimiter!
+
+  FPrebuildOSYS:= LamwGlobalSettings.PrebuildOSYS;
+  FPathToSmartDesigner:= LamwGlobalSettings.PathToSmartDesigner;
+
+  FAndroidTheme:= AProject.CustomData['Theme'];
+  FBuildSystem := AProject.CustomData['BuildSystem'];
+
+  ndkRelease:= LamwGlobalSettings.GetNDKRelease;
+  if ndkRelease <> '' then
   begin
-    FPathToAndroidSDK := LamwGlobalSettings.PathToAndroidSDK; //Included Path Delimiter!
-    FPathToAndroidNDK := LamwGlobalSettings.PathToAndroidNDK; //Included Path Delimiter!
-    FPathToJavaJDK:=     LamwGlobalSettings.PathToJavaJDK;    //Included Path Delimiter!
+    FNDKVersion:= GetNDKVersion(ndkRelease);
+  end
+  else
+  begin
+    ndkRelease:= TryGetNDKRelease(FPathToAndroidNDK);
+    FNDKVersion:= GetNDKVersion(ndkRelease); //18
+  end;
 
-    FPrebuildOSYS:= LamwGlobalSettings.PrebuildOSYS;
-    FPathToSmartDesigner:= LamwGlobalSettings.PathToSmartDesigner;
+  FChipArchitecture:= 'x86';
+  aux := LowerCase(LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions);
+  if Pos('-cparmv6', aux) > 0 then FChipArchitecture:= 'armeabi'
+  else if Pos('-cparmv7a', aux) > 0 then FChipArchitecture:= 'armeabi-v7a'
+  else if Pos('-xpaarch64', aux) > 0 then FChipArchitecture:= 'arm64-v8a'
+  else if Pos('-xpx86_64', aux) > 0 then FChipArchitecture:= 'x86_64'
+  else if Pos('-xpmipsel', aux) > 0 then FChipArchitecture:= 'mips';
 
-    FAndroidTheme:= AProject.CustomData['Theme'];
+  FProjFile := AProject.MainFile;
 
-    ndkRelease:= LamwGlobalSettings.GetNDKRelease;
-    if ndkRelease <> '' then
+  FNdkApi:= AProject.CustomData['NdkApi']; //android-22
+  tempStr:= SplitStr(FNdkApi, '-');   //now  FNdkApi = 22 !
+
+  isBrandNew:= False;
+
+  if (AProject.CustomData['LamwVersion'] = '') and (FAndroidTheme <> '') then
+    isBrandNew:= True;
+
+  if AProject.CustomData['LamwVersion'] <> LamwGlobalSettings.Version then
+  begin
+    AProject.Modified := True;
+    AProject.CustomData['LamwVersion'] := LamwGlobalSettings.Version;
+    UpdateAllJControls(AProject);
+  end;
+
+  FPathToAndroidProject := ExtractFilePath(AProject.MainFile.Filename);
+  FPathToAndroidProject := Copy(FPathToAndroidProject, 1, RPosEX(PathDelim, FPathToAndroidProject, Length(FPathToAndroidProject) - 1));
+
+  tempStr:= Copy(FPathToAndroidProject, 1, Length(FPathToAndroidProject)-1);
+  p:= LastDelimiter(PathDelim, tempStr) + 1;
+  FSmallProjName:= Copy(tempStr,  p, Length(tempStr));
+  FPackageName := AProject.CustomData['Package'];
+  if FPackageName = '' then
+  begin
+    FPackageName := GetPackageNameFromAndroidManifest(FPathToAndroidProject);
+    AProject.CustomData['Package'] := FPackageName;
+  end;
+  FPathToJavaSource:= FPathToAndroidProject + 'src' + PathDelim + AppendPathDelim(ReplaceChar(FPackageName, '.', PathDelim));
+
+  if  (FAndroidTheme = '') or (Pos('AppCompat', FAndroidTheme) <= 0) then
+    LamwGlobalSettings.QueryPaths:= False;  //dont query Path to Gradle
+
+  FPathToGradle:= LamwGlobalSettings.PathToGradle;  //C:\adt32\gradle-3.3\
+  LamwGlobalSettings.QueryPaths:= True; // reset to default...
+
+  if FPathToGradle <> '' then
+     FGradleVersion:= GetGradleVersion(FPathToGradle);
+
+  if not isBrandNew then
+  begin
+    isProjectImported:= IsDemoProject();   //demo or imported project,  etc...
+    if not DirectoryExists(FPathToAndroidProject + 'lamwdesigner') then //very very old project
     begin
-      FNDKVersion:= GetNDKVersion(ndkRelease);
+       InitSmartDesignerHelpers;
+    end;
+  end
+  else isProjectImported:= False;
+
+  //try fix/repair project paths [demos, etc..] in "Run" --> "build"  time ...
+  if isProjectImported then
+  begin
+    TryChangeDemoProjecPaths();
+    TryChangeDemoProjecAntBuildScripts();
+  end;
+
+  if FBuildSystem = 'Ant' then
+  begin
+    if not IsSdkToolsAntEnable(FPathToAndroidSDK) then
+    begin
+       FBuildSystem := 'Gradle';
+       AProject.CustomData['BuildSystem']:= FBuildSystem;
+       AProject.Modified := true;
+    end;
+  end;
+
+  if isBrandNew then
+    exit;
+
+  AProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
+  AProject.CustomData.Values['SdkPath']:= FPathToAndroidSDK;
+  AProject.Modified:= True;
+
+  buildTool := FBuildSystem;  // just a temporary string
+  if FBuildSystem = '' then
+  begin
+    if IsSdkToolsAntEnable(FPathToAndroidSDK) then
+      FBuildSystem := 'Ant'
+    else
+      FBuildSystem := 'Gradle';
+  end
+  else
+  begin
+    if FBuildSystem = 'Ant' then
+       if not IsSdkToolsAntEnable(FPathToAndroidSDK) then
+         FBuildSystem := 'Gradle';
+  end;
+  AProject.CustomData['BuildSystem']:= FBuildSystem;
+  if buildTool <> FBuildSystem then
+    AProject.Modified:= True;
+
+  if AProject.CustomData['Theme'] = '' then
+  begin
+    AProject.CustomData['Theme']:= 'DeviceDefault';
+    AProject.Modified:= True;
+  end;
+
+  sdkManifestTargetApi:= GetTargetFromManifest();
+
+  if IsAllCharNumber(PChar(sdkManifestTargetApi))  then
+      manifestTargetApi:= StrToInt(sdkManifestTargetApi)
+  else manifestTargetApi:= 29;
+
+  buildTool:=  GetBuildTool(manifestTargetApi);
+
+  if manifestTargetApi < 29 then
+  begin
+     queryValue:= '29';
+
+     if InputQuery('Warning. Manifest Target Api ['+sdkManifestTargetApi+ '] < 29',
+                   '[Suggestion] Change Target API to 29'+sLineBreak+'[minimum required by "Google Play Store"]:', queryValue) then
+     begin
+       if ( IsAllCharNumber(PChar(queryValue)) AND (queryValue <> '29') ) then
+          begin
+             manifestTargetApi:= StrToInt(queryValue);
+             buildTool:= GetBuildTool(manifestTargetApi);
+       end
+       else
+       begin
+         manifestTargetApi:= 29;
+         buildTool:= GetBuildTool(29);
+       end;  ;
+     end; //if input...
+
+  end
+  else //target >= 29
+  begin
+    outMaxBuildTool:= FCandidateSdkBuild;
+    if not LamwGlobalSettings.KeepManifestTargetApi  then
+    begin
+       buildTool:= outMaxBuildTool
     end
     else
     begin
-      ndkRelease:= TryGetNDKRelease(FPathToAndroidNDK);
-      FNDKVersion:= GetNDKVersion(ndkRelease); //18
-    end;
-
-    FChipArchitecture:= 'x86';
-    aux := LowerCase(LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions);
-    if Pos('-cparmv6', aux) > 0 then FChipArchitecture:= 'armeabi'
-    else if Pos('-cparmv7a', aux) > 0 then FChipArchitecture:= 'armeabi-v7a'
-    else if Pos('-xpaarch64', aux) > 0 then FChipArchitecture:= 'arm64-v8a'
-    else if Pos('-xpx86_64', aux) > 0 then FChipArchitecture:= 'x86_64'
-    else if Pos('-xpmipsel', aux) > 0 then FChipArchitecture:= 'mips';
-
-    FProjFile := AProject.MainFile;
-
-    FNdkApi:= AProject.CustomData['NdkApi']; //android-22
-    tempStr:= SplitStr(FNdkApi, '-');   //now  FNdkApi = 22 !
-
-    isBrandNew:= False;
-
-    if (AProject.CustomData['LamwVersion'] = '') and (FAndroidTheme <> '') then
-      isBrandNew:= True;
-
-    if AProject.CustomData['LamwVersion'] <> LamwGlobalSettings.Version then
-    begin
-      AProject.Modified := True;
-      AProject.CustomData['LamwVersion'] := LamwGlobalSettings.Version;
-      UpdateAllJControls(AProject);
-    end;
-
-    FPathToAndroidProject := ExtractFilePath(AProject.MainFile.Filename);
-    FPathToAndroidProject := Copy(FPathToAndroidProject, 1, RPosEX(PathDelim, FPathToAndroidProject, Length(FPathToAndroidProject) - 1));
-
-    tempStr:= Copy(FPathToAndroidProject, 1, Length(FPathToAndroidProject)-1);
-    p:= LastDelimiter(PathDelim, tempStr) + 1;
-    FSmallProjName:= Copy(tempStr,  p, Length(tempStr));
-    FPackageName := AProject.CustomData['Package'];
-    if FPackageName = '' then
-    begin
-      FPackageName := GetPackageNameFromAndroidManifest(FPathToAndroidProject);
-      AProject.CustomData['Package'] := FPackageName;
-    end;
-    FPathToJavaSource:= FPathToAndroidProject + 'src' + PathDelim + AppendPathDelim(ReplaceChar(FPackageName, '.', PathDelim));
-
-    if  (FAndroidTheme = '') or (Pos('AppCompat', FAndroidTheme) <= 0) then
-      LamwGlobalSettings.QueryPaths:= False;  //dont query Path to Gradle
-
-    FPathToGradle:= LamwGlobalSettings.PathToGradle;  //C:\adt32\gradle-3.3\
-    LamwGlobalSettings.QueryPaths:= True; // reset to default...
-
-    if FPathToGradle <> '' then
-       FGradleVersion:= GetGradleVersion(FPathToGradle);
-
-    if not isBrandNew then
-    begin
-      isProjectImported:= IsDemoProject();   //demo or imported project,  etc...
-      if not DirectoryExists(FPathToAndroidProject + 'lamwdesigner') then //very very old project
-      begin
-         InitSmartDesignerHelpers;
-      end;
+       buildTool:= GetBuildTool(manifestTargetApi);
     end
-    else isProjectImported:= False;
-
-    //try fix/repair project paths [demos, etc..] in "Run" --> "build"  time ...
-    if isProjectImported then
-    begin
-      TryChangeDemoProjecPaths();
-      TryChangeDemoProjecAntBuildScripts();
-    end;
-
-    if AProject.CustomData['BuildSystem'] = 'Ant' then
-    begin
-      if not IsSdkToolsAntEnable(FPathToAndroidSDK) then
-         AProject.CustomData['BuildSystem']:= 'Gradle';
-    end;
-
-    if not isBrandNew then
-    begin
-      AProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
-      AProject.CustomData.Values['SdkPath']:= FPathToAndroidSDK;
-      AProject.Modified:= True;
-
-      if AProject.CustomData['BuildSystem'] = '' then
-      begin
-        if IsSdkToolsAntEnable(FPathToAndroidSDK) then
-          AProject.CustomData['BuildSystem']:= 'Ant'
-        else
-          AProject.CustomData['BuildSystem']:= 'Gradle';
-
-        AProject.Modified:= True;
-      end
-      else
-      begin
-        if AProject.CustomData['BuildSystem'] = 'Ant' then
-           if not IsSdkToolsAntEnable(FPathToAndroidSDK) then
-           begin
-             AProject.CustomData['BuildSystem']:= 'Gradle';
-             AProject.Modified:= True;
-           end;
-      end;
-
-
-      if AProject.CustomData['Theme'] = '' then
-      begin
-        AProject.CustomData['Theme']:= 'DeviceDefault';
-        AProject.Modified:= True;
-      end;
-
-      sdkManifestTargetApi:= GetTargetFromManifest();
-
-      if IsAllCharNumber(PChar(sdkManifestTargetApi))  then
-          manifestTargetApi:= StrToInt(sdkManifestTargetApi)
-      else manifestTargetApi:= 29;
-
-      buildTool:=  GetBuildTool(manifestTargetApi);
-
-      if manifestTargetApi < 29 then
-      begin
-         queryValue:= '29';
-
-         if InputQuery('Warning. Manifest Target Api ['+sdkManifestTargetApi+ '] < 29',
-                       '[Suggestion] Change Target API to 29'+sLineBreak+'[minimum required by "Google Play Store"]:', queryValue) then
-         begin
-           if ( IsAllCharNumber(PChar(queryValue)) AND (queryValue <> '29') ) then
-              begin
-                 manifestTargetApi:= StrToInt(queryValue);
-                 buildTool:= GetBuildTool(manifestTargetApi);
-           end
-           else
-           begin
-             manifestTargetApi:= 29;
-             buildTool:= GetBuildTool(29);
-           end;  ;
-         end; //if input...
-
-      end
-      else //target >= 29
-      begin
-        outMaxBuildTool:= FCandidateSdkBuild;
-        if not LamwGlobalSettings.KeepManifestTargetApi  then
-        begin
-           buildTool:= outMaxBuildTool
-        end
-        else
-        begin
-           buildTool:= GetBuildTool(manifestTargetApi);
-        end
-      end;
-
-      KeepBuildUpdated(manifestTargetApi, buildTool);
-
-      if Self.IsLaz4Android() then
-      begin
-         projectCustom:= UpperCase(AProject.LazCompilerOptions.CustomOptions);
-         projectTarget:= AProject.LazCompilerOptions.TargetCPU;  //aarch64 or arm or i386 or mipsel
-         //(-Fl) C:\adt32\ndk10e\platforms\android-21\arch-arm\usr\lib\;
-         //C:\adt32\ndk10e\toolchains\arm-linux-androideabi-4.9\prebuilt\windows\lib\gcc\arm-linux-androideabi\4.9\
-
-         //(-o)  ..\libs\armeabi-v7a\libcontrols
-
-         //-Xd -CfSoft -CpARMV7A -XParm-linux-androideabi-
-         //-FDC:\adt32\ndk10e\toolchains\arm-linux-androideabi-4.9\prebuilt\windows\bin
-         alertMsg:= '';
-         if Pos('aarch64', projectTarget) > 0  then
-            alertMsg:= 'WARNING: Target CPU "aarch64" not supported '+sLineBreak+
-                       '[out-of-box] by Laz4Android' +sLineBreak+ sLineBreak+
-                       'Hint1: Fora all: after "prebuild" change to your NDK installed system...'+sLineBreak+ sLineBreak+
-                       'Hint2: "Project" --> "Project Option" -->'+sLineBreak+
-                        '["Path"]'+sLineBreak+
-                        '-Fl' +sLineBreak+
-                        'change arch-arm64 [to] arch-arm'+sLineBreak+
-                        'change aarch64-linux-android [to] arm-linux-androideabi'+sLineBreak+ sLineBreak+
-                        '-o' +sLineBreak+
-                       'change arm64-v8a [to] armeabi-v7a'+sLineBreak+sLineBreak+
-                       '["Config and Target"]'+sLineBreak+
-                       'change Target CPU (-P) [to] arm'+sLineBreak+sLineBreak+
-                       '["Custom Options"]'+sLineBreak+
-                       'expand -Xd [to] -Xd -CfSoft -CpARMV7A'+sLineBreak+
-                       'change aarch64-linux-android [to] arm-linux-androideabi'+sLineBreak+
-                       sLineBreak+ '[Ctrl+c to Copy to Clipboard]';
-
-         if Pos('VFPV3', projectCustom) > 0  then
-            alertMsg:= 'WARNING: Custom Option "-CfVFPV3" not supported '+sLineBreak+
-                       '[out-of-box] by Laz4Android'+sLineBreak+ sLineBreak+
-                       'Hint: "Project" --> "Project Option" -->'+sLineBreak+'"[LAMW] Android Project Options" --> "Build"'+sLineBreak+
-                       'change -CfVFPV3 to -CfSoft'+sLineBreak+
-                       sLineBreak+'[Ctrl+c to Copy to Clipboard]';
-
-         if alertMsg <> '' then
-            ShowMessage(alertMsg);
-
-      end;
-      UpdateBuildModes();
-    end; //not is brandNews
   end;
+
+  KeepBuildUpdated(manifestTargetApi, buildTool);
+
+  if Self.IsLaz4Android() then
+  begin
+     projectCustom:= UpperCase(AProject.LazCompilerOptions.CustomOptions);
+     projectTarget:= AProject.LazCompilerOptions.TargetCPU;  //aarch64 or arm or i386 or mipsel
+     //(-Fl) C:\adt32\ndk10e\platforms\android-21\arch-arm\usr\lib\;
+     //C:\adt32\ndk10e\toolchains\arm-linux-androideabi-4.9\prebuilt\windows\lib\gcc\arm-linux-androideabi\4.9\
+
+     //(-o)  ..\libs\armeabi-v7a\libcontrols
+
+     //-Xd -CfSoft -CpARMV7A -XParm-linux-androideabi-
+     //-FDC:\adt32\ndk10e\toolchains\arm-linux-androideabi-4.9\prebuilt\windows\bin
+     alertMsg:= '';
+     if Pos('aarch64', projectTarget) > 0  then
+        alertMsg:= 'WARNING: Target CPU "aarch64" not supported '+sLineBreak+
+                   '[out-of-box] by Laz4Android' +sLineBreak+ sLineBreak+
+                   'Hint1: Fora all: after "prebuild" change to your NDK installed system...'+sLineBreak+ sLineBreak+
+                   'Hint2: "Project" --> "Project Option" -->'+sLineBreak+
+                    '["Path"]'+sLineBreak+
+                    '-Fl' +sLineBreak+
+                    'change arch-arm64 [to] arch-arm'+sLineBreak+
+                    'change aarch64-linux-android [to] arm-linux-androideabi'+sLineBreak+ sLineBreak+
+                    '-o' +sLineBreak+
+                   'change arm64-v8a [to] armeabi-v7a'+sLineBreak+sLineBreak+
+                   '["Config and Target"]'+sLineBreak+
+                   'change Target CPU (-P) [to] arm'+sLineBreak+sLineBreak+
+                   '["Custom Options"]'+sLineBreak+
+                   'expand -Xd [to] -Xd -CfSoft -CpARMV7A'+sLineBreak+
+                   'change aarch64-linux-android [to] arm-linux-androideabi'+sLineBreak+
+                   sLineBreak+ '[Ctrl+c to Copy to Clipboard]';
+
+     if Pos('VFPV3', projectCustom) > 0  then
+        alertMsg:= 'WARNING: Custom Option "-CfVFPV3" not supported '+sLineBreak+
+                   '[out-of-box] by Laz4Android'+sLineBreak+ sLineBreak+
+                   'Hint: "Project" --> "Project Option" -->'+sLineBreak+'"[LAMW] Android Project Options" --> "Build"'+sLineBreak+
+                   'change -CfVFPV3 to -CfSoft'+sLineBreak+
+                   sLineBreak+'[Ctrl+c to Copy to Clipboard]';
+
+     if alertMsg <> '' then
+        ShowMessage(alertMsg);
+
+  end;
+  UpdateBuildModes();
 end;
 
 function TLamwSmartDesigner.IsSdkToolsAntEnable(path: string): boolean;

@@ -11,7 +11,7 @@ uses
   AndroidWizard_intf, uformworkspace, uFormAndroidProject, uRegisterForm, 
   FormPathMissing, uFormOSystem, uJavaParser, LamwDesigner, uFormSizeSelect, 
   ImgCache, LamwSettings, SmartDesigner, AndroidThemes, jImageListEditDlg, 
-  NinePatchPNG, uLamwTypes, LazarusPackageIntf;
+  NinePatchPNG, ulamwprocs, uLamwTypes, LazarusPackageIntf;
 
 implementation
 

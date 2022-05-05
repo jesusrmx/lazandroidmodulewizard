@@ -17,7 +17,7 @@
         </Debugging>
       </Linking>
     </CompilerOptions>
-    <Files Count="21">
+    <Files Count="22">
       <Item1>
         <Filename Value="androidwizard_intf.pas"/>
         <HasRegisterProc Value="True"/>
@@ -100,9 +100,13 @@
         <UnitName Value="NinePatchPNG"/>
       </Item20>
       <Item21>
+        <Filename Value="ulamwprocs.pas"/>
+        <UnitName Value="ulamwprocs"/>
+      </Item21>
+      <Item22>
         <Filename Value="ulamwtypes.pas"/>
         <UnitName Value="uLamwTypes"/>
-      </Item21>
+      </Item22>
     </Files>
     <CompatibilityMode Value="True"/>
     <RequiredPkgs Count="5">
