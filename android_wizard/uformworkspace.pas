@@ -754,7 +754,7 @@ begin
   end;
 
   {$IFDEF FULL}
-  if (FProjectModel = psAnt) and not DirectoryExists(FAndroidProjectName) then
+  if (FProjectModel = psNewProject) and not DirectoryExists(FAndroidProjectName) then
   begin
 
     CreateDir(FAndroidProjectName);

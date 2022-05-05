@@ -1239,16 +1239,10 @@ var
   pathToAdbBin: string;
   apk_aliaskey, strText: string;
   strPack: string;
-  sdkBuildTools, pluginVersion: string;
-  compileSdkVersion: string;
-  androidPluginNumber: integer;
-  gradleCompatible, outgradleCompatible: string;
-  gradleCompatibleAsNumber: integer;
-  directive: string;
-  FVersionCode : integer;
+  FVersionCode: integer;
   FVersionName : string;
   xmlAndroidManifest: TXMLDocument;
-  outTheme: string;
+  outTheme, sdkBuildTools: string;
 begin
   Result:= False;
   FModuleType:= projectType; //-1:gdx 0:GUI  1:NoGUI 2: NoGUI EXE Console 3: generic library
@@ -2489,107 +2483,20 @@ begin
           //
           {%Region /fold}
           {$IFDEF WINDOWS}
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'debug'+DirectorySeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-adb-install-debug.bat');
-
-          strList.Clear;
-          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-          strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'gradle-jarsigner-verify.sbat');
-
+          CreateGradleAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, instructionChip);
+          CreateGradleJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName);
           //Drafts Making gradlew (= gradle warapper)
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-          if FPathToGradle = '' then
-            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('set GRADLE_HOME='+FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('gradle wrapper');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-making-wrapper.bat');
-
+          CreateGradleMakingWrapper(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
           //Drafts Method II
           //build
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-          if FPathToGradle = '' then
-            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('set GRADLE_HOME='+ FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('gradlew build');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-build.bat');
-
+          CreateGradleWBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
           //run
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-          if FPathToGradle = '' then
-            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('set GRADLE_HOME='+ FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('gradlew run');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradlew-run.bat');
-
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-          if FPathToGradle = '' then
-            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('set GRADLE_HOME='+ FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('gradle clean build --info');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-build.bat');
-
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-          if FPathToGradle = '' then
-            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('set GRADLE_HOME='+ FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('gradle clean bundle --info');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-build-bundle.bat');
-
-          //thanks to TR3E!
-          strList.Clear;
-          sdkBuildTools:= GetBuildTool(FMaxSdkPlatform);
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
-          strList.Add('set GRADLE_HOME='+FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-
-          //fixed! thanks do @pasquale!
-          apkName:= FSmallProjName+ '-' + instructionChip;
-
-          strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
-          strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-apksigner.bat');
-
-          strList.Clear;  //multi-arch :: armeabi-v7a + arm64-v8a + ...
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
-          strList.Add('set GRADLE_HOME='+FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-          strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.bat');
-
-          strList.Clear;
-          strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
-          if FPathToGradle = '' then
-            strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('set GRADLE_HOME='+ FPathToGradle);
-          strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
-          strList.Add('gradle run');
-          strList.SaveToFile(FAndroidProjectName+PathDelim+'gradle-local-run.bat');
+          CreateGradleWRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
+          CreateGradleLocalBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
+          CreateGradleLocalBuildBundle(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
+          CreateGradleLocalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName, instructionChip, FMaxSdkPlatform);
+          CreateGradleLocalUniversalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName, FMaxSdkPlatform);
+          CreateGradleLocalRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
           {$ENDIF}
           {%EndRegion}
 

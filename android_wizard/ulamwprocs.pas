@@ -33,21 +33,23 @@ type
   procedure CreateGradleProperties(const FAndroidProjectName, FAndroidTheme, FPathToJavaJDK : string; overwrite:boolean=true);
   procedure CreateLocalProperties(const FAndroidProjectName, FPathToAndroidSDK, FPathToAndroidNDK: string; overwrite:boolean=true);
 
-  function CreateBuildGradle(
-    FAndroidProjectName: string;
-    FPathToAndroidSDK: string;
-    FMaxSDKPlatform: Integer;
-    FGradleVersion:string;
-    FAndroidTheme: string;
-    instructionChip: string;
-    FMinApi, FTargetApi: string;
-    FVersionCode: Integer; FVersionName: string;
-    FSupport: boolean;
-    FPackagePrefaceName: string;
-    FSmallProjName: string;
+  function CreateBuildGradle(FAndroidProjectName: string; FPathToAndroidSDK: string; FMaxSDKPlatform: Integer;
+    FGradleVersion:string; FAndroidTheme: string; instructionChip: string; FMinApi, FTargetApi: string;
+    FVersionCode: Integer; FVersionName: string; FSupport: boolean; FPackagePrefaceName: string; FSmallProjName: string;
     overwrite: boolean = true): boolean;
 
   procedure CreateGradleReadme(FAndroidProjectName, FPathToGradle, FPathToAndroidSDK: string; overwrite:boolean=true);
+  procedure CreateGradleAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, instructionChip: string; overwrite: boolean = true);
+  procedure CreateGradleJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateGradleMakingWrapper(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
+  procedure CreateGradleWBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
+  procedure CreateGradleWRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
+  procedure CreateGradleLocalBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
+  procedure CreateGradleLocalBuildBundle(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
+  procedure CreateGradleLocalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName, instructionChip: string; FMaxSDKPlatform:Integer; overwrite: boolean=true);
+  procedure CreateGradleLocalUniversalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName: string; FMaxSDKPlatform:Integer; overwrite: boolean=true);
+  procedure CreateGradleLocalRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
+
   // ANT
 
 implementation
@@ -893,6 +895,186 @@ begin
     strList.SaveToFile(aFile);
   end;
 
+end;
+
+procedure CreateGradleAdbInstallDebug(FAndroidProjectName,
+  FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName,
+  instructionChip: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-adb-install-debug.bat', overwrite, aFile) then
+  begin
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'debug'+DirectorySeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
+    strList.Add('pause');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleJarsignerVerify(FAndroidProjectName, FPathToJavaJDK,
+  FSmallProjName: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-jarsigner-verify.bat', overwrite, aFile) then
+  begin
+    strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+    strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
+    strList.Add('cd '+FAndroidProjectName);
+    strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleMakingWrapper(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-making-wrapper.bat', overwrite, aFile) then
+  begin
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+    if FPathToGradle = '' then
+      strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+    else
+      strList.Add('set GRADLE_HOME='+FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('gradle wrapper');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleWBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradlew-build.bat', overwrite, aFile) then
+  begin
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+    if FPathToGradle = '' then
+      strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+    else
+      strList.Add('set GRADLE_HOME='+ FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('gradlew build');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleWRun(FAndroidProjectName, FPathToAndroidSDK,
+  FPathToGradle: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradlew-run.bat', overwrite, aFile) then
+  begin
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+    if FPathToGradle = '' then
+      strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+    else
+      strList.Add('set GRADLE_HOME='+ FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('gradlew run');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleLocalBuild(FAndroidProjectName, FPathToAndroidSDK,
+  FPathToGradle: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-local-build.bat', overwrite, aFile) then
+  begin
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+    if FPathToGradle = '' then
+      strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+    else
+      strList.Add('set GRADLE_HOME='+ FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('gradle clean build --info');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleLocalBuildBundle(FAndroidProjectName, FPathToAndroidSDK,
+  FPathToGradle: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-local-build-bundle.bat', overwrite, aFile) then
+  begin
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+    if FPathToGradle = '' then
+      strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+    else
+      strList.Add('set GRADLE_HOME='+ FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('gradle clean bundle --info');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleLocalAPKSigner(FAndroidProjectName, FPathToAndroidSDK,
+  FPathToGradle, FSmallProjName, instructionChip: string; FMaxSDKPlatform:Integer; overwrite: boolean);
+var
+  aFile, tempStr, sdkBuildTools, apkName: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-local-apksigner.bat', overwrite, aFile) then
+  begin
+    //thanks to TR3E!
+    sdkBuildTools:= GetBuildTool(FPathToAndroidSDK, FMaxSdkPlatform, tempStr);
+    strList.Clear;
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
+    strList.Add('set GRADLE_HOME='+FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+
+    //fixed! thanks do @pasquale!
+    apkName:= FSmallProjName+ '-' + instructionChip;
+
+    strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
+    strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+apkName+'-release-unsigned-aligned.apk');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleLocalUniversalAPKSigner(FAndroidProjectName,
+  FPathToAndroidSDK, FPathToGradle, FSmallProjName: string;
+  FMaxSDKPlatform: Integer; overwrite: boolean);
+var
+  aFile, sdkBuildTools, tempStr: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.bat', overwrite, aFile) then
+  begin
+    //multi-arch :: armeabi-v7a + arm64-v8a + ...
+    sdkBuildTools:= GetBuildTool(FPathToAndroidSDK, FMaxSdkPlatform, tempStr);
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools;'+FPathToAndroidSDK+'build-tools\'+sdkBuildTools);
+    strList.Add('set GRADLE_HOME='+FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
+    strList.Add('apksigner sign --ks '+FAndroidProjectName+'\'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-release.apk '+FAndroidProjectName+'\build\outputs\apk\release\'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateGradleLocalRun(FAndroidProjectName, FPathToAndroidSDK,
+  FPathToGradle: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'gradle-local-run.bat', overwrite, aFile) then
+  begin
+    strList.Add('set Path=%PATH%;'+FPathToAndroidSDK+'platform-tools');
+    if FPathToGradle = '' then
+      strList.Add('set GRADLE_HOME=path_to_your_local_gradle')
+    else
+      strList.Add('set GRADLE_HOME='+ FPathToGradle);
+    strList.Add('set PATH=%PATH%;%GRADLE_HOME%\bin');
+    strList.Add('gradle run');
+    strList.SaveToFile(aFile);
+  end;
 end;
 
 initialization
