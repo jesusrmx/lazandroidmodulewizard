@@ -2415,41 +2415,24 @@ begin
           // GRADLE
           //
 
+          //Add GRADLE support ... [... initial code ...]
+          //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
+
           // BuildSys: 'Gradle'
           //       OS: 'All'
           // Produces:
           //    FAndroidProjectName/gradle.properties
-          // Requires:
-          //    FAndroidTheme, FPathToJavaJDK, FAndroidProjectName
-          {%Region /fold}
-          CreateGradleProperties(FAndroidProjectName, FAndroidTheme, FPathToJavaJDK);
-          {%EndRegion}
-
-          // BuildSys: 'Gradle'
-          //       OS: 'All'
-          // Produces:
           //    FAndroidProjectName/local.properties
-          // Requires:
-          //    FPathToAndroidSDK, FPathToAndroidNDK, FAndroidProjectName,
-          {%Region /fold}
-          CreateLocalProperties(FAndroidProjectName, FPathToAndroidSDK, FPathToAndroidNDK);
-          {%EndRegion}
-
-          //Add GRADLE support ... [... initial code ...]
-          //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
-
-
-          // BuildSys: 'Gradle'
-          //       OS: 'All'
-          // Produces:
           //    FAndroidProjectName/build.gradle
           //    FAndroidProjectName/gradle_readme.txt
           // Requires:
           //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
           //    FAndroidTheme, FMinApi, FTargetApi, FPathToAndroidSDK, FVersionCode
           //    FVersionName, FPackagePrefaceName, FSmallProjName, FAndroidProjectName
-          //    FPathToGradle,
+          //    FPathToGradle, FPathToJavaJDK, FPathToAndroidNDK
           {%Region /fold}
+          CreateGradleProperties(FAndroidProjectName, FAndroidTheme, FPathToJavaJDK);
+          CreateLocalProperties(FAndroidProjectName, FPathToAndroidSDK, FPathToAndroidNDK);
           if not CreateBuildGradle(FAndroidProjectName, FPathToAndroidSDK, FMaxSdkPlatform,
               FGradleVersion, FAndroidTheme, instructionChip, FMinApi, FTargetApi,
               FVersionCode, FVersionName, FSupport, FPackagePrefaceName, FSmallProjName) then
