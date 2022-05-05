@@ -99,9 +99,6 @@ type
      function GetPluginVersion(buildTool: string): string;
      function GetBuildTool(sdkApi: integer): string;
      function HasBuildTools(platform: integer;  out outBuildTool: string): boolean;
-     function TryGradleCompatibility(plugin: string; gradleVers: string; out outGradleVer: string) : boolean;
-     function TryPluginCompatibility(gradleVers: string): string;
-     function GetVerAsNumber(aVers: string): integer;
 
      function DoNewPathToJavaTemplate(): string;
      function GetPathToSmartDesigner(): string;
@@ -1359,112 +1356,6 @@ begin
 
 end;
 
-function TAndroidProjectDescriptor.GetVerAsNumber(aVers: string): integer;
-var
-  numberAsString: string;
-  len: integer;
-begin
-  numberAsString:= StringReplace(aVers,'.', '', [rfReplaceAll]);
-  len:= Length(numberAsString);
-  if len = 2 then numberAsString:= numberAsString + '00';
-  if len = 3 then numberAsString:= numberAsString + '0';
-  Result:= StrToInt(numberAsString);
-end;
-
-function TAndroidProjectDescriptor.TryPluginCompatibility(gradleVers: string): string;
-var
-  gradleVersNumber: integer;
-begin
-  Result:= '3.0.1';
-  gradleVersNumber:= GetVerAsNumber(gradleVers);
-  if gradleVersNumber <  4100 then Result:= '2.3.3'
-  else if (gradleVersNumber >= 4100) and (gradleVersNumber < 4400) then Result:= '3.0.1'
-  else if (gradleVersNumber >= 4400) and (gradleVersNumber < 4600) then Result:= '3.1.0'
-  else if (gradleVersNumber >= 4600) and (gradleVersNumber < 4920) then Result:= '3.2.1'
-  else if (gradleVersNumber >= 4920) and (gradleVersNumber < 5110) then Result:= '3.3.2'
-  else if (gradleVersNumber >= 7000) and (gradleVersNumber < 7999) then Result:= '7.0.0'
-  else Result:= '3.4.3'; //gradleVersNumber >= 5110)
-end;
-
-//https://developer.android.com/studio/releases/gradle-plugin.html#updating-plugin
-function TAndroidProjectDescriptor.TryGradleCompatibility(plugin: string; gradleVers: string; out outGradleVer: string): boolean;
-var
-  pluginNumber: integer;
-  numberAsString: string;
-  tryGradleVer: string;
-  tryGradleNumber, len: integer;
-  gradleNumber: integer;
-begin
-
-  Result:= False;
-  {200  < 220 ---  2.1
-  220  < 233 ---  2.14.1
-  233  < 301 ---  3.3
-  301  >     ---  4.0}
-  if gradleVers = '' then
-  begin
-   ShowMessage('Error. Gradle version is empty');
-   Exit;
-  end;
-
-  if plugin = '' then
-  begin
-    ShowMessage('Error. Android Gradle plugin version is empty');
-    Exit;
-  end;
-
-  numberAsString:= StringReplace(plugin,'.', '', [rfReplaceAll]); //3.0.1
-  pluginNumber:= StrToInt(numberAsString);  //301
-
-  if (pluginNumber >=  200) and (pluginNumber <  220) then
-  begin
-     tryGradleVer:= '2.10';   //210  -> 2100
-  end else if (pluginNumber >= 220) and (pluginNumber <  233) then
-  begin
-    tryGradleVer:= '2.14.1';  //        2141
-  end else if (pluginNumber >= 233) and (pluginNumber <  310) then
-   begin
-      tryGradleVer:= '4.1';
-   end else if (pluginNumber >= 310) and  (pluginNumber <  320) then
-   begin
-      tryGradleVer:= '4.4';         //27.0.3
-   end else if (pluginNumber >= 320) and  (pluginNumber <  330) then
-   begin
-      tryGradleVer:= '4.6';         //28.0.3
-   end else if (pluginNumber >= 330) and  (pluginNumber <  340) then
-   begin
-      tryGradleVer:= '4.9.2';   //fake -> '4.10.1'  //4.10.1 --> 4920     //28.0.3
-   end else //(pluginNumber >= 340)
-   begin
-       tryGradleVer:= '5.1.1';         //28.0.3
-   end;
-
-  numberAsString:= StringReplace(tryGradleVer,'.', '', [rfReplaceAll]); //3.3
-  len:= Length(numberAsString);
-  if len = 2 then numberAsString:= numberAsString + '00';
-  if len = 3 then numberAsString:= numberAsString + '0';
-  tryGradleNumber:= StrToInt(numberAsString);
-
-  numberAsString:= StringReplace(gradleVers,'.', '', [rfReplaceAll]); //41
-  len:= Length(numberAsString);
-  if len = 2 then numberAsString:= numberAsString + '00'; //4100
-  if len = 3 then numberAsString:= numberAsString + '0';
-
-  gradleNumber:= StrToInt(numberAsString);
-
-  if gradleNumber >= tryGradleNumber then
-  begin
-    outGradleVer:= gradleVers;
-    Result:= True;
-  end
-  else
-  begin
-    outGradleVer:= TryUndoFakeVersion(tryGradleVer);
-    Result:= False;
-  end;
-
-end;
-
 function TAndroidProjectDescriptor.GetWorkSpaceFromForm(projectType: TModuleType; out outTag: TModuleType): boolean;
 
   function MakeUniqueName(const Orig: string; sl: TStrings): string;
@@ -2318,9 +2209,6 @@ begin
 
           {$ENDIF}
           {$ENDIF FULL}
-
-          uLamwProcs.ShowMessageProc := @ShowMessage;
-
 
           if FBuildSystem = 'Ant' then
           begin

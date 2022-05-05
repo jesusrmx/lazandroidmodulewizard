@@ -5,13 +5,22 @@ unit ulamwprocs;
 interface
 
 uses
-  Classes, SysUtils, LamwSettings;
+  Classes, SysUtils, Dialogs, LamwSettings;
 
-var
-  ShowMessageProc: procedure(msg:string);
+type
+  // TheThing holds all variables produced by TfrmWorkSpace
+  // Does all what TAndroidXXXProjectDescriptor do but can be reused in other
+  // parts of LAMW
+  TheThing = class
+  end;
 
+  function GetVerAsNumber(aVers: string): integer;
 
   function TryUndoFakeVersion(grVer: string): string;
+  function TryGradleCompatibility(plugin: string; gradleVers: string; out outGradleVer: string) : boolean;
+  function TryPluginCompatibility(gradleVers: string): string;
+
+
 
   // GRADLE
   procedure CreateGradleProperties(const FAndroidProjectName, FAndroidTheme, FPathToJavaJDK : string; overwrite:boolean=true);
@@ -42,6 +51,18 @@ implementation
 var
   strList: TStringList;
 
+function GetVerAsNumber(aVers: string): integer;
+var
+  numberAsString: string;
+  len: integer;
+begin
+  numberAsString:= StringReplace(aVers,'.', '', [rfReplaceAll]);
+  len:= Length(numberAsString);
+  if len = 2 then numberAsString:= numberAsString + '00';
+  if len = 3 then numberAsString:= numberAsString + '0';
+  Result:= StrToInt(numberAsString);
+end;
+
 function TryUndoFakeVersion(grVer: string): string;
 begin
   Result:=  grVer;
@@ -49,6 +70,101 @@ begin
   else if grVer = '4.9.2' then Result:= '4.10.1'
   else if grVer = '4.9.3' then Result:= '4.10.2'
   else if grVer = '4.9.4' then Result:= '4.10.3';
+end;
+
+//https://developer.android.com/studio/releases/gradle-plugin.html#updating-plugin
+function TryGradleCompatibility(plugin: string; gradleVers: string; out
+  outGradleVer: string): boolean;
+var
+  pluginNumber: integer;
+  numberAsString: string;
+  tryGradleVer: string;
+  tryGradleNumber, len: integer;
+  gradleNumber: integer;
+begin
+
+  Result:= False;
+  {200  < 220 ---  2.1
+  220  < 233 ---  2.14.1
+  233  < 301 ---  3.3
+  301  >     ---  4.0}
+  if gradleVers = '' then
+  begin
+   ShowMessage('Error. Gradle version is empty');
+   Exit;
+  end;
+
+  if plugin = '' then
+  begin
+    ShowMessage('Error. Android Gradle plugin version is empty');
+    Exit;
+  end;
+
+  numberAsString:= StringReplace(plugin,'.', '', [rfReplaceAll]); //3.0.1
+  pluginNumber:= StrToInt(numberAsString);  //301
+
+  if (pluginNumber >=  200) and (pluginNumber <  220) then
+  begin
+     tryGradleVer:= '2.10';   //210  -> 2100
+  end else if (pluginNumber >= 220) and (pluginNumber <  233) then
+  begin
+    tryGradleVer:= '2.14.1';  //        2141
+  end else if (pluginNumber >= 233) and (pluginNumber <  310) then
+   begin
+      tryGradleVer:= '4.1';
+   end else if (pluginNumber >= 310) and  (pluginNumber <  320) then
+   begin
+      tryGradleVer:= '4.4';         //27.0.3
+   end else if (pluginNumber >= 320) and  (pluginNumber <  330) then
+   begin
+      tryGradleVer:= '4.6';         //28.0.3
+   end else if (pluginNumber >= 330) and  (pluginNumber <  340) then
+   begin
+      tryGradleVer:= '4.9.2';   //fake -> '4.10.1'  //4.10.1 --> 4920     //28.0.3
+   end else //(pluginNumber >= 340)
+   begin
+       tryGradleVer:= '5.1.1';         //28.0.3
+   end;
+
+  numberAsString:= StringReplace(tryGradleVer,'.', '', [rfReplaceAll]); //3.3
+  len:= Length(numberAsString);
+  if len = 2 then numberAsString:= numberAsString + '00';
+  if len = 3 then numberAsString:= numberAsString + '0';
+  tryGradleNumber:= StrToInt(numberAsString);
+
+  numberAsString:= StringReplace(gradleVers,'.', '', [rfReplaceAll]); //41
+  len:= Length(numberAsString);
+  if len = 2 then numberAsString:= numberAsString + '00'; //4100
+  if len = 3 then numberAsString:= numberAsString + '0';
+
+  gradleNumber:= StrToInt(numberAsString);
+
+  if gradleNumber >= tryGradleNumber then
+  begin
+    outGradleVer:= gradleVers;
+    Result:= True;
+  end
+  else
+  begin
+    outGradleVer:= TryUndoFakeVersion(tryGradleVer);
+    Result:= False;
+  end;
+
+end;
+
+function TryPluginCompatibility(gradleVers: string): string;
+var
+  gradleVersNumber: integer;
+begin
+  Result:= '3.0.1';
+  gradleVersNumber:= GetVerAsNumber(gradleVers);
+  if gradleVersNumber <  4100 then Result:= '2.3.3'
+  else if (gradleVersNumber >= 4100) and (gradleVersNumber < 4400) then Result:= '3.0.1'
+  else if (gradleVersNumber >= 4400) and (gradleVersNumber < 4600) then Result:= '3.1.0'
+  else if (gradleVersNumber >= 4600) and (gradleVersNumber < 4920) then Result:= '3.2.1'
+  else if (gradleVersNumber >= 4920) and (gradleVersNumber < 5110) then Result:= '3.3.2'
+  else if (gradleVersNumber >= 7000) and (gradleVersNumber < 7999) then Result:= '7.0.0'
+  else Result:= '3.4.3'; //gradleVersNumber >= 5110)
 end;
 
 { TFileProducer }
@@ -99,7 +215,7 @@ end;
 procedure CreateLocalProperties(const FAndroidProjectName, FPathToAndroidSDK,
   FPathToAndroidNDK: string; overwrite: boolean);
 var
-  aFile: string;
+  aFile, tempStr: string;
 begin
   if NeedFile(FAndroidProjectName+PathDelim+'local.properties', overwrite, aFile) then
   begin
@@ -297,7 +413,7 @@ begin
        begin
          strList.Add('    '+directive+' '''+aAppCompatLib.Name+'''');
          if aAppCompatLib.MinAPI > StrToInt(compileSdkVersion) then
-             ShowMessageProc('Warning: AppCompat theme need Android SDK >= ' +
+             ShowMessage('Warning: AppCompat theme need Android SDK >= ' +
                           IntToStr(aAppCompatLib.MinAPI));
        end;
        //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
@@ -308,7 +424,7 @@ begin
        begin
          strList.Add('    '+directive+' '''+aSupportLib.Name+'''');
          if aSupportLib.MinAPI > StrToInt(compileSdkVersion) then
-           ShowMessageProc('Warning: Support library need Android SDK >= ' +
+           ShowMessage('Warning: Support library need Android SDK >= ' +
                         IntToStr(aSupportLib.MinAPI));
        end;
        //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
