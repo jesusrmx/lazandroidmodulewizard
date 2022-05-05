@@ -2461,185 +2461,39 @@ begin
           {%EndRegion}
 
           {$IFDEF FULL}
-          {%Region /fold Full Gradle Region}
-          {$IFDEF WINDOWS}
           // BuildSys: 'Gradle'
-          //       OS: 'Windows'
+          //       OS: 'All'
           // Produces:
-          //    FAndroidProjectName/gradle-adb-install-debug.bat
-          //    FAndroidProjectName/gradle-jarsigner-verify.bat
-          //    FAndroidProjectName/gradle-making-wrapper.bat
-          //    FAndroidProjectName/gradlew-build.bat
-          //    FAndroidProjectName/gradlew-run.bat
-          //    FAndroidProjectName/gradle-local-build.bat
-          //    FAndroidProjectName/gradle-local-build-bundle.bat
-          //    FAndroidProjectName/gradle-local-apksigner.bat
-          //    FAndroidProjectName/gradle-local-universal-apksigner.bat
-          //    FAndroidProjectName/gradle-local-run.bat
+          //    FAndroidProjectName/gradle-adb-install-debug[.bat/sh]
+          //    FAndroidProjectName/gradle-jarsigner-verify[.bat/sh]
+          //    FAndroidProjectName/gradle-making-wrapper[.bat/sh]
+          //    FAndroidProjectName/gradlew-build[.bat/sh]
+          //    FAndroidProjectName/gradlew-run[.bat/sh]
+          //    FAndroidProjectName/gradle-local-build[.bat/sh]
+          //    FAndroidProjectName/gradle-local-build-bundle[.bat/sh]
+          //    FAndroidProjectName/gradle-local-apksigner[.bat/sh]
+          //    FAndroidProjectName/gradle-local-universal-apksigner[.bat/sh]
+          //    FAndroidProjectName/gradle-local-run[.bat/sh]
           // Requires:
           //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
           //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
           //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName,
           //
           {%Region /fold}
-          {$IFDEF WINDOWS}
           CreateGradleAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, instructionChip);
           CreateGradleJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName);
+
           //Drafts Making gradlew (= gradle warapper)
           CreateGradleMakingWrapper(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
-          //Drafts Method II
-          //build
           CreateGradleWBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
-          //run
           CreateGradleWRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
+
           CreateGradleLocalBuild(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
           CreateGradleLocalBuildBundle(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
           CreateGradleLocalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName, instructionChip, FMaxSdkPlatform);
           CreateGradleLocalUniversalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName, FMaxSdkPlatform);
           CreateGradleLocalRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle);
-          {$ENDIF}
           {%EndRegion}
-
-          {$ELSE}
-
-          // BuildSys: 'Gradle'
-          //       OS: 'Unix'
-          // Produces:
-          //    FAndroidProjectName/gradle-adb-install-debug.sh
-          //    FAndroidProjectName/gradle-jarsigner-verify.sh
-          //    FAndroidProjectName/gradle-jarsigner-verify-macos.sh
-          //    FAndroidProjectName/gradle-making-wrapper.sh
-          //    FAndroidProjectName/gradlew-build.sh
-          //    FAndroidProjectName/gradlew-run.sh
-          //    FAndroidProjectName/gradle-local-build.sh
-          //    FAndroidProjectName/gradle-local-build-bundle.sh
-          //    FAndroidProjectName/gradle-local-apksigner.sh
-          //    FAndroidProjectName/gradle-local-universal-apksigner.sh
-          //    FAndroidProjectName/gradle-local-run.sh
-          // Requires:
-          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
-          //    FAndroidTheme, AppCompatLibs, FPathToAndroidSDK, FPathToGradle,
-          //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName,
-          //
-          {%Region /fold}
-          strList.Clear;
-          strList.Add(pathToAdbBin+DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          tempStr:= FAndroidProjectName;
-          //{$ifdef windows}
-          //tempStr:= StringReplace(FAndroidProjectName,PathDelim,DirectorySeparator, [rfReplaceAll]);
-          //tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
-          //{$endif}
-          strList.Add(pathToAdbBin+DirectorySeparator+'adb install -r ' + tempStr +
-                                  DirectorySeparator+ 'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'debug' + DirectorySeparator+FSmallProjName+'-'+instructionChip+'-debug.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-adb-install-debug.sh');
-
-          strList.Clear;
-          strList.Add('export JAVA_HOME='+FPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify.sh');
-
-          strList.Clear;
-          strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'build'+DirectorySeparator+'outputs'+DirectorySeparator+'apk'+DirectorySeparator+'release'+DirectorySeparator+FSmallProjName+'-release.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-jarsigner-verify-macos.sh');
-
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          if FPathToGradle = '' then
-            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('export GRADLE_HOME='+ FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('source ~/.bashrc');
-          //strList.Add('./gradle wrapper');
-          strList.Add('gradle wrapper');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-making-wrapper.sh');
-
-          //Drafts Method II
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          if FPathToGradle = '' then
-             strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-          else
-             strList.Add('export GRADLE_HOME='+FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('source ~/.bashrc');
-          //strList.Add('./gradlew build');
-          strList.Add('gradlew build');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-build.sh');
-
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          if FPathToGradle = '' then
-             strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-          else
-             strList.Add('export GRADLE_HOME='+FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('source ~/.bashrc');
-          //strList.Add('./gradlew run');
-          strList.Add('gradlew run');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradlew-run.sh');
-
-          //Drafts Method I
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          if FPathToGradle = '' then
-            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('export GRADLE_HOME='+ FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('source ~/.bashrc');
-          strList.Add('gradle clean build --info');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-build.sh');
-
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          if FPathToGradle = '' then
-            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('export GRADLE_HOME='+ FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('source ~/.bashrc');
-          strList.Add('gradle clean bundle --info');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-build-bundle.sh');
-
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          strList.Add('export PATH='+FPathToAndroidSdk+'build-tools/'+sdkBuildTools+':$PATH');
-          strList.Add('export GRADLE_HOME='+ FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned.apk '+FAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned-aligned.apk');
-          strList.Add('apksigner sign --ks '+FAndroidProjectName+'/'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-release.apk '+FAndroidProjectName+'/build/outputs/apk/release/'+apkName+'-release-unsigned-aligned.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-apksigner.sh');
-
-          strList.Clear;  //multi-arch :: armeabi-v7a + arm64-v8a + ...
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-          strList.Add('export PATH='+FPathToAndroidSdk+'build-tools/'+sdkBuildTools+':$PATH');
-          strList.Add('export GRADLE_HOME='+ FPathToGradle);
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('zipalign -v -p 4 '+FAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned.apk '+FAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-          strList.Add('apksigner sign --ks '+FAndroidProjectName+'/'+Lowercase(FSmallProjName)+'-release.keystore --ks-pass pass:123456 --key-pass pass:123456 --out '+FAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-release.apk '+FAndroidProjectName+'/build/outputs/apk/release/'+FSmallProjName+'-universal-release-unsigned-aligned.apk');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-universal-apksigner.sh');
-
-          strList.Clear;
-          strList.Add('export PATH='+FPathToAndroidSdk+'platform-tools'+':$PATH');
-
-          if FPathToGradle = '' then
-            strList.Add('export GRADLE_HOME=path_to_your_local_gradle')
-          else
-            strList.Add('export GRADLE_HOME='+ FPathToGradle);
-
-          strList.Add('export PATH=$PATH:$GRADLE_HOME/bin');
-          strList.Add('source ~/.bashrc');
-          //strList.Add('.\gradle run');
-          strList.Add('gradle run');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'gradle-local-run.sh');
-          {%EndRegion}
-          {$ENDIF}
-          {%EndRegion Full Gradle Region}
           {$ENDIF FULL}
           end; // if "Gradle"
         end;
