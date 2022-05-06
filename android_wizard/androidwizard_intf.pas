@@ -857,12 +857,7 @@ begin
         //
         {%Region /fold}
         //eclipe compatibility [Neon!]
-        CreateDir(FAndroidProjectName+DirectorySeparator+'.settings');
-        auxList.Add('eclipse.preferences.version=1');
-        auxList.Add('org.eclipse.jdt.core.compiler.codegen.targetPlatform=1.7');
-        auxList.Add('org.eclipse.jdt.core.compiler.compliance=1.7');
-        auxList.Add('org.eclipse.jdt.core.compiler.source=1.7');
-        auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.settings'+DirectorySeparator+'org.eclipse.jdt.core.prefs');
+        CreateEclipseCorePrefs(FAndroidProjectName, '1.7');
         {%EndRegion}
 
 
@@ -871,17 +866,7 @@ begin
         // Depends On:    FAndroidProjectName
         //
         {%Region /fold}
-        auxList.Clear;
-        auxList.Add('<?xml version="1.0" encoding="UTF-8"?>');
-        auxList.Add('<classpath>');
-	      auxList.Add('<classpathentry kind="src" path="src"/>');
-	      auxList.Add('<classpathentry kind="src" path="gen"/>');
-	      auxList.Add('<classpathentry kind="con" path="org.eclipse.andmore.ANDROID_FRAMEWORK"/>');
-	      auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.LIBRARIES"/>');
-	      auxList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.DEPENDENCIES"/>');
-	      auxList.Add('<classpathentry kind="output" path="bin/classes"/>');
-        auxList.Add('</classpath>');
-        auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.classpath');
+        CreateEclipseClassPath(FAndroidProjectName);
         {%EndRegion}
 
         // What it does:  Creates <Proj>/.project  a file For eclipse funcionality
@@ -889,40 +874,7 @@ begin
         // Depends On:    FAndroidProjectName, FSmalProjName
         //
         {%Region /fold}
-        auxList.Clear;
-        auxList.Add('<projectDescription>');
-        auxList.Add('	<name>'+FSmallProjName+'</name>');
-        auxList.Add('	<comment></comment>');
-        auxList.Add('	<projects>');
-        auxList.Add('	</projects>');
-        auxList.Add('	<buildSpec>');
-        auxList.Add('		<buildCommand>');
-        auxList.Add('			<name>org.eclipse.andmore.ResourceManagerBuilder</name>');
-        auxList.Add('			<arguments>');
-        auxList.Add('			</arguments>');
-        auxList.Add('		</buildCommand>');
-        auxList.Add('		<buildCommand>');
-        auxList.Add('			<name>org.eclipse.andmore.PreCompilerBuilder</name>');
-        auxList.Add('			<arguments>');
-        auxList.Add('			</arguments>');
-        auxList.Add('		</buildCommand>');
-        auxList.Add('		<buildCommand>');
-        auxList.Add('			<name>org.eclipse.jdt.core.javabuilder</name>');
-        auxList.Add('			<arguments>');
-        auxList.Add('			</arguments>');
-        auxList.Add('		</buildCommand>');
-        auxList.Add('		<buildCommand>');
-        auxList.Add('			<name>org.eclipse.andmore.ApkBuilder</name>');
-        auxList.Add('			<arguments>');
-        auxList.Add('			</arguments>');
-        auxList.Add(' 		</buildCommand>');
-        auxList.Add('	</buildSpec>');
-        auxList.Add('	<natures>');
-        auxList.Add('		<nature>org.eclipse.andmore.AndroidNature</nature>');
-        auxList.Add('		<nature>org.eclipse.jdt.core.javanature</nature>');
-        auxList.Add('	</natures>');
-        auxList.Add('</projectDescription>');
-        auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'.project');
+        CreateEclipseProjectFile(FAndroidProjectName, FSmallProjName);
         {%EndRegion}
         {$ENDIF}
       end;

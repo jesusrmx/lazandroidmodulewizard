@@ -48,6 +48,10 @@ type
   procedure CreateLogCatError(FAndroidProjectName, FPathToAndroidSDK: string; overwrite:boolean=true);
   procedure CreateReleaseKeyStore(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
 
+  procedure CreateEclipseCorePrefs(FAndroidProjectName:string; compVer:string='1.7'; overwrite:boolean=true);
+  procedure CreateEclipseClassPath(FAndroidProjectName:string; overwrite:boolean=true);
+  procedure CreateEclipseProjectFile(FAndroidProjectName, FSmallProjName:string; overwrite:boolean=true);
+
   //
   // GRADLE
   //
@@ -735,6 +739,85 @@ begin
     // but ATM it is commented out.
     {$ENDIF}
     ScriptSave(aFile);
+  end;
+end;
+
+procedure CreateEclipseCorePrefs(FAndroidProjectName: string; compVer: string;
+  overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+DirectorySeparator+'.settings'+DirectorySeparator+'org.eclipse.jdt.core.prefs', overwrite, aFile) then
+  begin
+    CreateDir(FAndroidProjectName+DirectorySeparator+'.settings');
+    strList.Add('eclipse.preferences.version=1');
+    strList.Add('org.eclipse.jdt.core.compiler.codegen.targetPlatform='+compVer);
+    strList.Add('org.eclipse.jdt.core.compiler.compliance='+compVer);
+    strList.Add('org.eclipse.jdt.core.compiler.source='+compVer);
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateEclipseClassPath(FAndroidProjectName: string; overwrite: boolean
+  );
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+DirectorySeparator+'.classpath', overwrite, aFile) then
+  begin
+    strList.Add('<?xml version="1.0" encoding="UTF-8"?>');
+    strList.Add('<classpath>');
+    strList.Add('<classpathentry kind="src" path="src"/>');
+    strList.Add('<classpathentry kind="src" path="gen"/>');
+    strList.Add('<classpathentry kind="con" path="org.eclipse.andmore.ANDROID_FRAMEWORK"/>');
+    strList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.LIBRARIES"/>');
+    strList.Add('<classpathentry exported="true" kind="con" path="org.eclipse.andmore.DEPENDENCIES"/>');
+    strList.Add('<classpathentry kind="output" path="bin/classes"/>');
+    strList.Add('</classpath>');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateEclipseProjectFile(FAndroidProjectName, FSmallProjName: string;
+  overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+DirectorySeparator+'.project', overwrite, aFile) then
+  begin
+    strList.Add('<projectDescription>');
+    strList.Add('	<name>'+FSmallProjName+'</name>');
+    strList.Add('	<comment></comment>');
+    strList.Add('	<projects>');
+    strList.Add('	</projects>');
+    strList.Add('	<buildSpec>');
+    strList.Add('		<buildCommand>');
+    strList.Add('			<name>org.eclipse.andmore.ResourceManagerBuilder</name>');
+    strList.Add('			<arguments>');
+    strList.Add('			</arguments>');
+    strList.Add('		</buildCommand>');
+    strList.Add('		<buildCommand>');
+    strList.Add('			<name>org.eclipse.andmore.PreCompilerBuilder</name>');
+    strList.Add('			<arguments>');
+    strList.Add('			</arguments>');
+    strList.Add('		</buildCommand>');
+    strList.Add('		<buildCommand>');
+    strList.Add('			<name>org.eclipse.jdt.core.javabuilder</name>');
+    strList.Add('			<arguments>');
+    strList.Add('			</arguments>');
+    strList.Add('		</buildCommand>');
+    strList.Add('		<buildCommand>');
+    strList.Add('			<name>org.eclipse.andmore.ApkBuilder</name>');
+    strList.Add('			<arguments>');
+    strList.Add('			</arguments>');
+    strList.Add(' 		</buildCommand>');
+    strList.Add('	</buildSpec>');
+    strList.Add('	<natures>');
+    strList.Add('		<nature>org.eclipse.andmore.AndroidNature</nature>');
+    strList.Add('		<nature>org.eclipse.jdt.core.javanature</nature>');
+    strList.Add('	</natures>');
+    strList.Add('</projectDescription>');
+    strList.SaveToFile(aFile);
   end;
 end;
 
