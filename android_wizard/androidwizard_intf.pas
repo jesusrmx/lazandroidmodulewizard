@@ -1768,98 +1768,30 @@ begin
           pathToAdbBin:= FPathToAndroidSdk+'platform-tools';
           apk_aliaskey:= LowerCase(FSmallProjName)+'.keyalias';
 
-
           //
           //  All (Ant + Gradle)
           //
-
           {$IFDEF FULL}
           // BuildSys: 'All'
           //       OS: 'All'
           // Produces:
           //    FAndroidProjectName/keytool_input.txt
-          // Requires:
-          //    FAndroidProjectName,
-          {%Region /fold}
-          //keytool input [dammy] data!
-          strList.Clear;
-          strList.Add('123456');             //Enter keystore password:
-          strList.Add('123456');             //Re-enter new password:
-          strList.Add('MyFirstName MyLastName'); //What is your first and last name?
-          strList.Add('MyDevelopmentUnitName');        //What is the name of your organizational unit?
-          strList.Add('MyCompanyName');   //What is the name of your organization?
-          strList.Add('MyCity');             //What is the name of your City or Locality?
-          strList.Add('MT');                 //What is the name of your State or Province?
-          strList.Add('BR');                 //What is the two-letter country code for this unit?
-          strList.Add('y');  //Is <CN=FirstName LastName, OU=Development, O=MyExampleCompany, L=MyCity, ST=AK, C=WZ> correct?[no]:  y
-          strList.Add('123456'); //Enter key password for the Apk <aliasKey> <RETURN if same as keystore password>:
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
-          {%EndRegion}
-
-          // BuildSys: 'All'
-          //       OS: 'All'
-          // Produces:
           //    FAndroidProjectName/How_To_Get_Your_Signed_Release_Apk.txt
+          //    FAndroidProjectName/adb-uninstall[.bat/.sh]
+          //    FAndroidProjectName/logcat[.bat/.sh]
+          //    FAndroidProjectName/utils/logcat-error[.bat/.sh]
+          //    FAndroidProjectName/release-keystore[.bat/.sh]
           // Requires:
-          //    FAndroidProjectName, FSmallProjName
+          //    FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, FAndroidProjectName,
+          //    FPathToJavaJDK, FMinApi,
+          //    FAntBuildMode, FAntPackageName, FMainActivity,
           {%Region /fold}
-          strList.Clear;
-          strList.Add('       Tutorial: How to get your "signed" release Apk ['+ FSmallProjName +']');
-          strList.Add(' ');
-          strList.Add('    NEW! ');
-          strList.Add('    "Tools"  --> "[LAMW] ..." --> "Build Release Signed Apk  ..."');
-          strList.Add('    "Tools"  --> "[LAMW] ..." --> "Build Release Signed Bundle ..."');
-          strList.Add(' ');
-          strList.Add(' ');
-          strList.Add(' OR: ');
-          strList.Add(' ');
-          strList.Add('1)Edit/change the project file "keytool_input.txt" to more representative informations:"');
-          strList.Add('');
-          strList.Add('.Your keystore password [--ks-pass pass] : 123456');
-          strList.Add('.Re-enter/confirm the keystore password: 123456');
-          strList.Add(' ');
-          strList.Add('.Your first and last name: MyFirstName MyLastName');
-          strList.Add('');
-          strList.Add('.Your Organizational unit: MyDevelopmentUnit');
-          strList.Add('');
-          strList.Add('.Your Organization name: MyCompany');
-          strList.Add('');
-          strList.Add('.Your City or Locality: MyCity');
-          strList.Add('');
-          strList.Add('.Your State or Province: MT' );
-          strList.Add('');
-          strList.Add('.The two-letter country code: BR');
-          strList.Add('');
-          strList.Add('.All correct: y');
-          strList.Add('');
-          strList.Add('.Your key password for this Apk alias [--key-pass pass]: 123456 ');
-          strList.Add('');
-          strList.Add('');
-          strList.Add('2)If you are using "Ant" then edit/change "ant.properties" according, too!');
-          strList.Add('');
-          strList.Add('');
-          strList.Add('3) Execute the [project] command "release-keystore.bat" or "release-keystore.sh" or "release-keystore-macos.sh" to get the "'+Lowercase(FSmallProjName)+'-release.keystore"');
-          strList.Add('           warning: the file "'+Lowercase(FSmallProjName)+'-release.keystore" should be created only once [per application] otherwise it will fail [and NEVER delete it!]');
-          strList.Add(' ');
-          strList.Add('4) [Gradle]: Edit/change the values [123456] "--ks-pass pass:" and "--key-pass pass:" in project file "gradle-local-apksigner.bat" [or .sh]  according "keytool_input.txt" file');
-          strList.Add('             Edit/change the values [123456] "--ks-pass pass:" and "--key-pass pass:" in project file "gradle-local-universal-apksigner.bat" [or .sh]  according "keytool_input.txt" file');
-          strList.Add('');
-          strList.Add('5) [Gradle]: Execute the [project] command "gradle-local-apksigner.bat" [.sh] to get the [release] signed Apk!');
-          strList.Add('             OR execute "gradle-local-universal-apksigner.bat" [.sh] if your are supporting multi-architecture (ex.: armeabi-v7a + arm64-v8a + ...) ');
-          strList.Add('             hint: look for your generated "'+FSmallProjName+'-release.apk" in [project] folder "...\build\outputs\apk\release"');
-          strList.Add(' ');
-          strList.Add('');
-          strList.Add('6) [Ant]: Execute the [project] command "ant-build-release.bat" [.sh] to get the [release] signed Apk!"');
-          strList.Add('          hint: look for your generated "'+FSmallProjName+'-release.apk" in [project] folder "...\bin"');
-          strList.Add('');
-          strList.Add('');
-          strList.Add('Success! You can now upload your nice "'+FSmallProjName+'-release.apk" to "Google Play" [or others stores...]!');
-          strList.Add('');
-          strList.Add('....  Thanks to All!');
-          strList.Add('....  Special thanks to ADiV/TR3E!');
-          strList.Add('');
-          strList.Add('....  by jmpessoa_hotmail_com');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'How_To_Get_Your_Signed_Release_Apk.txt');
+          CreateKeyToolInput(FAndroidProjectName);
+          CreateHowToGetYourSignedReleaseApk(FAndroidProjectName, FSmallProjName);
+          CreateADbUninstall(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName);
+          CreateLogcat(FAndroidProjectName, FPathToAndroidSDK);
+          CreateLogcatError(FAndroidProjectName, FPathToAndroidSDK);
+          CreateReleaseKeyStore(FAndroidProjectName, FPathToJavaJDK, FSmallProjName);
           {%EndRegion}
 
           {$IFDEF WINDOWS}
@@ -1876,178 +1808,8 @@ begin
           //    FAndroidProjectName, FPathToAndroidSDK, FMinApi
           //
           {%Region /fold}
-
-          //*.bat utils...
-          CreateDir(FAndroidProjectName+ DirectorySeparator + 'utils');
-
-          {"android list targets" to see the available targets...}
-          strList.Clear;
-          strList.Add('cd '+FPathToAndroidSDK+'tools');
-          strList.Add('android list targets');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'list-target.bat');
-
-          //need to pause on double-click use...
-          strList.Clear;
-          strList.Add('cmd /K list-target.bat');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'paused-list-target.bat');
-
-          strList.Clear;
-          strList.Add('cd '+FPathToAndroidSDK+'tools');
-          strList.Add('android create avd -n avd_default -t 1 -c 32M');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'create-avd-default.bat');
-
-          //need to pause on double-click use...
-          strList.Clear;
-          strList.Add('cmd /k create-avd-default.bat');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'paused-create-avd-default.bat');
-
-          strList.Clear;
-          strList.Add('cd '+FPathToAndroidSDK+'tools');
-          if StrToInt(FMinApi) >= 15 then
-            strList.Add('emulator -avd avd_default +  -gpu on &')  //gpu: api >= 15,,,
-          else
-            strList.Add('tools emulator -avd avd_api_'+FMinApi + ' &');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'launch-avd-default.bat');
+          CreateAVDUtils(FAndroidProjectName, FPathToAndroidSDK, FMinApi);
           {%EndRegion}
-
-          // BuildSys: 'All'
-          //       OS: 'Windows'
-          // Produces:
-          //    FAndroidProjectName/adb-uninstall.bat
-          //    FAndroidProjectName/logcat.bat
-          //    FAndroidProjectName/utils/logcat-error.bat
-          //    FAndroidProjectName/utils/logcat-app-perform.bat
-          // Requires:
-          //    FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, FAndroidProjectName,
-          //    FAntBuildMode,
-          {%Region /fold}
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'adb-uninstall.bat');
-
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb logcat &');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'logcat.bat');
-
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+
-                     DirectorySeparator+'adb logcat AndroidRuntime:E *:S');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'logcat-error.bat');
-
-          strList.Clear;
-          strList.Add(FPathToAndroidSDK+'platform-tools'+DirectorySeparator+
-                     'adb logcat ActivityManager:I '+FSmallProjName+'-'+FAntBuildMode+'.apk:D *:S');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'logcat-app-perform.bat');
-
-          (*//causes instability in the simulator! why ?
-          strList.Clear;
-          strList.Add('cd '+FAndroidProjectName+DirectorySeparator+'bin');
-          strList.Add(FPathToAndroidSDK+'platform-tools'+DirectorySeparator+
-                     'adb shell am start -a android.intent.action.MAIN -n '+
-                      FAntPackageName+'.'+LowerCase(projName)+'/.'+FMainActivity);
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'launch-apk.bat');
-          *)
-
-          strList.Clear;
-          {
-          strList.Add('cd '+FAndroidProjectName+DirectorySeparator+'bin');
-          strList.Add(FPathToAndroidSDK+
-                     'build-tools'+DirectorySeparator+ GetFolderFromApi(StrToInt(FMinApi))+
-                     DirectorySeparator + 'aapt list '+FSmallProjName+'-'+FAntBuildMode+'.apk');
-          strList.Add('cd ..');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'utils'+DirectorySeparator+'aapt.bat'); //Android Asset Packaging Tool
-          }
-          {%EndRegion}
-
-          // BuildSys: 'All'
-          //       OS: 'Windows'
-          // Produces:
-          //    FAndroidProjectName/release-keystore.bat
-          // Requires:
-          //    FAndroidProjectName, FPathToJavaJDK, FSmallProjName
-          {%Region /fold}
-          strList.Clear;
-
-          strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-          strList.Add('set PATH=%JAVA_HOME%'+PathDelim+'bin;%PATH%');
-          strList.Add('set JAVA_TOOL_OPTIONS=-Duser.language=en');
-          strList.Add('cd '+FAndroidProjectName);
-          //strList.Add('if exist "'+Lowercase(FSmallProjName)+'-release.keystore" goto Error');
-
-          //https://forum.lazarus.freepascal.org/index.php/topic,56830.0.html  [by guaracy]
-          {
-          strList.Add('LC_ALL=C keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                      FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
-          }
-          //roolback
-          //https://forum.lazarus.freepascal.org/index.php/topic,57735.0.html
-          strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                      FAndroidProjectName+DirectorySeparator+'keytool_input.txt');
-
-          strList.Add(':Error');
-          strList.Add('echo off');
-          strList.Add('cls');
-          strList.Add('echo.');
-          strList.Add('echo Signature file created previously, remember that if you delete this file and it was uploaded to Google Play, you will not be able to upload another app without this signature.');
-          strList.Add('echo.');
-          strList.Add('pause');
-          strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'release-keystore.bat');
-          {%EndRegion}
-
-          {$ELSE}
-
-          // BuildSys: 'All'
-          //       OS: 'Unix'
-          // Produces:
-          //    FAndroidProjectName/adb-uninstall.sh
-          //    FAndroidProjectName/logcat.sh
-          //    FAndroidProjectName/release-keystore.sh
-          //    FAndroidProjectName/release-keystore-macos.sh
-          // Requires:
-          //    FAndroidProjectName, FSmallProjName, FPathToJavaJDK, FPathToAndroidSDK
-          //    FPackagePrefaceName
-          {%Region /fold}
-          //linux uninstall  - thanks to Stephano!
-          strList.Clear;
-          strList.Add(pathToAdbBin+DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'adb-uninstall.sh');
-
-          //linux logcat  - thanks to Stephano!
-          strList.Clear;
-          strList.Add(pathToAdbBin+DirectorySeparator+'adb logcat &');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'logcat.sh');
-
-          strList.Clear;
-          strList.Add('export JAVA_HOME='+FPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-          strList.Add('cd '+FAndroidProjectName);
-
-          ////https://forum.lazarus.freepascal.org/index.php/topic,57735.0.html
-          strList.Add('LC_ALL=C keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                       FAndroidProjectName+'/keytool_input.txt');
-
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore.sh');
-
-          //MacOs
-          strList.Clear;
-          strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');
-          strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
-          strList.Add('cd '+FAndroidProjectName);
-          strList.Add('keytool -genkey -v -keystore '+Lowercase(FSmallProjName)+'-release.keystore -alias '+apk_aliaskey+' -keyalg RSA -keysize 2048 -validity 10000 < '+
-                       FAndroidProjectName+'/keytool_input.txt');
-          SaveShellScript(strList, FAndroidProjectName+PathDelim+'release-keystore-macos.sh');
-          {%EndRegion}
-
           {$ENDIF}
           {$ENDIF FULL}
 
@@ -2247,6 +2009,10 @@ begin
 
           {$IFDEF FULL}
           {%Region /fold Full Ant region}
+          CreateLogcatAppPerform(FAndroidProjectName, FPathToAndroidSDK, FSmallProjName, FAntBuildMode);
+          // Missing FAntPackageName
+          //CreateLaunchAPK(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMainActivity);
+          //CreateAAPT(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMinApi, FSmallProjName, FAntBuildMode);
           {$IFDEF WINDOWS}
 
           // BuildSys: 'Ant'
@@ -2415,9 +2181,6 @@ begin
           // GRADLE
           //
 
-          //Add GRADLE support ... [... initial code ...]
-          //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
-
           // BuildSys: 'Gradle'
           //       OS: 'All'
           // Produces:
@@ -2426,13 +2189,15 @@ begin
           //    FAndroidProjectName/build.gradle
           //    FAndroidProjectName/gradle_readme.txt
           // Requires:
-          //    FMaxSdkPlatform, FCandidateSdkBuild, FGradleVersion, instructionChip,
+          //    FMaxSdkPlatform, FGradleVersion, instructionChip,
           //    FAndroidTheme, FMinApi, FTargetApi, FPathToAndroidSDK, FVersionCode
           //    FVersionName, FPackagePrefaceName, FSmallProjName, FAndroidProjectName
-          //    FPathToGradle, FPathToJavaJDK, FPathToAndroidNDK
+          //    FPathToGradle, FPathToJavaJDK, FPathToAndroidNDK, FSupport
           {%Region /fold}
           CreateGradleProperties(FAndroidProjectName, FAndroidTheme, FPathToJavaJDK);
           CreateLocalProperties(FAndroidProjectName, FPathToAndroidSDK, FPathToAndroidNDK);
+          //Add GRADLE support ... [... initial code ...]
+          //Building "build.gradle" file    -- for gradle we need "sdk/build-tools" >= 21.1.1
           if not CreateBuildGradle(FAndroidProjectName, FPathToAndroidSDK, FMaxSdkPlatform,
               FGradleVersion, FAndroidTheme, instructionChip, FMinApi, FTargetApi,
               FVersionCode, FVersionName, FSupport, FPackagePrefaceName, FSmallProjName) then
