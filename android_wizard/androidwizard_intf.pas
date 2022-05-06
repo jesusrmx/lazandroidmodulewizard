@@ -736,11 +736,7 @@ end;
 
 function TAndroidGUIProjectDescriptor.DoInitDescriptor: TModalResult;    //GUI
 var
-  strAfterReplace, strPackName, aux, strMainActivity: string;
-  auxList, providerList: TStringList;
   outTag: TModuleType;
-  supportProvider, tempStr, insertRef: string;
-  p1: integer;
 begin
   try
     FModuleType := mtGUI;
@@ -844,36 +840,21 @@ begin
         CreateDir(FAndroidProjectName+DirectorySeparator+'obj'+DirectorySeparator+'controls');
       {%EndRegion}
 
-      auxList:= TStringList.Create;
-
       if FProjectModel = psNewProject then
       begin
         {$IFDEF FULL}
         // What it does:  For eclipse funcionality
         //    Creates <Proj>/.settings
         //    Creates <Proj>/.settings/org.eclipse.jdt.core.prefs
+        //    Creates <Proj>/.classpath
+        //    Creates <Proj>/.project
         //
         // Depends On:    FAndroidProjectName
         //
         {%Region /fold}
         //eclipe compatibility [Neon!]
         CreateEclipseCorePrefs(FAndroidProjectName, '1.7');
-        {%EndRegion}
-
-
-        // What it does:  Creates <Proj>/.classpath  For eclipse funcionality
-        //
-        // Depends On:    FAndroidProjectName
-        //
-        {%Region /fold}
         CreateEclipseClassPath(FAndroidProjectName);
-        {%EndRegion}
-
-        // What it does:  Creates <Proj>/.project  a file For eclipse funcionality
-        //
-        // Depends On:    FAndroidProjectName, FSmalProjName
-        //
-        {%Region /fold}
         CreateEclipseProjectFile(FAndroidProjectName, FSmallProjName);
         {%EndRegion}
         {$ENDIF}
@@ -888,44 +869,7 @@ begin
       {%Region /fold}
 
       //AndroidManifest.xml creation:
-
-      auxList.Clear;
-      auxList.LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'androidmanifest.txt');
-
-      strAfterReplace  := StringReplace(auxList.Text, 'dummyPackage',strPackName, [rfReplaceAll, rfIgnoreCase]);
-
-      strMainActivity:= strPackName+'.'+FMainActivity; {gApp}
-
-      strAfterReplace  := StringReplace(strAfterReplace, 'dummyAppName',strMainActivity, [rfReplaceAll, rfIgnoreCase]);
-
-      strAfterReplace  := StringReplace(strAfterReplace, 'dummySdkApi', FMinApi, [rfReplaceAll, rfIgnoreCase]);
-      strAfterReplace  := StringReplace(strAfterReplace, 'dummyTargetApi', FTargetApi, [rfReplaceAll, rfIgnoreCase]);
-
-      auxList.Clear;
-      auxList.Text:= strAfterReplace;
-
-      if FSupport then
-      begin
-         if FileExists(FPathToJavaTemplates +DirectorySeparator +'support'+DirectorySeparator+'manifest_support_provider.txt') then
-         begin
-           providerList:= TStringList.Create;
-           providerList.LoadFromFile(FPathToJavaTemplates +DirectorySeparator+'support'+DirectorySeparator+'manifest_support_provider.txt');
-           supportProvider:= StringReplace(providerList.Text, 'dummyPackage',strPackName, [rfReplaceAll, rfIgnoreCase]);
-           tempStr:= auxList.Text;  //manifest
-           if Pos('androidx.core.content.FileProvider', tempStr) <= 0 then    //androidX
-           begin
-             insertRef:= '</activity>'; //insert reference point
-             p1:= Pos(insertRef, tempStr);
-             Insert(sLineBreak + supportProvider, tempStr, p1+Length(insertRef));
-             auxList.Clear;
-             auxList.Text:= tempStr;
-           end;
-           providerList.Free;
-         end;
-      end;
-
-      auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'AndroidManifest.xml');
-      auxList.Free;
+      CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates, FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi, FTargetApi, FSupport);
       {%EndRegion}
 
       Result := mrOK

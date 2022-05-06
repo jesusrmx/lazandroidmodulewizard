@@ -103,6 +103,7 @@ type
   procedure CreateAppJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
   procedure CreateControlsNative(FAndroidProjectName, FPathToJavaTemplates: string; overwrite:boolean=true);
   procedure CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
+  procedure CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates, FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi, FTargetApi:string; FSupport:boolean; overwrite:boolean=true);
 implementation
 
 {$ifdef unix}
@@ -2173,6 +2174,54 @@ begin
       end;
       Free;
     end;
+  end;
+end;
+
+procedure CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates,
+  FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi,
+  FTargetApi: string; FSupport: boolean; overwrite: boolean);
+var
+  aFile, strPackName, strMainActivity, tempStr, insertRef, supportProvider: String;
+  providerList: TStringList;
+  p1: SizeInt;
+begin
+  if NeedFile(FAndroidProjectName+DirectorySeparator+'AndroidManifest.xml', overwrite, aFile) then
+  begin
+    strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+    strList.LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'androidmanifest.txt');
+
+    tempStr  := StringReplace(strList.Text, 'dummyPackage',strPackName, [rfReplaceAll, rfIgnoreCase]);
+
+    strMainActivity:= strPackName+'.'+FMainActivity; {gApp}
+
+    tempStr  := StringReplace(tempStr, 'dummyAppName',strMainActivity, [rfReplaceAll, rfIgnoreCase]);
+
+    tempStr  := StringReplace(tempStr, 'dummySdkApi', FMinApi, [rfReplaceAll, rfIgnoreCase]);
+    tempStr  := StringReplace(tempStr, 'dummyTargetApi', FTargetApi, [rfReplaceAll, rfIgnoreCase]);
+
+    strList.Text:= tempStr;
+
+    if FSupport then
+    begin
+       if FileExists(FPathToJavaTemplates +DirectorySeparator +'support'+DirectorySeparator+'manifest_support_provider.txt') then
+       begin
+         providerList:= TStringList.Create;
+         providerList.LoadFromFile(FPathToJavaTemplates +DirectorySeparator+'support'+DirectorySeparator+'manifest_support_provider.txt');
+         supportProvider:= StringReplace(providerList.Text, 'dummyPackage',strPackName, [rfReplaceAll, rfIgnoreCase]);
+         tempStr:= strList.Text;  //manifest
+         if Pos('androidx.core.content.FileProvider', tempStr) <= 0 then    //androidX
+         begin
+           insertRef:= '</activity>'; //insert reference point
+           p1:= Pos(insertRef, tempStr);
+           Insert(sLineBreak + supportProvider, tempStr, p1+Length(insertRef));
+           strList.Clear;
+           strList.Text:= tempStr;
+         end;
+         providerList.Free;
+       end;
+    end;
+
+    strList.SaveToFile(aFile);
   end;
 end;
 
