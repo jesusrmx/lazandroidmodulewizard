@@ -6,13 +6,7 @@ interface
 
 uses
   Classes, SysUtils, Controls, ProjectIntf, Forms, AndroidWidget,
-  process, math, SourceChanger, propedits;
-
-//tk min and max API versions for build.xml
-const
-  cMinAPI = 14;
-  cMaxAPI = 30;
-// end tk
+  process, math, SourceChanger, propedits, ulamwprocs;
 
 type
   { TLamwSmartDesigner }
@@ -126,11 +120,6 @@ type
 
   end;
 
-  // tk ReplaceChar made public
-  function ReplaceChar(const query: string; oldchar, newchar: char): string;
-  // end tk
-  function IsAllCharNumber(pcString: PChar): Boolean;
-
 var
   LamwSmartDesigner: TLamwSmartDesigner;
 
@@ -176,27 +165,6 @@ begin
   //                 sLineBreak+ 'to build/run your modified project [sorry...]'+
   //                 sLineBreak+ '[hint: when prompt to save project, choice "yes"]');
   //{$endif}
-end;
-
-function ReplaceChar(const query: string; oldchar, newchar: char): string;
-var
-  i: Integer;
-begin
-  Result := query;
-  for i := 1 to Length(Result) do
-    if Result[i] = oldchar then Result[i] := newchar;
-end;
-
-function IsAllCharNumber(pcString: PChar): Boolean;
-begin
-  Result := False;
-  if StrLen(pcString)=0 then exit;
-  while pcString^ <> #0 do // 0 indicates the end of a PChar string
-  begin
-    if not (pcString^ in ['0'..'9']) then Exit;
-    Inc(pcString);
-  end;
-  Result := True;
 end;
 
 function GetPathToSDKFromBuildXML(fullPathToBuildXML: string): string;

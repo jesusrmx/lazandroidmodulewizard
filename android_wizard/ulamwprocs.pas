@@ -7,6 +7,12 @@ interface
 uses
   Classes, SysUtils, FileUtil, Controls, Dialogs, LamwSettings;
 
+//tk min and max API versions for build.xml
+const
+  cMinAPI = 14;
+  cMaxAPI = 30;
+// end tk
+
 type
   // TheThing holds all variables produced by TfrmWorkSpace
   // Does all what TAndroidXXXProjectDescriptor do but can be reused in other
@@ -15,6 +21,10 @@ type
   end;
 
   function IsAllCharNumber(pcString: PChar): Boolean;
+  // tk ReplaceChar made public
+  function ReplaceChar(const query: string; oldchar, newchar: char): string;
+  // end tk
+
   function GetVerAsNumber(aVers: string): integer;
   function TryUndoFakeVersion(grVer: string): string;
   function TryGradleCompatibility(plugin: string; gradleVers: string; out outGradleVer: string) : boolean;
@@ -26,7 +36,9 @@ type
   function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; out FCandidateSdkBuild:string): string;
   function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool,FCandidateSdkBuild: string): boolean;
 
+  //
   // ALL
+  //
   procedure CreateKeyToolInput(const FAndroidProjectName: string; overwrite:boolean=false);
   procedure CreateHowToGetYourSignedReleaseApk(const FAndroidProjectName,FSmallProjName: string; overwrite:boolean=false);
   procedure CreateAVDUtils(FAndroidProjectName, FPathToAndroidSDK,FMinApi: string);
@@ -36,12 +48,9 @@ type
   procedure CreateLogCatError(FAndroidProjectName, FPathToAndroidSDK: string; overwrite:boolean=true);
   procedure CreateReleaseKeyStore(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
 
-  // Should be ANT specific
-  procedure CreateLogcatAppPerform(FAndroidProjectName, FPathToAndroidSDK, FSmallProjName, FAntBuildMode: string; overwrite:boolean=true);
-  procedure CreateLaunchAPK(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMainActivity: string; ovewrite:boolean=true);
-  procedure CreateAAPT(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMinApi, FSmallProjName, FAntBuildMode: string; ovewrite:boolean=true);
-
+  //
   // GRADLE
+  //
   procedure CreateGradleProperties(const FAndroidProjectName, FAndroidTheme, FPathToJavaJDK : string; overwrite:boolean=true);
   procedure CreateLocalProperties(const FAndroidProjectName, FPathToAndroidSDK, FPathToAndroidNDK: string; overwrite:boolean=true);
   function CreateBuildGradle(FAndroidProjectName: string; FPathToAndroidSDK: string; FMaxSDKPlatform: Integer;
@@ -60,7 +69,22 @@ type
   procedure CreateGradleLocalUniversalAPKSigner(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle, FSmallProjName: string; FMaxSDKPlatform:Integer; overwrite: boolean=true);
   procedure CreateGradleLocalRun(FAndroidProjectName, FPathToAndroidSDK, FPathToGradle: string; overwrite:boolean=true);
 
+  //
   // ANT
+  //
+  procedure CreateLogcatAppPerform(FAndroidProjectName, FPathToAndroidSDK, FSmallProjName, FAntBuildMode: string; overwrite:boolean=true);
+  procedure CreateLaunchAPK(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMainActivity: string; ovewrite:boolean=true);
+  procedure CreateAAPT(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMinApi, FSmallProjName, FAntBuildMode: string; ovewrite:boolean=true);
+
+  procedure CreateBuildXML(FAndroidProjectName, FPathToAndroidSDK, FAndroidTheme, FTargetApi, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateAntReadme(FAndroidProjectName, FAntBuildMode, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateAntProperties(FAndroidProjectName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateProguardPoject(FAndroidProjectName: string; overwrite:boolean=true);
+  procedure CreateProjectProperties(FAndroidProjectName, FAndroidTheme, FTargetApi: string; overwrite:boolean=true);
+  procedure CreateAntBuildDebug(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin:string; overwrite:boolean=true);
+  procedure CreateAntBuildRelease(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin:string; overwrite:boolean=true);
+  procedure CreateAntAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateAntJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
 
 implementation
 
@@ -82,6 +106,15 @@ begin
     Inc(pcString);
   end;
   Result := True;
+end;
+
+function ReplaceChar(const query: string; oldchar, newchar: char): string;
+var
+  i: Integer;
+begin
+  Result := query;
+  for i := 1 to Length(Result) do
+    if Result[i] = oldchar then Result[i] := newchar;
 end;
 
 function GetVerAsNumber(aVers: string): integer;
@@ -1465,6 +1498,329 @@ begin
     strList.Add('source ~/.bashrc');
     {$ENDIF}
     strList.Add('gradle run');
+    ScriptSave(aFile);
+  end;
+end;
+
+procedure CreateBuildXML(FAndroidProjectName, FPathToAndroidSDK, FAndroidTheme,
+  FTargetApi, FPackagePrefaceName, FSmallProjName: string; overwrite: boolean);
+var
+  intTargetApi, i: Integer;
+  strPack, aFile: String;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'build.xml', overwrite, aFile) then
+  begin
+    intTargetApi:= StrToInt(FTargetApi);
+
+    strList.Add('<?xml version="1.0" encoding="UTF-8"?>');
+    strList.Add('<project name="'+FSmallProjName+'" default="help">');
+    strList.Add('<property name="sdk.dir" location="'+FPathToAndroidSDK+'"/>');
+
+    if (Pos('AppCompat', FAndroidTheme) > 0) and (intTargetApi < 21) then
+      strList.Add('<property name="target" value="android-21"/>')
+    else
+      strList.Add('<property name="target" value="android-'+Trim(FTargetApi)+'"/>');
+
+    strList.Add('<property file="ant.properties"/>');
+    strList.Add('<fail message="sdk.dir is missing." unless="sdk.dir"/>');
+
+    // tk Generate code to allow conditional compilation in our java sources
+    strPack := FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+    strList.Add('');
+    strList.Add('<!-- Tags required to enable conditional compilation in java sources -->');
+    strList.Add('<property name="src.dir" location=".'+PathDelim+'src'+PathDelim+ IncludeTrailingPathDelimiter(ReplaceChar(strPack, '.', PathDelim))+'"/>');
+    strList.Add('<property name="source.dir" value="${src.dir}/${target}" />');
+    strList.Add('<import file="${sdk.dir}/tools/ant/build.xml"/>');
+
+    strList.Add('');
+    strList.Add('<!-- API version properties, modify according to your API level -->');
+    for i := cMinAPI to cMaxAPI do
+    begin
+      if i <= intTargetApi then
+        strList.Add('<property name="api'+IntToStr(i)+'" value="true"/>') //does the magic!!!!
+      else
+        strList.Add('<property name="api'+IntToStr(i)+'" value="false"/>');
+    end;
+
+    strList.Add('');
+    strList.Add('<!-- API conditions, do not modify -->');
+    for i := cMinAPI to cMaxAPI do
+    begin
+      strList.Add('<condition property="ifdef_api'+IntToStr(i)+'up" value="/*">');
+      strList.Add('  <equals arg1="${api'+IntToStr(i)+'}" arg2="false"/>');
+      strList.Add('</condition>');
+      strList.Add('<condition property="endif_api'+IntToStr(i)+'up" value="*/">');
+      strList.Add('  <equals arg1="${api'+IntToStr(i)+'}" arg2="false"/>');
+      strList.Add('</condition>');
+      strList.Add('<property name="ifdef_api'+IntToStr(i)+'up" value=""/>');
+      strList.Add('<property name="endif_api'+IntToStr(i)+'up" value=""/>');
+    end;
+
+    strList.Add('');
+    strList.Add('<!-- Copy & filter java sources for defined Android target, do not modify -->');
+    strList.Add('<copy todir="${src.dir}/${target}">');
+    strList.Add('  <fileset dir="${src.dir}">');
+    strList.Add('    <include name="*.java"/>');
+    strList.Add('  </fileset>');
+    strList.Add('  <filterset begintoken="//[" endtoken="]">');
+    for i := cMinAPI to cMaxAPI do
+    begin
+      strList.Add('    <filter token="ifdef_api'+IntToStr(i)+'up" value="${ifdef_api'+IntToStr(i)+'up}"/>');
+      strList.Add('    <filter token="endif_api'+IntToStr(i)+'up" value="${endif_api'+IntToStr(i)+'up}"/>');
+    end;
+    strList.Add('  </filterset>');
+    strList.Add('</copy>');
+    // end tk
+    strList.Add('</project>');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateAntReadme(FAndroidProjectName, FAntBuildMode,
+  FSmallProjName: string; overwrite: boolean);
+var
+  aFile: String;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'readme.txt', overwrite, aFile) then
+  begin
+    strList.Add('Tutorial: How to get your Android Application [Apk] using "Ant":');
+    strList.Add(' ');
+    strList.Add('   NEW! Go to Lazarus IDE menu "Run--> [LAMW] Build and Run"! Thanks to Anton!!!');
+    strList.Add(' ');
+    strList.Add('1. Double click "ant-build-debug.bat [.sh]" to build Apk');
+    strList.Add(' ');
+    strList.Add('2. If Android Virtual Device[AVD]/Emulator [or real device] is running then:');
+    strList.Add('   2.1 double click "install-'+FAntBuildMode+'.bat" to install the Apk on the Emulator [or real device]');
+    strList.Add('   2.2 look for the App "'+FSmallProjName+'" in the Emulator [or real device] and click it!');
+    strList.Add(' ');
+    strList.Add('3. If AVD/Emulator is NOT running:');
+    strList.Add('   3.1 If AVD/Emulator NOT exist:');
+    strList.Add('        3.1.1 double click "paused_create-avd-default.bat" to create the AVD ['+DirectorySeparator+'utils folder]');
+    strList.Add('   3.2 double click "launch-avd-default.bat" to launch the Emulator ['+DirectorySeparator+'utils  folder]');
+    strList.Add('   3.3 look for the App "'+FSmallProjName+'" in the Emulator and click it!');
+    strList.Add(' ');
+    strList.Add('4. Log/Debug');
+    strList.Add('   4.1 double click "logcat*.bat" to read logs and bugs! ['+DirectorySeparator+'utils folder]');
+    strList.Add(' ');
+    strList.Add('5. Uninstall Apk');
+    strList.Add('   5.1 double click "uninstall.bat" to remove Apk from the Emulator [or real device]!');
+    strList.Add(' ');
+    strList.Add('6. To find your Apk look for the "'+FSmallProjName+'-'+FAntBuildMode+'.apk" in '+DirectorySeparator+'bin folder!');
+    strList.Add(' ');
+    strList.Add('7. Android Asset Packaging Tool: to know which files were packed in "'+FSmallProjName+'-'+FAntBuildMode+'.apk"');
+    strList.Add('   7.1 double click "aapt.bat" ['+DirectorySeparator+'utils folder]' );
+    strList.Add(' ');
+    strList.Add('8. To see all available Android targets in your system ['+DirectorySeparator+'utils folder]');
+    strList.Add('   8.1 double click "paused_list_target.bat" ');
+    strList.Add(' ');
+    strList.Add('9. Hint 1: you can edit "*.bat" to extend/modify some command or to fix some incorrect info/path!');
+    strList.Add(' ');
+    strList.Add('10.Hint 2: you can edit "build.xml" to set another Android target. ex. "android-18" or "android-19" etc.');
+    strList.Add('   WARNING: Yes, if after run  "ant-build-debug.*" the folder "...\bin" is still empty then try another target!' );
+    strList.Add('   WARNING: If you changed the target in "build.xml" change it in "AndroidManifest.xml" too!' );
+    strList.Add(' ');
+    strList.Add('11.WARNING: After a new [Lazarus IDE]-> "run->build" do not forget to run again: "ant-build-debug.bat" and "install.bat" !');
+    strList.Add(' ');
+    strList.Add('12. Linux users: use "ant-build-debug.sh" , "install-'+FAntBuildMode+'.sh" , "uninstall.sh" and "logcat.sh" [thanks to Stephano!]');
+    strList.Add('    WARNING: All demos Apps was generate on my windows system! So, please,  edit its to correct paths...!');
+    strList.Add(' ');
+    strList.Add('13. WARNING, before to execute "ant-build-release.bat" [.sh]  you need execute "release-keystore.bat" [.sh] !');
+    strList.Add('    Please, read "How_To_Get_Your_Signed_Release_Apk.txt"');
+    strList.Add(' ');
+    strList.Add('14. Please, for more info, look for "How to use the Demos" in "LAMW: Lazarus Android Module Wizard" readme.txt!!');
+    strList.Add(' ');
+    strList.Add('....  Thank you!');
+    strList.Add(' ');
+    strList.Add('....  by jmpessoa_hotmail_com');
+    strList.Add(' ');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateAntProperties(FAndroidProjectName, FSmallProjName: string; overwrite: boolean);
+var
+  aFile, apk_aliaskey: String;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'ant.properties', overwrite, aFile) then
+  begin
+    apk_aliaskey:= LowerCase(FSmallProjName)+'.keyalias';
+    strList.Add('java.source=1.8');
+    strList.Add('java.target=1.8');
+    strList.Add('key.store='+LowerCase(FSmallProjName)+'-release.keystore');
+    strList.Add('key.alias='+apk_aliaskey);
+    strList.Add('key.store.password=123456');
+    strList.Add('key.alias.password=123456');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateProguardPoject(FAndroidProjectName: string; overwrite: boolean);
+var
+  aFile: String;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'proguard-project.txt', overwrite, aFile) then
+  begin
+    strList.Add('# To enable ProGuard in your project, edit project.properties');
+    strList.Add('# to define the proguard.config property as described in that file.');
+    strList.Add('#');
+    strList.Add('# Add project specific ProGuard rules here.');
+    strList.Add('# By default, the flags in this file are appended to flags specified');
+    strList.Add('# in ${sdk.dir}/tools/proguard/proguard-android.txt');
+    strList.Add('# You can edit the include path and order by changing the ProGuard');
+    strList.Add('# include property in project.properties.');
+    strList.Add('#');
+    strList.Add('# For more details, see');
+    strList.Add('#   http://developer.android.com/guide/developing/tools/proguard.html');
+    strList.Add(' ');
+    strList.Add('# Add any project specific keep options here:');
+    strList.Add(' ');
+    strList.Add('# If your project uses WebView with JS, uncomment the following');
+    strList.Add('# and specify the fully qualified class name to the JavaScript interface');
+    strList.Add('# class:');
+    strList.Add('#-keepclassmembers class fqcn.of.javascript.interface.for.webview {');
+    strList.Add('#   public *;');
+    strList.Add('#}');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateProjectProperties(FAndroidProjectName, FAndroidTheme, FTargetApi: string;
+  overwrite: boolean);
+var
+  aFile: String;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'project.properties', overwrite, aFile) then
+  begin
+    strList.Add('# This file is automatically generated by Android Tools.');
+    strList.Add('# Do not modify this file -- YOUR CHANGES WILL BE ERASED!');
+    strList.Add('#');
+    strList.Add('# This file must be checked in Version Control Systems.');
+    strList.Add('#');
+    strList.Add('# To customize properties used by the Ant build system edit');
+    strList.Add('# "ant.properties", and override values to adapt the script to your');
+    strList.Add('# project structure.');
+    strList.Add('#');
+    strList.Add('# To enable ProGuard to shrink and obfuscate your code, uncomment this (available properties: sdk.dir, user.home):');
+    strList.Add('#proguard.config=${sdk.dir}/tools/proguard/proguard-android.txt:proguard-project.txt');
+    strList.Add(' ');
+    strList.Add('# Project target.');
+    if Pos('AppCompat', FAndroidTheme) > 0 then
+    begin
+       if StrToInt(FTargetApi) >= 26 then  //
+         strList.Add('target=android-'+ FTargetApi)
+       else
+         strList.Add('target=android-26');  //
+    end
+    else
+    begin
+       strList.Add('target=android-'+FTargetApi);
+    end;
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateAntBuildDebug(FAndroidProjectName, FPathToJavaJDK,
+  FPathToAntBin: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if FPathToAntBin = '' then //PATH=$PATH:/data/myscripts
+    exit;
+
+  if NeedFile(FAndroidProjectName+PathDelim+'ant-build-debug'+ScriptExt, overwrite, aFile) then
+  begin
+    {$IFDEF WINDOWS}
+    strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
+    strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+    strList.Add('cd '+FAndroidProjectName);
+    strList.Add('call ant clean -Dtouchtest.enabled=true debug');
+    strList.Add('if errorlevel 1 pause');
+    {$ELSE}
+    {$IFDEF DARWIN}
+    strList.Add('export PATH='+FPathToAntBin+':$PATH');        //export PATH=/usr/bin/ant:PATH
+    strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+    strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
+    {$ELSE}
+    strList.Add('export PATH='+FPathToAntBin+':$PATH'); //export PATH=/usr/bin/ant:PATH
+    strList.Add('export JAVA_HOME='+FPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+    {$ENDIF}
+    strList.Add('cd '+FAndroidProjectName);
+    strList.Add('ant -Dtouchtest.enabled=true debug');
+    {$ENDIF}
+    ScriptSave(aFile);  //build Apk using "Ant"
+  end;
+end;
+
+procedure CreateAntBuildRelease(FAndroidProjectName, FPathToJavaJDK,
+  FPathToAntBin: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if FPathToAntBin = '' then //PATH=$PATH:/data/myscripts
+    exit;
+
+  if NeedFile(FAndroidProjectName+PathDelim+'ant-build-release'+ScriptExt, overwrite, aFile) then
+  begin
+    {$IFDEF WINDOWS}
+    strList.Add('set Path=%PATH%;'+FPathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
+    strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+    strList.Add('cd '+FAndroidProjectName);
+    strList.Add('call ant clean release');
+    strList.Add('if errorlevel 1 pause');
+    {$ELSE}
+    {$IFDEF DARWIN}
+    strList.Add('export PATH='+FPathToAntBin+':$PATH'); //export PATH=/usr/bin/ant:PATH
+    strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+    strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
+    {$ELSE}
+    strList.Add('export PATH='+FPathToAntBin+':$PATH'); //export PATH=/usr/bin/ant:PATH
+    strList.Add('export JAVA_HOME='+FPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+    {$ENDIF}
+    strList.Add('cd '+FAndroidProjectName);
+    strList.Add('ant clean release');
+    {$ENDIF}
+    ScriptSave(aFile);  //build Apk using "Ant"
+  end;
+end;
+
+procedure CreateAntAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK,
+  FPackagePrefaceName, FSmallProjName: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'ant-adb-install-debug'+ScriptExt, overwrite, aFile) then
+  begin
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-debug.apk');
+    {$IFDEF WINDOWS}
+    strList.Add('pause');
+    {$ENDIF}
+    ScriptSave(aFile);
+  end;
+end;
+
+procedure CreateAntJarsignerVerify(FAndroidProjectName, FPathToJavaJDK,
+  FSmallProjName: string; overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'ant-jarsigner-verify'+ScriptExt, overwrite, aFile) then
+  begin
+    {$IFDEF WINDOWS}
+    strList.Add('set JAVA_HOME='+FPathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
+    strList.Add('path %JAVA_HOME%'+PathDelim+'bin;%path%');
+    {$ELSE}
+    {$IFDEF DARWIN}
+    strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+    strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
+    {$ELSE}
+    strList.Add('export JAVA_HOME='+FPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
+    {$ENDIF}
+    {$ENDIF}
+    strList.Add('cd '+FAndroidProjectName);
+    strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-release.apk');
     ScriptSave(aFile);
   end;
 end;
