@@ -782,94 +782,13 @@ begin
       //    App.java, lamwdesigner/Controls.native, jCommons.java
       //
       {%region /fold}
-      with TStringList.Create do
-        try
-          if FSupport then  // refactored by jmpessoa: UNIQUE "Controls.java" !!!
-          begin
-            if FileExists(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jSupported.java') then
-            begin
-              LoadFromFile(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jSupported.java');
-              Strings[0] := 'package ' + strPackName + ';';  //replace dummy
-              SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'jSupported.java');
-            end;
-            if FileExists(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'support_provider_paths.xml') and
-               (not FileExists(FAndroidProjectName + DirectorySeparator +'res'+DirectorySeparator+'xml'+DirectorySeparator+'support_provider_paths.xml'))then
-            begin
-              LoadFromFile(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'support_provider_paths.xml');
-              SaveToFile(FAndroidProjectName + DirectorySeparator +'res'+DirectorySeparator+'xml'+DirectorySeparator+'support_provider_paths.xml');
-            end;
-          end
-          else
-          begin
-            if FileExists(FPathToJavaTemplates+DirectorySeparator+ 'jSupported.java') then
-            begin
-              LoadFromFile(FPathToJavaTemplates+DirectorySeparator+ 'jSupported.java');
-              Strings[0] := 'package ' + strPackName + ';';  //replace dummy
-              SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'jSupported.java');
-            end;
-          end;
-
-          //UNIQUE and now Refactored "Controls.java" !!!
-          LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'Controls.java');
-          Strings[0] := 'package ' + strPackName + ';';  //replace dummy - Controls.java
-          aux:=  StringReplace(Text, '/*libsmartload*/' ,
-                 'try{System.loadLibrary("controls");} catch (UnsatisfiedLinkError e) {Log.e("JNI_Loading_libcontrols", "exception", e);}',
-                 [rfReplaceAll,rfIgnoreCase]);
-          Text:= aux;
-          SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'Controls.java');
-
-          //NEW GUI jForm Refactored from "Controls.java"
-          Clear;
-          if fileExists(FPathToJavaTemplates + DirectorySeparator + 'jForm.java') then
-          begin
-            LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'jForm.java');
-            Strings[0] := 'package ' + strPackName + ';';  //replace dummy
-            SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'jForm.java');
-          end;
-
-          Clear;
-          if (Pos('AppCompat', FAndroidTheme) > 0) then
-          begin
-             if FileExists(FPathToJavaTemplates + DirectorySeparator + 'support'+DirectorySeparator+'App.java') then
-               LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'support'+DirectorySeparator+'App.java');
-          end
-          else
-          begin
-             if FileExists(FPathToJavaTemplates + DirectorySeparator + 'App.java') then
-               LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'App.java');
-          end;
-
-          Strings[0] := 'package ' + strPackName + ';'; //replace dummy App.java
-          SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'App.java');
-
-          CreateDir(FAndroidProjectName+DirectorySeparator+'lamwdesigner');
-          if FileExists(FPathToJavaTemplates+DirectorySeparator + 'Controls.native') then
-          begin
-            CopyFile(FPathToJavaTemplates+DirectorySeparator + 'Controls.native',
-              FAndroidProjectName+DirectorySeparator+'lamwdesigner'+DirectorySeparator+'Controls.native');
-          end;
-
-          if Pos('AppCompat', FAndroidTheme) > 0 then
-          begin
-            if FileExists(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jCommons.java') then
-            begin
-              LoadFromFile(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jCommons.java');
-              Strings[0] := 'package ' + strPackName + ';';  //replace dummy
-              SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'jCommons.java');
-            end;
-          end
-          else
-          begin
-            if FileExists(FPathToJavaTemplates+DirectorySeparator+ 'jCommons.java') then
-            begin
-              LoadFromFile(FPathToJavaTemplates+DirectorySeparator+ 'jCommons.java');
-              Strings[0] := 'package ' + strPackName + ';';  //replace dummy
-              SaveToFile(FFullJavaSrcPath + DirectorySeparator + 'jCommons.java');
-            end;
-          end;
-      finally
-          Free;
-      end;
+      CreateJSupportedJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FSupport);
+      CreateSupportProviderPathsXML(FAndroidProjectName, FPathToJavaTemplates, FSupport);
+      CreateControlsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName);
+      CreateJFormJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName);
+      CreateAppJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme);
+      CreateControlsNative(FAndroidProjectName, FPathToJavaTemplates);
+      CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme);
       {%EndRegion}
 
       FPathToJNIFolder := FAndroidProjectName;

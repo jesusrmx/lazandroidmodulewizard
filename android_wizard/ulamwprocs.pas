@@ -92,7 +92,13 @@ type
   procedure CreateJavaSrcDir(FAndroidProjectName, FPackageName, FSmallProjName: string; out FFullJavaSrcPath:string);
   procedure CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidThemeColor: string; overwrite:boolean=true);
   procedure CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidTheme: string; overwrite: boolean=true);
-
+  procedure CreateJSupportedJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName: string; FSupport: boolean; overwrite:boolean=true);
+  procedure CreateSupportProviderPathsXML(FAndroidProjectName, FPathToJavaTemplates: string; FSupport: boolean; overwrite:boolean=true);
+  procedure CreateControlsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateJFormJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateAppJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
+  procedure CreateControlsNative(FAndroidProjectName, FPathToJavaTemplates: string; overwrite:boolean=true);
+  procedure CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
 implementation
 
 {$ifdef unix}
@@ -105,6 +111,24 @@ const
 
 var
   strList: TStringList;
+
+// Copies src (or altsrc if src do not exists) to dst.
+// It does nothing if overwrite=true and dst exists
+procedure AltCopyFile(src,dst:string; overwrite:boolean; altSrc:string='');
+begin
+  if overwrite or not FileExists(dst) then
+  begin
+    if not FileExists(src) then begin
+      src := '';
+      if (altSrc<>'') and FileExists(altSrc) then
+        src := altSrc;
+    end;
+    if src<>'' then begin
+      ForceDirectories(ExtractFilePath(dst));
+      CopyFile(src, dst);
+    end;
+  end;
+end;
 
 function IsAllCharNumber(pcString: PChar): Boolean;
 begin
@@ -1866,19 +1890,12 @@ end;
 
 procedure CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName,
   FAndroidThemeColor: string; overwrite: boolean);
-var
-  srcFile, dstFile: string;
 begin
-  dstFile := FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml';
-  if overwrite or not FileExists(dstFile) then
-  begin
-    ForceDirectories(ExtractFilePath(dstFile));
-    srcFile := FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors'+DirectorySeparator+FAndroidThemeColor+DirectorySeparator+'colors.xml';
-    if FileExists(srcFile) then
-      CopyFile(srcFile, dstFile, COPY_FLAGS[overwrite])
-    else
-      CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml', dstFile, COPY_FLAGS[overwrite]);
-  end;
+  AltCopyFile(
+    FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors'+DirectorySeparator+FAndroidThemeColor+DirectorySeparator+'colors.xml',
+    FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml',
+    overwrite,
+    FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
 end;
 
 procedure CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName,
@@ -1901,6 +1918,177 @@ begin
     else
     begin
        CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'styles.xml', dstFile, COPY_FLAGS[overwrite]);
+    end;
+  end;
+end;
+
+procedure CreateJSupportedJava(FPathToJavaTemplates, FFullJavaSrcPath,
+  FPackagePrefaceName, FSmallProjName: string; FSupport: boolean;
+  overwrite: boolean);
+var
+  strPackName, dest: String;
+begin
+  dest := FFullJavaSrcPath + DirectorySeparator + 'jSupported.java';
+  if overwrite or not FileExists(dest) then
+  begin
+    ForceDirectories(ExtractFilePath(dest));
+    strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+    with TStringList.Create do
+    begin
+      if FSupport then  // refactored by jmpessoa: UNIQUE "Controls.java" !!!
+      begin
+        if FileExists(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jSupported.java') then
+        begin
+          LoadFromFile(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jSupported.java');
+          Strings[0] := 'package ' + strPackName + ';';  //replace dummy
+          SaveToFile(dest);
+        end;
+      end
+      else
+      begin
+        if FileExists(FPathToJavaTemplates+DirectorySeparator+ 'jSupported.java') then
+        begin
+          LoadFromFile(FPathToJavaTemplates+DirectorySeparator+ 'jSupported.java');
+          Strings[0] := 'package ' + strPackName + ';';  //replace dummy
+          SaveToFile(dest);
+        end;
+      end;
+      Free;
+    end;
+  end;
+end;
+
+procedure CreateSupportProviderPathsXML(FAndroidProjectName,
+  FPathToJavaTemplates: string; FSupport: boolean; overwrite: boolean);
+begin
+  if FSupport then
+    AltCopyFile(
+      FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'support_provider_paths.xml',
+      FAndroidProjectName+DirectorySeparator +'res'+DirectorySeparator+'xml'+DirectorySeparator+'support_provider_paths.xml',
+      overwrite);
+end;
+
+procedure CreateControlsJava(FPathToJavaTemplates, FFullJavaSrcPath,
+  FPackagePrefaceName, FSmallProjName: string; overwrite: boolean);
+var
+  aux, strPackName, dest: string;
+begin
+  dest := FFullJavaSrcPath + DirectorySeparator + 'Controls.java';
+  if overwrite or not FileExists(dest) then
+  begin
+    strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+    ForceDirectories(ExtractFilePath(dest));
+    //UNIQUE and now Refactored "Controls.java" !!!
+    with TStringList.Create do
+    begin
+      LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'Controls.java');
+      Strings[0] := 'package ' + strPackName + ';';  //replace dummy - Controls.java
+      aux:=  StringReplace(Text, '/*libsmartload*/' ,
+             'try{System.loadLibrary("controls");} catch (UnsatisfiedLinkError e) {Log.e("JNI_Loading_libcontrols", "exception", e);}',
+             [rfReplaceAll,rfIgnoreCase]);
+      Text:= aux;
+      SaveToFile(dest);
+      Free;
+    end;
+  end;
+end;
+
+procedure CreateJFormJava(FPathToJavaTemplates, FFullJavaSrcPath,
+  FPackagePrefaceName, FSmallProjName: string; overwrite: boolean);
+var
+  dest, strPackName: string;
+begin
+  dest := FFullJavaSrcPath + DirectorySeparator + 'jForm.java';
+  if overwrite or not FileExists(dest) then
+  begin
+    strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+    //NEW GUI jForm Refactored from "Controls.java"
+    with TStringList.Create do
+    begin
+      if FileExists(FPathToJavaTemplates + DirectorySeparator + 'jForm.java') then
+      begin
+        LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'jForm.java');
+        Strings[0] := 'package ' + strPackName + ';';  //replace dummy
+        ForceDirectories(ExtractFilePath(dest));
+        SaveToFile(dest);
+      end;
+      Free;
+    end;
+  end;
+end;
+
+procedure CreateAppJava(FPathToJavaTemplates, FFullJavaSrcPath,
+  FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite: boolean
+  );
+var
+  dest, strPackName: string;
+begin
+  dest := FFullJavaSrcPath + DirectorySeparator + 'App.java';
+  if overwrite or not FileExists(dest) then
+  begin
+    strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+
+    with TStringList.Create do
+    begin
+      if (Pos('AppCompat', FAndroidTheme) > 0) then
+      begin
+         if FileExists(FPathToJavaTemplates + DirectorySeparator + 'support'+DirectorySeparator+'App.java') then
+           LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'support'+DirectorySeparator+'App.java');
+      end
+      else
+      begin
+         if FileExists(FPathToJavaTemplates + DirectorySeparator + 'App.java') then
+           LoadFromFile(FPathToJavaTemplates + DirectorySeparator + 'App.java');
+      end;
+
+      Strings[0] := 'package ' + strPackName + ';'; //replace dummy App.java
+      SaveToFile(dest);
+      Free;
+    end;
+  end;
+end;
+
+procedure CreateControlsNative(FAndroidProjectName, FPathToJavaTemplates: string;
+  overwrite: boolean);
+begin
+  AltCopyFile(
+    FPathToJavaTemplates+DirectorySeparator + 'Controls.native',
+    FAndroidProjectName+DirectorySeparator+'lamwdesigner'+DirectorySeparator+'Controls.native',
+    overwrite);
+end;
+
+procedure CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath,
+  FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite: boolean
+  );
+var
+  dest, strPackName: string;
+begin
+  dest := FFullJavaSrcPath + DirectorySeparator + 'jCommons.java';
+  if overwrite or not FileExists(dest) then
+  begin
+    strPackName:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
+
+    with TStringList.Create do
+    begin
+      if Pos('AppCompat', FAndroidTheme) > 0 then
+      begin
+        if FileExists(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jCommons.java') then
+        begin
+          LoadFromFile(FPathToJavaTemplates+DirectorySeparator +'support'+DirectorySeparator+'jCommons.java');
+          Strings[0] := 'package ' + strPackName + ';';  //replace dummy
+          SaveToFile(dest);
+        end;
+      end
+      else
+      begin
+        if FileExists(FPathToJavaTemplates+DirectorySeparator+ 'jCommons.java') then
+        begin
+          LoadFromFile(FPathToJavaTemplates+DirectorySeparator+ 'jCommons.java');
+          Strings[0] := 'package ' + strPackName + ';';  //replace dummy
+          SaveToFile(dest);
+        end;
+      end;
+      Free;
     end;
   end;
 end;
