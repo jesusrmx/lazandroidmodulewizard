@@ -1453,18 +1453,7 @@ begin
             //
             {%Region /fold}
             FPathToJavaSrc:= FAndroidProjectName + DirectorySeparator + 'src';
-            ForceDirectories(FPathToJavaSrc);
-
-            FFullJavaSrcPath:= FPathToJavaSrc;
-            strList.Clear;
-            strList.StrictDelimiter:= True;
-            strList.Delimiter:= '.';
-            strList.DelimitedText:= FPackagePrefaceName+'.'+LowerCase(FSmallProjName);
-            for i:= 0 to strList.Count -1 do
-            begin
-               FFullJavaSrcPath:= FFullJavaSrcPath + DirectorySeparator + strList.Strings[i];
-               CreateDir(FFullJavaSrcPath);
-            end;
+            CreateJavaSrcDir(FAndroidProjectName, FPackagePrefaceName, FSmallProjName, FFullJavaSrcPath);
 
             CreateDir(FAndroidProjectName+DirectorySeparator+'res');
 
@@ -1493,30 +1482,8 @@ begin
 
             CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values');
 
-
-            if DirectoryExists(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors'+DirectorySeparator+FAndroidThemeColor) then
-               CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors'+DirectorySeparator+FAndroidThemeColor+DirectorySeparator+'colors.xml',
-                  FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml')
-            else
-              CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml',
-                  FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
-
-
-            if Pos('AppCompat', FAndroidTheme) > 0 then
-            begin
-                CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+FAndroidTheme+'.xml',
-                          FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'styles.xml');
-            end
-            else if Pos('GDXGame', FAndroidTheme) > 0 then
-            begin
-                CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+FAndroidTheme+'.xml',
-                          FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'styles.xml');
-            end
-            else
-            begin
-               CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'styles.xml',
-                         FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'styles.xml');
-            end;
+            CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidThemeColor);
+            CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidTheme);
             {%EndRegion}
 
             // BuildSys: 'All'
@@ -2147,6 +2114,7 @@ begin
   begin
     AProject.CustomData.Values['LAMW'] := 'GDX';
     AProject.CustomData.Values['Theme']:= 'GDXGame';
+    //TODO: AProject.CustomData.Values['ThemeColor'] := FAndroidThemeColor;
     AProject.CustomData['StartModule'] := 'GdxModule1';
   end
   else if FModuleType = mtGUI then    {0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
@@ -2154,6 +2122,7 @@ begin
     AProject.CustomData.Values['LAMW'] := 'GUI';
 
     AProject.CustomData.Values['Theme']:= FAndroidTheme;
+    AProject.CustomData.Values['ThemeColor'] := FAndroidThemeColor;
 
     AProject.CustomData['StartModule'] := 'AndroidModule1';
     if FSupport then

@@ -729,31 +729,15 @@ begin
   strList:= TStringList.Create;
 
   if FBuildSystem = 'Gradle' then
-  begin
-    if not FileExists(FPathToAndroidProject + 'gradle.properties') then
-    begin
-      if Pos('AppCompat', FAndroidTheme) > 0 then
-        StrList.Add('');
-      strList.Add('org.gradle.java.home=' + FPathToJavaJDK);
-      strList.SaveToFile(FPathToAndroidProject+'gradle.properties');
-    end;
+    CreateGradleProperties(FPathToAndroidProject, FAndroidTheme, FPathToJavaJDK, false);
 
-  end;
   strList.Clear;
 
-  targetpath:=ConcatPaths([FPathToAndroidProject,'res','values']);
-  ForceDirectories(targetpath);
+  CreateJavaSrcDir(FPathToAndroidProject, FPackageName, FSmallProjName, auxStr{dummy});
 
-  sourcepath:=ConcatPaths([LamwGlobalSettings.PathToJavaTemplates,'values'])+DirectorySeparator +'colors.xml';
-  if FileExists(sourcepath) then
-  begin
-     if not FileExists(targetpath+DirectorySeparator+'colors.xml') then
-     begin
-       strList.LoadFromFile(sourcepath);
-       ForceDirectories(targetpath);
-       strList.SaveToFile(targetpath+DirectorySeparator+'colors.xml');
-     end;
-  end;
+  auxStr := LazarusIDE.ActiveProject.CustomData.Values['ThemeColor'];
+  if auxStr='' then auxStr := 'InvalidThemeColor'; // fake invalid ThemeColor dir
+  CreateColorsXml(LamwGlobalSettings.PathToJavaTemplates, FPathToAndroidProject, auxStr, false);
 
   FSupport:= (LazarusIDE.ActiveProject.CustomData.Values['Support']='TRUE');
 
@@ -763,27 +747,7 @@ begin
      FSupport:= True;
   end;
 
-
-  if not FileExists(targetpath+DirectorySeparator+'styles.xml') then
-  begin
-    if (Pos('AppCompat', FAndroidTheme) > 0) or (Pos('GDXGame', FAndroidTheme) > 0) then
-    begin
-       if FileExists(LamwGlobalSettings.PathToJavaTemplates+'values'+DirectorySeparator+FAndroidTheme+'.xml') then
-       begin
-          CopyFile(LamwGlobalSettings.PathToJavaTemplates+'values'+DirectorySeparator+FAndroidTheme+'.xml',
-                     targetpath+DirectorySeparator+'styles.xml');
-       end;
-    end
-    else
-    begin
-       if FileExists(LamwGlobalSettings.PathToJavaTemplates+'values'+DirectorySeparator +'styles.xml') then
-       begin
-          strList.LoadFromFile(LamwGlobalSettings.PathToJavaTemplates+'values'+DirectorySeparator +'styles.xml');
-          strList.SaveToFile(targetpath+DirectorySeparator+'styles.xml');
-       end;
-    end;
-
-  end;
+  CreateStylesXml(LamwGlobalSettings.PathToJavaTemplates, FPathToAndroidProject, FAndroidTheme, false);
 
   if Pos('AppCompat',  FAndroidTheme) > 0 then
      minsdkApi:= 18

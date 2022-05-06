@@ -86,12 +86,22 @@ type
   procedure CreateAntAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
   procedure CreateAntJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
 
+  //
+  //  Basic project files
+  //
+  procedure CreateJavaSrcDir(FAndroidProjectName, FPackageName, FSmallProjName: string; out FFullJavaSrcPath:string);
+  procedure CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidThemeColor: string; overwrite:boolean=true);
+  procedure CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidTheme: string; overwrite: boolean=true);
+
 implementation
 
 {$ifdef unix}
 uses
   BaseUnix;
 {$endif}
+
+const
+  COPY_FLAGS:array[false..true] of TCopyFileFlags = ([], [cffOverwriteFile]);
 
 var
   strList: TStringList;
@@ -1822,6 +1832,76 @@ begin
     strList.Add('cd '+FAndroidProjectName);
     strList.Add('jarsigner -verify -verbose -certs '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-release.apk');
     ScriptSave(aFile);
+  end;
+end;
+
+procedure CreateJavaSrcDir(FAndroidProjectName, FPackageName,
+  FSmallProjName: string; out FFullJavaSrcPath: string);
+var
+  L: TStringList;
+  FPathToJavaSrc: string;
+  i: Integer;
+begin
+
+  FPathToJavaSrc:= FAndroidProjectName + DirectorySeparator + 'src';
+
+  if not DirectoryExists(FPathToJavaSrc) then
+  begin
+    ForceDirectories(FPathToJavaSrc);
+
+    FFullJavaSrcPath:= FPathToJavaSrc;
+    L := TStringList.Create;
+    L.Clear;
+    L.StrictDelimiter:= True;
+    L.Delimiter:= '.';
+    L.DelimitedText:= FPackageName + '.' + LowerCase(FSmallProjName);
+    for i:= 0 to L.Count -1 do
+    begin
+       FFullJavaSrcPath:= FFullJavaSrcPath + DirectorySeparator + L.Strings[i];
+       CreateDir(FFullJavaSrcPath);
+    end;
+    L.Free;
+  end;
+end;
+
+procedure CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName,
+  FAndroidThemeColor: string; overwrite: boolean);
+var
+  srcFile, dstFile: string;
+begin
+  dstFile := FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml';
+  if overwrite or not FileExists(dstFile) then
+  begin
+    ForceDirectories(ExtractFilePath(dstFile));
+    srcFile := FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors'+DirectorySeparator+FAndroidThemeColor+DirectorySeparator+'colors.xml';
+    if FileExists(srcFile) then
+      CopyFile(srcFile, dstFile, COPY_FLAGS[overwrite])
+    else
+      CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml', dstFile, COPY_FLAGS[overwrite]);
+  end;
+end;
+
+procedure CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName,
+  FAndroidTheme: string; overwrite: boolean);
+var
+  dstFile: String;
+begin
+  dstFile := FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'styles.xml';
+  if overwrite or not FileExists(dstFile) then
+  begin
+    ForceDirectories(ExtractFilePath(dstFile));
+    if Pos('AppCompat', FAndroidTheme) > 0 then
+    begin
+        CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+FAndroidTheme+'.xml', dstFile, COPY_FLAGS[overwrite]);
+    end
+    else if Pos('GDXGame', FAndroidTheme) > 0 then
+    begin
+        CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+FAndroidTheme+'.xml', dstFile, COPY_FLAGS[overwrite]);
+    end
+    else
+    begin
+       CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'styles.xml', dstFile, COPY_FLAGS[overwrite]);
+    end;
   end;
 end;
 
