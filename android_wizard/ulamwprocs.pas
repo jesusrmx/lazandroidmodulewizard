@@ -37,6 +37,7 @@ type
   function GetPluginVersion(buildTool: string): string;
   function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; out FCandidateSdkBuild:string): string;
   function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool,FCandidateSdkBuild: string): boolean;
+  function GetInstructionChip(FInstructionSet, ProjTargetFilename: string): string;
 
   //
   // ALL
@@ -58,11 +59,12 @@ type
   // GRADLE
   //
   procedure CreateGradleProperties(const FAndroidProjectName, FAndroidTheme, FPathToJavaJDK : string; overwrite:boolean=true);
+  procedure UpdateGradleProperties(const FAndroidProjectName, FAndroidTheme, FPathToJavaJDK : string);
   procedure CreateLocalProperties(const FAndroidProjectName, FPathToAndroidSDK, FPathToAndroidNDK: string; overwrite:boolean=true);
   function CreateBuildGradle(FAndroidProjectName: string; FPathToAndroidSDK: string; FMaxSDKPlatform: Integer;
     FGradleVersion:string; FAndroidTheme: string; instructionChip: string; FMinApi, FTargetApi: string;
     FVersionCode: Integer; FVersionName: string; FSupport: boolean; FPackagePrefaceName: string; FSmallProjName: string;
-    overwrite: boolean = true): boolean;
+    Updating:boolean=false; buildTool:string=''; overwrite: boolean = true): boolean;
   procedure CreateGradleReadme(FAndroidProjectName, FPathToGradle, FPathToAndroidSDK: string; overwrite:boolean=true);
   procedure CreateGradleAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, instructionChip: string; overwrite: boolean = true);
   procedure CreateGradleJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
@@ -85,6 +87,7 @@ type
   procedure CreateBuildXML(FAndroidProjectName, FPathToAndroidSDK, FAndroidTheme, FTargetApi, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
   procedure CreateAntReadme(FAndroidProjectName, FAntBuildMode, FSmallProjName: string; overwrite:boolean=true);
   procedure CreateAntProperties(FAndroidProjectName, FSmallProjName: string; overwrite:boolean=true);
+  procedure UpdateAntProperties(FAndroidProjectName: string);
   procedure CreateProguardPoject(FAndroidProjectName: string; overwrite:boolean=true);
   procedure CreateProjectProperties(FAndroidProjectName, FAndroidTheme, FTargetApi: string; overwrite:boolean=true);
   procedure CreateAntBuildDebug(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin:string; overwrite:boolean=true);
@@ -106,7 +109,7 @@ type
   procedure CreateControlsNative(FAndroidProjectName, FPathToJavaTemplates: string; overwrite:boolean=true);
   procedure CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
   procedure CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates, FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi, FTargetApi:string; FSupport:boolean; overwrite:boolean=true);
-  procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string; FSupport:boolean; FMinApi, FTargetApi, DefMinApi:string; Checks: TUpdateManifestChecks);
+  procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string; FSupport:boolean; FMinApi, FTargetApi, DefApi:string; Checks: TUpdateManifestChecks);
 implementation
 
 {$ifdef unix}
@@ -437,6 +440,28 @@ begin
     end;
   end;
   lisDir.free;
+end;
+
+function GetInstructionChip(FInstructionSet, ProjTargetFilename: string
+  ): string;
+var
+  tempStr: String;
+begin
+  tempStr:= LowerCase(FInstructionSet);
+  if Length(tempStr)>0 then
+  begin
+  if tempStr = 'armv6'  then result:='armeabi';
+  if tempStr = 'armv7a' then result:='armeabi-v7a';
+  if tempStr = 'x86'    then result:='x86';
+  if tempStr = 'x86_64' then result:='x86_64';
+  if tempStr = 'mipsel' then result:='mips';
+  if tempStr = 'armv8'  then result:='arm64-v8a';
+  end
+  else
+  begin
+    result:= ExtractFileDir(ProjTargetFilename);
+    result:= ExtractFileName(result);
+  end;
 end;
 
 { TFileProducer }
@@ -852,6 +877,48 @@ begin
 
 end;
 
+procedure UpdateGradleProperties(const FAndroidProjectName, FAndroidTheme,
+  FPathToJavaJDK: string);
+var
+  aFile, tempStr: string;
+begin
+
+  aFile := FAndroidProjectName+pathDelim+'gradle.properties';
+  if not FileExists(aFile) then
+  begin
+    CreateGradleProperties(FAndroidProjectName, FAndroidTheme, FPathToJavaJDK);
+    exit;
+  end;
+
+  PrepareStrList;
+  strList.LoadFromFile(aFile);
+
+  if Pos('AppCompat', FAndroidTheme) > 0 then
+  begin
+    if Pos(Uppercase('android.useAndroidX'), Uppercase(strList.Text) ) <= 0 then
+    begin
+       strList.Add('android.useAndroidX=true');
+    end;
+  end;
+
+  //apply change suggested by DonAlfred
+  if Pos('org.gradle.java.home=', strList.Text ) <= 0 then
+  begin
+    if DirectoryExists(FPathToJavaJDK) then
+    begin
+      tempStr:=FPathToJavaJDK;
+      {$ifdef MSWindows}
+      tempStr:=StringReplace(tempStr,'\','\\',[rfReplaceAll]);
+      tempStr:=StringReplace(tempStr,':','\:',[]);
+      //tempStr:=StringReplace(tempStr,' ','\ ',[rfReplaceAll]); //fix "invalid string escape"
+      {$endif}
+      strList.Add('org.gradle.java.home='+tempStr);
+    end;
+  end;
+
+  strList.SaveToFile(aFile);
+end;
+
 procedure CreateLocalProperties(const FAndroidProjectName, FPathToAndroidSDK,
   FPathToAndroidNDK: string; overwrite: boolean);
 var
@@ -875,12 +942,12 @@ function CreateBuildGradle(FAndroidProjectName: string;
   FPathToAndroidSDK: string; FMaxSDKPlatform: Integer; FGradleVersion: string;
   FAndroidTheme: string; instructionChip: string; FMinApi, FTargetApi: string;
   FVersionCode: Integer; FVersionName: string; FSupport: boolean;
-  FPackagePrefaceName: string; FSmallProjName: string; overwrite: boolean
-  ): boolean;
+  FPackagePrefaceName: string; FSmallProjName: string; Updating: boolean;
+  buildTool: string; overwrite: boolean): boolean;
 var
   compileSdkVersion: string;
   directive, strPack, aFile: String;
-  innerSupported: Boolean;
+  innerSupported, foundSignature: Boolean;
   aAppCompatLib:TAppCompatLib;
   aSupportLib: TSupportLib;
   candidateSDKBuild: string;
@@ -890,14 +957,65 @@ var
   outgradleCompatible: string;
   gradleCompatible: string;
   androidPluginNumber: Integer;
+  includeList: TStringList;
+  chipList: string;
+  universalApk: boolean;
+  buildToolApi: string;
 begin
+
+  universalApk := false;
+  foundSignature := false;
+  if Updating then
+  begin
+    PrepareStrList;
+
+    if fileExists(FAndroidProjectName + PathDelim + 'gradle.properties') then
+    begin
+      strList.LoadFromFile(FAndroidProjectName + PathDelim + 'gradle.properties');
+      if Pos('RELEASE_STORE_FILE', strList.Text) > 0 then
+        foundSignature := True;
+    end;
+
+    includeList := TStringList.Create;
+    includeList.Delimiter := ',';
+    includeList.StrictDelimiter := True;
+    includeList.Sorted := True;
+    includeList.Duplicates := dupIgnore;
+
+    includeList.Add('''' + instructionChip + ''''); //initial  Instruction Set
+
+    if FileExists(FAndroidProjectName + PathDelim + 'libs\armeabi\libcontrols.so') then     includeList.Add('''armeabi''');
+    if FileExists(FAndroidProjectName + PathDelim + 'libs\armeabi-v7a\libcontrols.so') then includeList.Add('''armeabi-v7a''');
+    if FileExists(FAndroidProjectName + PathDelim + 'libs\arm64-v8a\libcontrols.so') then   includeList.Add('''arm64-v8a''');
+    if FileExists(FAndroidProjectName + PathDelim + 'libs\x86_64\libcontrols.so') then      includeList.Add('''x86_64''');
+    if FileExists(FAndroidProjectName + PathDelim + 'libs\x86\libcontrols.so') then         includeList.Add('''x86''');
+    if FileExists(FAndroidProjectName + PathDelim + 'libs\mips\libcontrols.so') then        includeList.Add('''mips''');
+
+    chipList := includeList.DelimitedText; //NEW! includeList based...
+
+    universalApk := False;
+    if includeList.Count > 1 then
+      universalApk := True;
+
+    includeList.Free;
+  end;
+
   if NeedFile(FAndroidProjectName+PathDelim+'build.gradle', overwrite, aFile) then
   begin
 
 
     {%Region /fold Gradle Setup}
-    compileSdkVersion:= IntToStr(FMaxSdkPlatform);
-    sdkBuildTools:= GetBuildTool(FPathToAndroidSDK, FMaxSdkPlatform, candidateSDKBuild);
+    if Updating then
+    begin
+      // buildtool is specified, FMaxSDKPlatform ignored;
+      sdkBuildTools := buildTool;
+      compileSdkVersion := copy(buildTool, 1, 2);
+    end
+    else
+    begin
+      compileSdkVersion:= IntToStr(FMaxSdkPlatform);
+      sdkBuildTools:= GetBuildTool(FPathToAndroidSDK, FMaxSdkPlatform, candidateSDKBuild);
+    end;
 
     if sdkBuildTools = '' then
     begin
@@ -912,10 +1030,29 @@ begin
       exit;
     end;
 
-    if StrToInt(compileSdkVersion) > 25 then
-      pluginVersion:= GetPluginVersion(sdkBuildTools)
+    if Updating then
+    begin
+      // TODO: is this correct?
+      if IsAllCharNumber(PChar(compileSdkVersion)) then
+      begin
+        if StrToInt(compileSdkVersion) >= 25 then
+          pluginVersion := GetPluginVersion(sdkBuildTools)
+        else
+          pluginVersion := '2.3.3';
+      end
+      else
+      begin
+        compileSdkVersion := '29';
+        pluginVersion := '3.1.0';  //gradle 4.4.1
+      end;
+    end
     else
-      pluginVersion:= '2.3.3';
+    begin
+      if StrToInt(compileSdkVersion) > 25 then
+        pluginVersion:= GetPluginVersion(sdkBuildTools)
+      else
+        pluginVersion:= '2.3.3';
+    end;
 
     if pluginVersion = '' then
     begin
@@ -946,8 +1083,6 @@ begin
       androidPluginNumber:= GetVerAsNumber(pluginVersion);  //ex. 3.0.0 --> 3000
     end;
     {%EndRegion Gradle Setup}
-
-
 
     strPack := FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
 
@@ -1002,9 +1137,16 @@ begin
     strList.Add('        abi {');
     strList.Add('            enable true');
     strList.Add('            reset()');
-    strList.Add('            include '''+instructionChip+'''');
-      //strList.Add('            include ''x86'', ''x86_64'', ''armeabi'', ''armeabi-v7a'', ''mips'', ''mips64'', ''arm64-v8a''');
-    strList.Add('            universalApk false');
+    if universalApk then
+    begin
+      strList.Add('            include '+chipList);
+      strList.Add('            universalApk true');
+    end
+    else
+    begin
+      strList.Add('            include '''+instructionChip+'''');
+      strList.Add('            universalApk false');
+    end;
     strList.Add('        }');
     strList.Add('    }');
     end;
@@ -1019,7 +1161,11 @@ begin
 
       if androidPluginNumber < 3000 then
       begin
-         strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
+        if Updating then
+          //TODO: is this correct?
+          strList.Add('    buildToolsVersion "26.0.2"') //sdkBuildTools
+        else
+          strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
       end
       //else: each version of the Android Gradle Plugin now has a default version of the build tools
 
@@ -1071,6 +1217,24 @@ begin
     strList.Add('            versionCode ' + intToStr(FVersionCode));
     strList.Add('            versionName "' + FVersionName + '"');
     strList.Add('    }');
+
+    if foundSignature then
+    begin
+      strList.Add('    signingConfigs {');
+      strList.Add('        release {');
+      strList.Add('            storeFile file(RELEASE_STORE_FILE)');
+      strList.Add('            storePassword RELEASE_STORE_PASSWORD');
+      strList.Add('            keyAlias RELEASE_KEY_ALIAS');
+      strList.Add('            keyPassword RELEASE_KEY_PASSWORD');
+      strList.Add('        }');
+      strList.Add('    }');
+      strList.Add('    buildTypes {');
+      strList.Add('        release {');
+      strList.Add('            signingConfig signingConfigs.release');
+      strList.Add('        }');
+      strList.Add('    }');
+    end;
+
     strList.Add('    sourceSets {');
     strList.Add('        main {');
     strList.Add('            manifest.srcFile ''AndroidManifest.xml''');
@@ -1151,6 +1315,10 @@ begin
     strList.Add('	}');
     strList.Add('}');
     strList.Add(' ');
+
+    if Updating then
+      // TODO: is this correct?
+      gradleCompatibleAsNumber := GetVerAsNumber(gradleCompatible);
 
     if  gradleCompatibleAsNumber < 5000 then
     begin
@@ -1775,6 +1943,18 @@ begin
   end;
 end;
 
+procedure UpdateAntProperties(FAndroidProjectName: string);
+begin
+  PrepareStrList;
+  strList.LoadFromFile(FAndroidProjectName+'ant.properties');
+  if Pos('java.source=1.8', strList.Text) <= 0 then
+  begin
+    strList.Insert(0,'java.target=1.8');
+    strList.Insert(0,'java.source=1.8');
+    strList.SaveToFile(FAndroidProjectName+'ant.properties');
+  end;
+end;
+
 procedure CreateProguardPoject(FAndroidProjectName: string; overwrite: boolean);
 var
   aFile: String;
@@ -2260,7 +2440,7 @@ begin
 end;
 
 procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string;
-  FSupport: boolean; FMinApi, FTargetApi, DefMinApi: string;
+  FSupport: boolean; FMinApi, FTargetApi, DefApi: string;
   Checks: TUpdateManifestChecks);
 var
   dest, tempStr, aux, manifestApis, insertRef: String;
@@ -2289,7 +2469,7 @@ begin
     end;
   end;
 
-  // MinApi, TargetApi, DefMinApi
+  // MinApi, TargetApi, DefApi
   if umcMinApi in Checks then
   begin
     if FMinApi<>'' then begin
@@ -2301,7 +2481,7 @@ begin
       end
       else //re-introduce it!
       begin
-        manifestApis:= '<uses-sdk android:minSdkVersion="'+defMinApi+'" android:targetSdkVersion="'+FtargetApi+'"/>';
+        manifestApis:= '<uses-sdk android:minSdkVersion="'+DefApi+'" android:targetSdkVersion="'+FtargetApi+'"/>';
         insertRef:= 'android:versionName='; //insert reference point
         p1:= Pos(insertRef, tempStr);
         p2:= p1 + Length(insertRef);
@@ -2323,12 +2503,25 @@ begin
 
   if umcAndroidExported in checks then
   begin
-
+    //Apply to "smartdesigner.pas" improvement by LongDirtyAnimAlf in "AndroidWizard_intf"
+    tempStr:= strList.Text;
+    if Pos('android:exported="true"', tempStr) <= 0 then
+    begin
+     tempStr:= StringReplace(tempStr, 'android:enabled="true"' , 'android:enabled="true" android:exported="true"', [rfReplaceAll,rfIgnoreCase]);
+     strList.Text:= tempStr;
+     changed := true;
+    end;
   end;
 
   if umcTargetApi in checks then
   begin
-
+    if DefApi <> '' then
+    begin
+      tempStr:= strList.Text;
+      tempStr:= StringReplace(tempStr, 'android:targetSdkVersion="'+DefApi+'"' , 'android:targetSdkVersion="'+FTargetApi+'"', [rfReplaceAll,rfIgnoreCase]);
+      strList.Text:= tempStr;
+      changed := true;
+    end;
   end;
 
   if changed then

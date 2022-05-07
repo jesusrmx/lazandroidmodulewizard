@@ -1224,21 +1224,7 @@ begin
       FPackagePrefaceName:= frm.PackagePrefaceName; // ex.: org.lamw  or  example.com
       AndroidFileDescriptor.PathToJNIFolder:= FAndroidProjectName;
 
-      tempStr:= LowerCase(FInstructionSet);
-      if Length(tempStr)>0 then
-      begin
-      if tempStr = 'armv6'  then instructionChip:='armeabi';
-      if tempStr = 'armv7a' then instructionChip:='armeabi-v7a';
-      if tempStr = 'x86'    then instructionChip:='x86';
-      if tempStr = 'x86_64' then instructionChip:='x86_64';
-      if tempStr = 'mipsel' then instructionChip:='mips';
-      if tempStr = 'armv8'  then instructionChip:='arm64-v8a';
-      end
-      else
-      begin
-        instructionChip:= ExtractFileDir(LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename);
-        instructionChip:= ExtractFileName(instructionChip);
-      end;
+      instructionChip := GetInstructionChip(FInstructionSet, LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename);
       {%EndRegion}
 
       try
