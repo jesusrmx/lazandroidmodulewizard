@@ -20,6 +20,8 @@ type
   TheThing = class
   end;
 
+  TUpdateManifestChecks = set of (umcUpdateAndroidX, umcMinApi, umcTargetApi, umcAndroidExported);
+
   function IsAllCharNumber(pcString: PChar): Boolean;
   // tk ReplaceChar made public
   function ReplaceChar(const query: string; oldchar, newchar: char): string;
@@ -104,6 +106,7 @@ type
   procedure CreateControlsNative(FAndroidProjectName, FPathToJavaTemplates: string; overwrite:boolean=true);
   procedure CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
   procedure CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates, FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi, FTargetApi:string; FSupport:boolean; overwrite:boolean=true);
+  procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string; FSupport:boolean; FMinApi, FTargetApi, DefMinApi:string; Checks: TUpdateManifestChecks);
 implementation
 
 {$ifdef unix}
@@ -2223,6 +2226,113 @@ begin
 
     strList.SaveToFile(aFile);
   end;
+end;
+
+// searchs for an xml attribute in tempstr, if it's found it returns
+// the attribute a string like 'attribute="value"', returns '' if it's not found.
+function GetXMLAttributeString(tempStr: string; attribute:string): string;
+var
+  start, last: pchar;
+begin
+  result := '';
+
+  if (Attribute='') or (tempStr='') then
+    exit;
+
+  // find "attribute"
+  start := StrPos(@tempStr[1], @attribute[1]);
+  if start=nil then
+    exit;
+
+  // find the first '"'
+  last := StrPos(start, '"');
+  if last=nil then
+    exit;
+
+  // find the next '"'
+  last := StrPos(last+1, '"');
+  if last=nil then
+    exit;
+
+  // copy the attribute string
+  SetLength(result, last-start+1);
+  Move(last^, result[1], last-start+1);
+end;
+
+procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string;
+  FSupport: boolean; FMinApi, FTargetApi, DefMinApi: string;
+  Checks: TUpdateManifestChecks);
+var
+  dest, tempStr, aux, manifestApis, insertRef: String;
+  changed, checkAndroidX: Boolean;
+  p1, p2: Integer;
+  c: char;
+begin
+  PrepareStrList;
+
+  dest := FAndroidProjectName+'AndroidManifest.xml';
+  strList.LoadFromFile(dest);
+  changed := false;
+
+  // Update to androidX
+  if umcUpdateAndroidX in Checks then
+  begin
+    if (FSupport) or (Pos('AppCompat', FAndroidTheme) > 0) then
+    begin
+      tempStr := strList.Text;
+      if Pos('android.support.v4.content.FileProvider', tempStr) > 0 then //update to androidX
+      begin
+        tempStr:= StringReplace(tempStr, 'android.support.v4.content.FileProvider','androidx.core.content.FileProvider', [rfReplaceAll, rfIgnoreCase]);
+        strList.Text:= tempStr;
+        changed := true;
+      end
+    end;
+  end;
+
+  // MinApi, TargetApi, DefMinApi
+  if umcMinApi in Checks then
+  begin
+    if FMinApi<>'' then begin
+      tempStr:= strList.Text;  //manifest
+      aux := GetXMLAttributeString(tempStr, 'android:minSdkVersion');
+      if aux<>'' then
+      begin
+        tempStr:= StringReplace(tempStr, aux , 'android:minSdkVersion="'+FMinApi+'"', [rfReplaceAll,rfIgnoreCase]);
+      end
+      else //re-introduce it!
+      begin
+        manifestApis:= '<uses-sdk android:minSdkVersion="'+defMinApi+'" android:targetSdkVersion="'+FtargetApi+'"/>';
+        insertRef:= 'android:versionName='; //insert reference point
+        p1:= Pos(insertRef, tempStr);
+        p2:= p1 + Length(insertRef);
+        c:= tempStr[p2];
+        while c <> '>' do
+        begin
+          Inc(p2);
+          c:= tempStr[p2];
+        end;
+        Inc(p2);
+        insertRef:= Trim(Copy(tempStr, p1, p2-p1));
+        p1:= Pos(insertRef, tempStr);
+        Insert(sLineBreak + manifestApis, tempStr, p1+Length(insertRef) );
+      end;
+      strList.Text:= tempStr;
+      changed := true;
+    end;
+  end;
+
+  if umcAndroidExported in checks then
+  begin
+
+  end;
+
+  if umcTargetApi in checks then
+  begin
+
+  end;
+
+  if changed then
+    strList.SaveToFile(dest);
 end;
 
 initialization

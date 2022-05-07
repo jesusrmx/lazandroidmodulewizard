@@ -737,6 +737,7 @@ end;
 function TAndroidGUIProjectDescriptor.DoInitDescriptor: TModalResult;    //GUI
 var
   outTag: TModuleType;
+  strPackName: String;
 begin
   try
     FModuleType := mtGUI;

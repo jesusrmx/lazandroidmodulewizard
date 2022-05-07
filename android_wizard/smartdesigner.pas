@@ -701,6 +701,7 @@ var
   strList, providerList: TStringList;
   i, minsdkApi, sdkManifMinApiNumber: integer;
   strTargetApi, auxStr, tempStr, sdkManifestTarqet, sdkManifMinApi: string;
+  minApiStr, defApiStr: string;
   aSupportLib:TSupportLib;
   aAppCompatLib:TAppCompatLib;
   androidPluginNumber: integer;
@@ -749,6 +750,7 @@ begin
 
   CreateStylesXml(LamwGlobalSettings.PathToJavaTemplates, FPathToAndroidProject, FAndroidTheme, false);
 
+  {%Region /fold MinApi}
   if Pos('AppCompat',  FAndroidTheme) > 0 then
      minsdkApi:= 18
   else
@@ -777,91 +779,34 @@ begin
   else
     sdkManifMInApiNumber:= 0; //minSdk was removed from manisfest ... so we need re-introduce it!
 
+  {%EndRegion MinApi}
+
   sourcepath:=LamwGlobalSettings.PathToJavaTemplates+'androidmanifest.txt';
   targetpath:=FPathToAndroidProject+'AndroidManifest.xml';
 
-  if FileExists(sourcepath) AND (NOT FileExists(targetpath)) then with strList do
-  begin
-    LoadFromFile(sourcepath);
-    auxStr:=FPackageName + '.' + LowerCase(FSmallProjName);
-    tempStr  := StringReplace(Text, 'dummyPackage',auxStr, [rfReplaceAll, rfIgnoreCase]);
-    tempStr  := StringReplace(tempStr, 'dummyAppName','.App', [rfReplaceAll, rfIgnoreCase]);
-    tempStr  := StringReplace(tempStr, 'dummySdkApi', '0', [rfReplaceAll, rfIgnoreCase]);
-    tempStr  := StringReplace(tempStr, 'dummyTargetApi', '0', [rfReplaceAll, rfIgnoreCase]);
-    Clear;
-    Text:= tempStr;
-    SaveToFile(targetpath);
-  end;
+  // First create the manifest if it doesn't exists
+  CreateAndroidManifestXML(FPathToAndroidProject, LamwGlobalSettings.PathToJavaTemplates,
+    FPackageName, FSmallProjName, 'App'{TODO: FMainActivity}, IntToStr(sdkManifMInApiNumber), IntToStr(targetApi),
+    FSupport, false);
 
-  if (FSupport) or (Pos('AppCompat', FAndroidTheme) > 0) then
-  begin
-    strList.Clear;
-    strList.LoadFromFile(FPathToAndroidProject+'AndroidManifest.xml');
-
-    if Pos('android.support.v4.content.FileProvider', strList.Text) > 0 then //update to androidX
+  if sdkManifMinApiNumber < minsdkApi then begin
+    minApiStr := IntToStr(minsdkApi);
+    if sdkManifMinApi = '' then
     begin
-       tempStr:= StringReplace(strList.Text, 'android.support.v4.content.FileProvider','androidx.core.content.FileProvider', [rfReplaceAll, rfIgnoreCase]);
-       strList.Clear;
-       strList.Text:= tempStr;
-       strList.SaveToFile(FPathToAndroidProject+'AndroidManifest.xml');
-    end
-    else
-    begin
-
-       if FileExists(LamwGlobalSettings.PathToJavaTemplates +'support'+DirectorySeparator+'manifest_support_provider.txt') then
-       begin
-         providerList:= TStringList.Create;
-         providerList.LoadFromFile(LamwGlobalSettings.PathToJavaTemplates +'support'+DirectorySeparator+'manifest_support_provider.txt');
-         supportProvider  := StringReplace(providerList.Text, 'dummyPackage',FPackageName, [rfReplaceAll, rfIgnoreCase]);
-         providerList.Free;
-         if Pos('androidx.core.content.FileProvider', strList.Text) <= 0 then
-         begin
-           tempStr:= strList.Text;  //manifest
-           insertRef:= '</activity>'; //insert reference point
-           p1:= Pos(insertRef, tempStr);
-           Insert(sLineBreak + supportProvider, tempStr, p1+Length(insertRef) );
-           strList.Clear;
-           strList.Text:= tempStr;
-           strList.SaveToFile(FPathToAndroidProject+'AndroidManifest.xml');
-         end;
-       end;
-
+      // re introduce it
+      if Pos('AppCompat', FAndroidTheme) > 0 then
+        defApiStr := '18'
+      else
+        defApiStr := '14';
     end;
-  end;
-
-  if sdkManifMinApiNumber < minsdkApi  then
+  end else
   begin
-    strList.Clear;
-    strList.LoadFromFile(FPathToAndroidProject+'AndroidManifest.xml');
-    tempStr:= strList.Text;  //manifest
-    if Pos('android:minSdkVersion=', tempStr) > 0 then
-    begin
-      tempStr:= StringReplace(tempStr, 'android:minSdkVersion="'+sdkManifMinApi+'"' , 'android:minSdkVersion="'+IntToStr(minsdkApi)+'"', [rfReplaceAll,rfIgnoreCase]);
-    end
-    else //re-introduce it!
-    begin
-       if Pos('AppCompat', FAndroidTheme) > 0 then
-          manifestApis:= '<uses-sdk android:minSdkVersion="18" android:targetSdkVersion="'+IntToStr(targetApi)+'"/>'
-       else
-          manifestApis:= '<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="'+IntToStr(targetApi)+'"/>';
-
-       insertRef:= 'android:versionName='; //insert reference point
-       p1:= Pos(insertRef, tempStr);
-       p2:= p1 + Length(insertRef);
-       c:= tempStr[p2];
-       while c <> '>' do
-       begin
-          Inc(p2);
-          c:= tempStr[p2];
-       end;
-       Inc(p2);
-       insertRef:= Trim(Copy(tempStr, p1, p2-p1));
-       p1:= Pos(insertRef, tempStr);
-       Insert(sLineBreak + manifestApis, tempStr, p1+Length(insertRef) );
-    end;
-    strList.Text:= tempStr;
-    strList.SaveToFile(FPathToAndroidProject+'AndroidManifest.xml');
+    minApiStr := ''; // no changes
+    defApiStr := '';
   end;
+
+  // Now the manifest exists, update it according to several improvements
+  UpdateAndroidManifestXML(FPathToAndroidProject, FAndroidTheme, FSupport, minApiStr, IntToStr(targetApi), defApiStr, [umcAndroidExported, umcMinApi]);
 
   //Apply to "smartdesigner.pas" improvement by LongDirtyAnimAlf in "AndroidWizard_intf"
   strList.Clear;
@@ -876,6 +821,10 @@ begin
   strList.Clear;
 
   sdkManifestTarqet:= GetTargetFromManifest();
+
+  if sdkManifestTarqet <> '' then
+    // need just to change the targetApi, so ignore update to AndroidX and minApiSdk changes
+    UpdateAndroidManifestXML(FPathToAndroidProject, '', false, '', IntToStr(targetApi), sdkManifestTarqet);
 
   if sdkManifestTarqet <> '' then
   begin
