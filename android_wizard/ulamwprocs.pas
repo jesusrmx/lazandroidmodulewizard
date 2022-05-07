@@ -1946,7 +1946,7 @@ end;
 procedure UpdateAntProperties(FAndroidProjectName: string);
 begin
   PrepareStrList;
-  strList.LoadFromFile(FAndroidProjectName+'ant.properties');
+  strList.LoadFromFile(FAndroidProjectName+PathDelim+'ant.properties');
   if Pos('java.source=1.8', strList.Text) <= 0 then
   begin
     strList.Insert(0,'java.target=1.8');
@@ -2450,7 +2450,7 @@ var
 begin
   PrepareStrList;
 
-  dest := FAndroidProjectName+'AndroidManifest.xml';
+  dest := FAndroidProjectName+pathDelim+'AndroidManifest.xml';
   strList.LoadFromFile(dest);
   changed := false;
 
