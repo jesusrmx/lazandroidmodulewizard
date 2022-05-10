@@ -1046,19 +1046,11 @@ function TAndroidProjectDescriptor.GetWorkSpaceFromForm(projectType: TModuleType
 var
   frm: TFormWorkspace;
   strList: TStringList;
-  aSupportLib:TSupportLib;
-  aAppCompatLib:TAppCompatLib;
-  innerSupported: boolean;
-  i, intTargetApi, intMinApi: integer;
-  tempStr: string;
-  instructionChip, apkName: string;
-  pathToAdbBin: string;
-  apk_aliaskey, strText: string;
-  strPack: string;
+  instructionChip: string;
   FVersionCode: integer;
   FVersionName : string;
   xmlAndroidManifest: TXMLDocument;
-  outTheme, sdkBuildTools: string;
+  outTheme: string;
 begin
   Result:= False;
   FModuleType:= projectType; //-1:gdx 0:GUI  1:NoGUI 2: NoGUI EXE Console 3: generic library
@@ -1233,150 +1225,42 @@ begin
           if FModuleType in [mtGDX, mtGUI, mtNoGUI] then   //-1:gdx 0: GUI project   1: NoGui project   2: NoGUI Exe
           begin
 
-            // BuildSys: 'All'
-            //       OS: 'All'
-            //
-            // What it does:
-            //  Creates project directories:
-            //    Creates FPathToJavaSrc   -> <ProjDir>/src
-            //    Creates FFullJavaSrcPath -> <ProjDir>/src/pkg/preface/name/and/proj/name
-            //    Creates <ProjDir>/res, <ProjDir>/res/drawable, <ProjDir>/res/xml
-            //    Creates/Copy  <JTPL>/drawable-hdpi/ic_launcher.png -> <ProjDir>/res/drawable-hdpi
-            //    Creates/Copy  <JTPL>/drawable-ldpi/ic_launcher.png -> <ProjDir>/res/drawable-ldpi
-            //    Creates/Copy  <JTPL>/drawable-mdpi/ic_launcher.png -> <ProjDir>/res/drawable-mdpi
-            //    Creates/Copy  <JTPL>/drawable-xdpi/ic_launcher.png -> <ProjDir>/res/drawable-xdpi
-            //    Creates/Copy <JTPL>/drawable-xxdpi/ic_launcher.png -> <ProjDir>/res/drawable-xxdpi
-            //    Dir=/values/colors[/FAndroidThemeColor] copy <JTPL>/<Dir>/colors.xml -> <ProjDir>/<Dir>/colors.xml
-            //    if AppCompat in FAndroidTheme: <JTPL>/values/FAndroidTheme.xml -> <ProjDir>/res/values/styles.xml
-            //    elif GDXGame in FAndroidTheme: <JTPL>/values/FAndroidTheme.xml -> <ProjDir>/res/values/styles.xml
-            //    else                           <JTPL>/values/styles.xml        -> <ProjDir>/res/values/styles.xml
-            // Depends on:
-            //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName, FAndroidTheme, FAndroidThemeColor
-            //
-            {%Region /fold}
             FPathToJavaSrc:= FAndroidProjectName + DirectorySeparator + 'src';
-            CreateJavaSrcDir(FAndroidProjectName, FPackagePrefaceName, FSmallProjName, FFullJavaSrcPath);
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+'res');
-
-            ForceDirectories(FAndroidProjectName+DirectorySeparator+'res'+DirectorySeparator+'drawable');
-            ForceDirectories(FAndroidProjectName+DirectorySeparator+'res'+DirectorySeparator+'xml');
-
-            ForceDirectories(FAndroidProjectName+DirectorySeparator+'res'+DirectorySeparator+'drawable-hdpi');
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-hdpi'+DirectorySeparator+'ic_launcher.png',
-                     FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-hdpi'+DirectorySeparator+'ic_launcher.png');
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-ldpi');
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-ldpi'+DirectorySeparator+'ic_launcher.png',
-                     FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-ldpi'+DirectorySeparator+'ic_launcher.png');
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-mdpi');
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-mdpi'+DirectorySeparator+'ic_launcher.png',
-                     FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-mdpi'+DirectorySeparator+'ic_launcher.png');
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xhdpi');
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-xhdpi'+DirectorySeparator+'ic_launcher.png',
-                     FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xhdpi'+DirectorySeparator+'ic_launcher.png');
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xxhdpi');
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-xxhdpi'+DirectorySeparator+'ic_launcher.png',
-                     FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xxhdpi'+DirectorySeparator+'ic_launcher.png');
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values');
-
-            CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidThemeColor);
-            CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidTheme);
-            {%EndRegion}
-
-            // BuildSys: 'All'
-            //       OS: 'All'
-            //
-            // What it does:  Creates <Proj>/res/values/strings.xml
-            //
-            // Depends On:    FAndroidProjectName, FSmalProjName
-            //
-            {%Region /fold}
-            strList.Clear;
-            strList.Add('<?xml version="1.0" encoding="utf-8"?>');
-            strList.Add('<resources>');
-            strList.Add('   <string name="app_name">'+FSmallProjName+'</string>');
-            strList.Add('   <string name="hello_world">Hello world!</string>');
-            strList.Add('</resources>');
-            strList.SaveToFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'strings.xml');
-            {%EndRegion}
-
-            {
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml',
-                         FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
-            }
-
-            // BuildSys: 'All'
-            //       OS: 'All'
-            //
-            // What it does:
-            //    Creates <Proj>/res/values-v11, <Proj>/res/values-v14, <Proj>/res/values-v21
-            //            Creates/Copy <JTPL>/layout/activity_app.xml -> <ProjDir>/res/layout/activity_app.xml
-            //            <Proj>/assets, <Proj>/bin, <Proj>/gen
-            //
-            // Depends On:    FAndroidProjectName, FTargetApi, FAndroidTheme, FMinAPi
-            //
-            {%Region /fold}
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v11');
-
-            intTargetApi:= StrToInt(FTargetApi);
-            if intTargetApi < 14 then   intTargetApi:= 14;
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v14');
-            //replace "dummyTheme" ..res\values-v14
-            strList.Clear;
-            strList.LoadFromFile(FPathToJavaTemplates+DirectorySeparator+'values-v14'+DirectorySeparator+'styles.xml');
-
-            if (intTargetApi >= 14) and (intTargetApi < 21) then
-               strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.'+FAndroidTheme, [rfReplaceAll])
-            else
-               strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.DeviceDefault', [rfReplaceAll]);
-
-            strList.Text:= strText;
-            strList.SaveToFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v14'+DirectorySeparator+'styles.xml');
-
-            intMinApi:= StrToInt(FMinApi);
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v21');
-
-            //replace "dummyTheme" ..res\values-v21
-            strList.Clear;
-            if (Pos('AppCompat', FAndroidTheme) <= 0) and (Pos('GDXGame', FAndroidTheme) <= 0) then  //not AppCompat
-            begin
-              CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v21');
-              //replace "dummyTheme" ..res\values-v21
-              if intMinApi >= 21 then
-              begin
-                strList.LoadFromFile(FPathToJavaTemplates+DirectorySeparator+'values-v21'+DirectorySeparator+'styles.xml')
-              end
-              else
-                strList.LoadFromFile(FPathToJavaTemplates+DirectorySeparator+'values-v21'+DirectorySeparator+'styles-empty.xml');
-
-              if (intTargetApi >= 21) then
-              begin
-                strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.'+FAndroidTheme, [rfReplaceAll])
-              end
-              else
-              begin
-                strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.DeviceDefault', [rfReplaceAll]);
-              end;
-
-              strList.Text:= strText;
-              strList.SaveToFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v21'+DirectorySeparator+'styles.xml');
-            end;
-
-            CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'layout');
-            CopyFile(FPathToJavaTemplates+DirectorySeparator+'layout'+DirectorySeparator+'activity_app.xml',
-                         FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'layout'+DirectorySeparator+'activity_app.xml');
-
             CreateDir(FAndroidProjectName+ DirectorySeparator + 'assets');
             CreateDir(FAndroidProjectName+ DirectorySeparator + 'bin');
             CreateDir(FAndroidProjectName+ DirectorySeparator + 'gen');
-            {%EndRegion}
+            CreateDir(FAndroidProjectName+ DirectorySeparator + 'res');
+            CreateDir(FAndroidProjectName+ DirectorySeparator + 'res' +DirectorySeparator+'xml');
 
+            // BuildSys: 'All'
+            //       OS: 'All'
+            //
+            // What it does:
+            //    Creates FFullJavaSrcPath -> <ProjDir>/src/pkg/preface/name/and/proj/name
+            //    Creates <ProjDir>/res/drawable-hdpi/ic_launcher.png
+            //    Creates <ProjDir>/res/drawable-ldpi/ic_launcher.png
+            //    Creates <ProjDir>/res/drawable-mdpi/ic_launcher.png
+            //    Creates <ProjDir>/res/drawable-xdpi/ic_launcher.png
+            //    Creates <ProjDir>/res/drawable-xxdpi/ic_launcher.png
+            //    Creates <ProjDir>/res/values/colors.xml
+            //    Creates <ProjDir>/res/values/styles.xml
+            //    Creates <ProjDir>/res/values/strings.xml
+            //    Creates <ProjDir>/res/values-v14/styles.xml
+            //    Creates <ProjDir>/res/values-v21/styles.xml
+            //    Creates <ProjDir>/res/layout/activity_app.xml
+            // Depends on:
+            //    FAndroidProjectName, FPackagePrefaceName, FSmallProjName, FAndroidTheme, FAndroidThemeColor
+            //    FPathToJavaTemplates;
+            //
+            {%Region /fold}
+            CreateJavaSrcDir(FAndroidProjectName, FPackagePrefaceName, FSmallProjName, FFullJavaSrcPath);
+            CreateDrawables(FAndroidProjectName, FPathToJavaTemplates);
+            CreateColorsXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidThemeColor);
+            CreateStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme);
+            CreateStringsXml(FAndroidProjectName, FSmallProjName);
+            CreateTargetStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme, FMinApi, FTARgetApi);
+            CreateActivityAppXml(FAndroidProjectName, FPathToJavaTemplates);
+            {%EndRegion}
           end;
 
           if FModuleType in [mtGDX, mtGUI] then  //Android Bridges Controls... [GUI] and Gdx

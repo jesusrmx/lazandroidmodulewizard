@@ -99,8 +99,12 @@ type
   //  Basic project files
   //
   procedure CreateJavaSrcDir(FAndroidProjectName, FPackageName, FSmallProjName: string; out FFullJavaSrcPath:string);
-  procedure CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidThemeColor: string; overwrite:boolean=true);
-  procedure CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName, FAndroidTheme: string; overwrite: boolean=true);
+  procedure CreateDrawables(FAndroidProjectName, FPathToJavaTemplates: string; overwrite:boolean=true);
+  procedure CreateStringsXml(FAndroidProjectName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateColorsXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidThemeColor: string; overwrite:boolean=true);
+  procedure CreateStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme: string; overwrite: boolean=true);
+  procedure CreateTargetStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme, FMinApi, FTargetApi: string; overwrite:boolean=true);
+  procedure CreateActivityAppXml(FAndroidProjectName, FPathToJavaTemplates: string; overwrite:boolean=true);
   procedure CreateJSupportedJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName: string; FSupport: boolean; overwrite:boolean=true);
   procedure CreateSupportProviderPathsXML(FAndroidProjectName, FPathToJavaTemplates: string; FSupport: boolean; overwrite:boolean=true);
   procedure CreateControlsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
@@ -2155,7 +2159,51 @@ begin
   end;
 end;
 
-procedure CreateColorsXml(FPathToJavaTemplates, FAndroidProjectName,
+procedure CreateDrawables(FAndroidProjectName, FPathToJavaTemplates: string;
+  overwrite: boolean);
+begin
+  CreateDir(FAndroidProjectName+ DirectorySeparator + 'res' +DirectorySeparator+'drawable');
+
+  CreateDir(FAndroidProjectName+ DirectorySeparator + 'res' +DirectorySeparator+'drawable-hdpi');
+  CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-hdpi'+DirectorySeparator+'ic_launcher.png',
+           FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-hdpi'+DirectorySeparator+'ic_launcher.png');
+
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-ldpi');
+  CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-ldpi'+DirectorySeparator+'ic_launcher.png',
+           FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-ldpi'+DirectorySeparator+'ic_launcher.png');
+
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-mdpi');
+  CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-mdpi'+DirectorySeparator+'ic_launcher.png',
+           FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-mdpi'+DirectorySeparator+'ic_launcher.png');
+
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xhdpi');
+  CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-xhdpi'+DirectorySeparator+'ic_launcher.png',
+           FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xhdpi'+DirectorySeparator+'ic_launcher.png');
+
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xxhdpi');
+  CopyFile(FPathToJavaTemplates+DirectorySeparator+'drawable-xxhdpi'+DirectorySeparator+'ic_launcher.png',
+           FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'drawable-xxhdpi'+DirectorySeparator+'ic_launcher.png');
+
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values');
+end;
+
+procedure CreateStringsXml(FAndroidProjectName, FSmallProjName: string;
+  overwrite: boolean);
+var
+  aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values'+DirectorySeparator+'strings.xml', overwrite, aFile) then
+  begin
+    strList.Add('<?xml version="1.0" encoding="utf-8"?>');
+    strList.Add('<resources>');
+    strList.Add('   <string name="app_name">'+FSmallProjName+'</string>');
+    strList.Add('   <string name="hello_world">Hello world!</string>');
+    strList.Add('</resources>');
+    strList.SaveToFile(aFile);
+  end;
+end;
+
+procedure CreateColorsXml(FAndroidProjectName, FPathToJavaTemplates,
   FAndroidThemeColor: string; overwrite: boolean);
 begin
   AltCopyFile(
@@ -2165,7 +2213,7 @@ begin
     FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'colors.xml');
 end;
 
-procedure CreateStylesXml(FPathToJavaTemplates, FAndroidProjectName,
+procedure CreateStylesXml(FAndroidProjectName, FPathToJavaTemplates,
   FAndroidTheme: string; overwrite: boolean);
 var
   dstFile: String;
@@ -2187,6 +2235,71 @@ begin
        CopyFile(FPathToJavaTemplates+DirectorySeparator+'values'+DirectorySeparator+'styles.xml', dstFile, COPY_FLAGS[overwrite]);
     end;
   end;
+end;
+
+procedure CreateTargetStylesXml(FAndroidProjectName, FPathToJavaTemplates,
+  FAndroidTheme, FMinApi, FTargetApi: string; overwrite: boolean);
+var
+  intTargetApi, intMinApi: LongInt;
+  strText: String;
+begin
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v11');
+
+  intTargetApi:= StrToInt(FTargetApi);
+  if intTargetApi < 14 then   intTargetApi:= 14;
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v14');
+  //replace "dummyTheme" ..res\values-v14
+
+  PrepareStrList;
+  strList.LoadFromFile(FPathToJavaTemplates+DirectorySeparator+'values-v14'+DirectorySeparator+'styles.xml');
+
+  if (intTargetApi >= 14) and (intTargetApi < 21) then
+     strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.'+FAndroidTheme, [rfReplaceAll])
+  else
+     strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.DeviceDefault', [rfReplaceAll]);
+
+  strList.Text:= strText;
+  strList.SaveToFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v14'+DirectorySeparator+'styles.xml');
+
+  intMinApi:= StrToInt(FMinApi);
+
+  CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v21');
+
+  //replace "dummyTheme" ..res\values-v21
+  strList.Clear;
+  if (Pos('AppCompat', FAndroidTheme) <= 0) and (Pos('GDXGame', FAndroidTheme) <= 0) then  //not AppCompat
+  begin
+    CreateDir(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v21');
+    //replace "dummyTheme" ..res\values-v21
+    if intMinApi >= 21 then
+    begin
+      strList.LoadFromFile(FPathToJavaTemplates+DirectorySeparator+'values-v21'+DirectorySeparator+'styles.xml')
+    end
+    else
+      strList.LoadFromFile(FPathToJavaTemplates+DirectorySeparator+'values-v21'+DirectorySeparator+'styles-empty.xml');
+
+    if (intTargetApi >= 21) then
+    begin
+      strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.'+FAndroidTheme, [rfReplaceAll])
+    end
+    else
+    begin
+      strText:= StringReplace(strList.Text,'dummyTheme', 'android:Theme.DeviceDefault', [rfReplaceAll]);
+    end;
+
+    strList.Text:= strText;
+    strList.SaveToFile(FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'values-v21'+DirectorySeparator+'styles.xml');
+  end;
+end;
+
+procedure CreateActivityAppXml(FAndroidProjectName,
+  FPathToJavaTemplates: string; overwrite: boolean);
+begin
+  AltCopyFile(
+    FPathToJavaTemplates+DirectorySeparator+'layout'+DirectorySeparator+'activity_app.xml',
+    FAndroidProjectName+DirectorySeparator+ 'res'+DirectorySeparator+'layout'+DirectorySeparator+'activity_app.xml',
+    overwrite
+  );
 end;
 
 procedure CreateJSupportedJava(FPathToJavaTemplates, FFullJavaSrcPath,
