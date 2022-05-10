@@ -35,8 +35,9 @@ type
   function GetAppName(className: string): string;
   function GetFolderFromApi(api: integer): string;
   function GetPluginVersion(buildTool: string): string;
-  function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; out FCandidateSdkBuild:string): string;
-  function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool,FCandidateSdkBuild: string): boolean;
+  function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; var FCandidateSdkBuild:string): string;
+  function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool: string; var FCandidateSdkBuild: string): boolean;
+  function GetMaxSDKPlatform(FPathToAndroidSDK: string; out outBuildTool:string): Integer;
   function GetInstructionChip(FInstructionSet, ProjTargetFilename: string): string;
 
   //
@@ -388,7 +389,7 @@ begin
 
 end;
 
-function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; out
+function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; var
   FCandidateSdkBuild: string): string;
 var
   tempOutBuildTool: string;
@@ -400,7 +401,8 @@ begin
   end;
 end;
 
-function HasBuildTools(FPathToAndroidSDK: string; platform: integer; out outBuildTool,FCandidateSdkBuild: string): boolean;
+function HasBuildTools(FPathToAndroidSDK: string; platform: integer; out
+  outBuildTool: string; var FCandidateSdkBuild: string): boolean;
 var
   lisDir: TStringList;
   numberAsString, auxStr: string;
@@ -440,6 +442,49 @@ begin
                break;
              end;
            end;
+       end;
+    end;
+  end;
+  lisDir.free;
+end;
+
+function GetMaxSDKPlatform(FPathToAndroidSDK: string; out outBuildTool: string
+  ): Integer;
+var
+  lisDir: TStringList;
+  strApi: string;
+  i, intApi, FCandidateSdkPlatform: integer;
+  tempOutBuildTool, candidateSdkBuildDummy: string;
+begin
+  Result:= 0;
+  FCandidateSdkPlatform:= 0;
+  candidateSdkBuildDummy := '';
+
+  lisDir:= TStringList.Create;
+  FindAllDirectories(lisDir, IncludeTrailingPathDelimiter(FPathToAndroidSDK)+'platforms', False);
+
+  if lisDir.Count > 0 then
+  begin
+    for i:=0 to lisDir.Count-1 do
+    begin
+       strApi:= ExtractFileName(lisDir.Strings[i]);   //android-21
+       if strApi <> '' then
+       begin
+         strApi:= Copy(strApi, LastDelimiter('-', strApi) + 1, MaxInt);
+         if IsAllCharNumber(PChar(strApi))  then  //skip android-P
+         begin
+              intApi:= StrToInt(strApi);
+              if FCandidateSdkPlatform < intApi then FCandidateSdkPlatform:= intApi;
+              if Result < intApi then
+              begin
+                if HasBuildTools(FPathToAndroidSDK, intApi, tempOutBuildTool, candidateSdkBuildDummy) then
+                begin
+                   Result:= intApi;
+                   outBuildTool:= tempOutBuildTool;  //26.0.2
+                end;
+              end;
+
+         end;
        end;
     end;
   end;

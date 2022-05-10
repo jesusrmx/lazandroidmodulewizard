@@ -66,11 +66,8 @@ type
     function GetMinSDKFromManifest(): string;
     function GetMaxNdkPlatform(ndkVer: integer): integer;
 
-    function HasBuildTools(platform: integer; out outBuildTool: string): boolean;
-    function GetMaxSdkPlatform(out outBuildTool: string): integer;
     procedure KeepBuildUpdated(targetApi: integer; buildTool: string);
 
-    function GetBuildTool(sdkApi: integer): string;
     function GetPluginVersion(buildTool: string): string;
     function TryGradleCompatibility(plugin: string; gradleVers: string; out outGradleVer: string):boolean;
     function TryPluginCompatibility(gradleVers: string): string;
@@ -397,116 +394,6 @@ begin
       22: Result:= 30; //The deprecated "platforms" directories have been removed....
       23: Result:= 30;
    end;
-end;
-
-function TLamwSmartDesigner.GetMaxSdkPlatform(out outBuildTool: string): integer;
-var
-  lisDir: TStringList;
-  strApi: string;
-  i, intApi: integer;
-  tempOutBuildTool: string;
-begin
-
-  Result:= 0;
-  FCandidateSdkPlatform:= 0;
-
-  lisDir:= TStringList.Create;
-  FindAllDirectories(lisDir, IncludeTrailingPathDelimiter(FPathToAndroidSDK)+'platforms', False);
-
-  if lisDir.Count > 0 then
-  begin
-    for i:=0 to lisDir.Count-1 do
-    begin
-       strApi:= ExtractFileName(lisDir.Strings[i]);   //android-21
-       if strApi <> '' then
-       begin
-         strApi:= Copy(strApi, LastDelimiter('-', strApi) + 1, MaxInt);
-         if IsAllCharNumber(PChar(strApi))  then  //skip android-P
-         begin
-              intApi:= StrToInt(strApi);
-              if FCandidateSdkPlatform < intApi then FCandidateSdkPlatform:= intApi;
-              if Result < intApi then
-              begin
-                if HasBuildTools(intApi, tempOutBuildTool) then
-                begin
-                   Result:= intApi;
-                   outBuildTool:= tempOutBuildTool;  //26.0.2
-                end;
-              end;
-
-         end;
-       end;
-    end;
-  end;
-  lisDir.free;
-end;
-
-function TLamwSmartDesigner.HasBuildTools(platform: integer;  out outBuildTool: string): boolean;
-var
-  lisDir: TStringList;
-  numberAsString, auxStr: string;
-  i, builderNumber,  savedBuilder: integer;
-begin
-  Result:= False;
-  savedBuilder:= 0;
-  lisDir:= TStringList.Create;   //C:\adt32\sdk\build-tools\19.1.0
-
-  FindAllDirectories(lisDir, IncludeTrailingPathDelimiter(FPathToAndroidSDK)+'build-tools', False);
-
-  if lisDir.Count > 0 then
-  begin
-    for i:=0 to lisDir.Count-1 do
-    begin
-       auxStr:= ExtractFileName(lisDir.Strings[i]);
-       lisDir.Strings[i]:=auxStr;
-    end;
-    lisDir.Sorted:=True;
-    for i:=0 to lisDir.Count-1 do
-    begin
-       auxStr:= lisDir.Strings[i];
-       if  auxStr <> '' then
-       begin
-         if Pos('rc2', auxStr) = 0 then   //escape some alien...
-         begin
-           numberAsString:= Copy(auxStr, 1 , 2);  //19
-           if IsAllCharNumber(PChar(numberAsString))  then
-           begin
-               builderNumber:=  StrToInt(numberAsString);
-
-               if savedBuilder < builderNumber then
-               begin
-                 savedBuilder:= builderNumber;
-                 if builderNumber > platform then FCandidateSdkBuild:= auxStr;
-               end;
-
-               if platform <= builderNumber then
-               begin
-                 FCandidateSdkBuild:= auxStr;
-                 Result:= True;
-               end;
-
-               outBuildTool:= FCandidateSdkBuild; //19.1.0
-
-               if Result then break;
-           end;
-         end;
-       end;
-    end;
-  end;
-  lisDir.free;
-end;
-
-
-function TLamwSmartDesigner.GetBuildTool(sdkApi: integer): string;
-var
-  tempOutBuildTool: string;
-begin
-  Result:= '';
-  if not HasBuildTools(sdkApi, tempOutBuildTool) then
-  begin
-     ShowMessage('Warning: Android "sdk\build-tools" not installed for Api ' + IntToStr(sdkApi));
-  end;
-  Result:= tempOutBuildTool;  //26.0.2
 end;
 
 function TLamwSmartDesigner.GetPluginVersion(buildTool: string): string;
@@ -1189,7 +1076,7 @@ begin
       manifestTargetApi:= StrToInt(sdkManifestTargetApi)
   else manifestTargetApi:= 29;
 
-  buildTool:=  GetBuildTool(manifestTargetApi);
+  buildTool:=  GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild);
 
   if manifestTargetApi < 29 then
   begin
@@ -1201,12 +1088,12 @@ begin
        if ( IsAllCharNumber(PChar(queryValue)) AND (queryValue <> '29') ) then
           begin
              manifestTargetApi:= StrToInt(queryValue);
-             buildTool:= GetBuildTool(manifestTargetApi);
+             buildTool:= GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild);
        end
        else
        begin
          manifestTargetApi:= 29;
-         buildTool:= GetBuildTool(29);
+         buildTool:= GetBuildTool(FPathToAndroidSDK, 29, FCandidateSdkBuild);
        end;  ;
      end; //if input...
 
@@ -1220,7 +1107,7 @@ begin
     end
     else
     begin
-       buildTool:= GetBuildTool(manifestTargetApi);
+       buildTool:= GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild);
     end
   end;
 
