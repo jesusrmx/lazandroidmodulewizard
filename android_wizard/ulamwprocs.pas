@@ -339,52 +339,61 @@ begin
 
   if (buildTool = '') then Exit;
 
-  numberAsString:= StringReplace(buildTool,'.', '', [rfReplaceAll]); //25.0.3
-  maxBuilderNumber:= StrToInt(Trim(numberAsString));  //2503
+  numberAsString:= StringReplace(buildTool,'.', '', [rfReplaceAll]); //26.0.2
+  numberAsString:= Trim(numberAsString);
 
-  if (maxBuilderNumber >= 2111) and (maxBuilderNumber < 2112) then
+  if IsAllCharNumber(PChar(numberAsString))  then
   begin
-    Result:= '2.0.0';
-  end
-  else if (maxBuilderNumber >= 2112) and (maxBuilderNumber < 2302) then
-  begin
-    Result:= '2.0.0';
-  end
-  else if (maxBuilderNumber >= 2302) and (maxBuilderNumber < 2500) then
-  begin
-      Result:= '2.2.0';
-  end
-  else if (maxBuilderNumber >= 2500) and (maxBuilderNumber < 2602) then   //<<---- good performance !!!
-  begin
-      Result:= '2.3.3';
-      //gradleVer:= '3.3';
-  end
-  else if (maxBuilderNumber >= 2602) and (maxBuilderNumber < 2700)  then
-  begin
-      Result:= '3.0.1';
-      //gradleVer:= '4.1';
-  end
-  else if (maxBuilderNumber >= 2700) and (maxBuilderNumber < 2703)   then
-  begin
-      Result:= '3.1.0';
-      //gradleVer:= '4.4';
-  end
-  else if (maxBuilderNumber >= 2703) and (maxBuilderNumber < 2803)   then
-  begin
-      //Result:= '3.2.0';   //need build-tools 28.0.2 and need drop minSdk/targetSdk from AndroidManifest!!
-      //gradleVer:= '4.6';
+    maxBuilderNumber:= StrToInt(numberAsString);  //2602
 
-       Result:= '3.1.0'; //just to support minSdk/targetSdk in AndroidManifest!!
-  end
-  else if maxBuilderNumber >= 2803   then
-  begin
-      //Result:= '3.3.0';    //need droped minSdk/targetSdk in AndroidManifest!!
-      //gradleVer:= 'Gradle 4.10.1';
+    if (maxBuilderNumber >= 2111) and (maxBuilderNumber < 2112) then
+    begin
+      Result:= '2.0.0';
+    end
+    else if (maxBuilderNumber >= 2112) and (maxBuilderNumber < 2302) then
+    begin
+      Result:= '2.0.0';
+    end
+    else if (maxBuilderNumber >= 2302) and (maxBuilderNumber < 2500) then
+    begin
+        Result:= '2.2.0';
+    end
+    else if (maxBuilderNumber >= 2500) and (maxBuilderNumber < 2602) then   //<<---- good performance !!!
+    begin
+        Result:= '2.3.3';
+        //gradleVer:= '3.3';
+    end
+    else if (maxBuilderNumber >= 2602) and (maxBuilderNumber < 2700)  then
+    begin
+        Result:= '3.0.1';
+        //gradleVer:= '4.1';
+    end
+    else if (maxBuilderNumber >= 2700) and (maxBuilderNumber < 2703)   then
+    begin
+        Result:= '3.1.0';
+        //gradleVer:= '4.4';
+    end
+    else if (maxBuilderNumber >= 2703) and (maxBuilderNumber < 2803)   then
+    begin
+        //Result:= '3.2.0'; //need build-tools 28.0.2 and need drop minSdk/targetSdk from AndroidManifest!!
+        //gradleVer:= '4.6';
 
-      //Result:= '3.4.0';
-      //gradleVer:= 'Gradle Gradle 5.1.1'
+         Result:= '3.1.0'; //just to support minSdk/targetSdk in AndroidManifest!!
+    end
+    else if maxBuilderNumber >= 2803   then
+    begin
+        //Result:= '3.3.0';  //need droped minSdk/targetSdk in AndroidManifest!!
+        //gradleVer:= 'Gradle 4.10.1';
 
-      Result:= '3.1.0'; //just to support minSdk/targetSdk in AndroidManifest!!
+        //Result:= '3.4.0';
+        //gradleVer:= 'Gradle Gradle 5.1.1'
+
+         //Result:= '3.4.3';
+        //gradleVer:= 'Gradle Gradle 6.6.1'
+
+         Result:= '3.1.0'; // just to support minSdk/targetSdk from AndroidManifest!!
+    end;
+
   end;
 
 end;
