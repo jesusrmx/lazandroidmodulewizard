@@ -431,6 +431,8 @@ begin
   if Assigned(Project) and (Project.CustomData.Values['LAMW'] <> '' ) then
   begin
     pathToSdk:= Project.CustomData.Values['SdkPath'];
+    if pathToSdk = '' then
+      pathToSdk:= Project.CustomSessionData.Values['SdkPath'];
     pathToADB:= pathToSdk+'platform-tools';
 
     strExt:= '';

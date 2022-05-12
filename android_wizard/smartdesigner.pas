@@ -973,8 +973,8 @@ begin
   if isBrandNew then
     exit;
 
-  AProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
-  AProject.CustomData.Values['SdkPath']:= FPathToAndroidSDK;
+  AProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;
+  AProject.CustomSessionData.Values['SdkPath']:= FPathToAndroidSDK;
   AProject.Modified:= True;
 
   buildTool := FBuildSystem;  // just a temporary string
@@ -3184,11 +3184,15 @@ begin
 
   strList:= TStringList.Create;
   pathToDemoSDK:= LazarusIDE.ActiveProject.CustomData.Values['SdkPath']; //included pathDelimiter
+  if pathToDemoSDK = '' then
+    pathToDemoSDK:= LazarusIDE.ActiveProject.CustomSessionData.Values['SdkPath']; //included pathDelimiter
 
   if pathToDemoSDK = '' then
     pathToDemoSDK:= GetPathToSDKFromBuildXML(FPathToAndroidProject+'build.xml'); //included pathDelimiter
 
   pathToDemoNDK:= LazarusIDE.ActiveProject.CustomData.Values['NdkPath']; //included pathDelimiter
+  if pathToDemoNDK = '' then
+    pathToDemoNDK := LazarusIDE.ActiveProject.CustomSessionData.Values['NdkPath']; //included pathDelimiter
 
   if (FPathToAndroidNDK <> '') and (pathToDemoNDK <> '') then
   begin
@@ -3259,7 +3263,7 @@ begin
       strResult:= TryChangeNdkPlatformsApi(strResult, FMaxNdk);
 
       LazarusIDE.ActiveProject.LazCompilerOptions.Libraries:= strResult;
-      LazarusIDE.ActiveProject.CustomData.Values['NdkApi']:='android-'+strMaxNdk; //android-13 or android-14 or ... etc
+      LazarusIDE.ActiveProject.CustomSessionData.Values['NdkApi']:='android-'+strMaxNdk; //android-13 or android-14 or ... etc
 
       //CustomOptions
       strTemp:= LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions;  //path not already converted!!
@@ -3281,9 +3285,10 @@ begin
       LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= strResult;
 
       //update custom ...
-      LazarusIDE.ActiveProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
-      LazarusIDE.ActiveProject.CustomData.Values['SdkPath']:= FPathToAndroidSDK;
-
+      LazarusIDE.ActiveProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;
+      LazarusIDE.ActiveProject.CustomSessionData.Values['SdkPath']:= FPathToAndroidSDK;
+      LazarusIDE.ActiveProject.CustomData.Remove('NdkPath');
+      LazarusIDE.ActiveProject.CustomData.Remove('SdkPath');
   end
   else
   begin
@@ -3329,7 +3334,12 @@ begin
   Result := False;
 
   pathToDemoNDK:= LazarusIDE.ActiveProject.CustomData.Values['NdkPath']; //included delimiter
+  if pathToDemoNDK = '' then
+    pathToDemoNDK:= LazarusIDE.ActiveProject.CustomSessionData.Values['NdkPath']; //included delimiter
+
   pathToDemoSDK:= LazarusIDE.ActiveProject.CustomData.Values['SdkPath']; //included delimiter
+  if pathToDemoSDK = '' then
+    pathToDemoSDK:= LazarusIDE.ActiveProject.CustomSessionData.Values['SdkPath']; //included delimiter
 
   if (pathToDemoNDK = '') and (pathToDemoSDK = '') then
   begin
@@ -3338,8 +3348,10 @@ begin
     //create custom data
     pathToDemoNDK:= IncludeTrailingPathDelimiter(pathToDemoNDK);
     pathToDemoSDK:= IncludeTrailingPathDelimiter(pathToDemoSDK);
-    LazarusIDE.ActiveProject.CustomData.Values['NdkPath']:= pathToDemoNDK;
-    LazarusIDE.ActiveProject.CustomData.Values['SdkPath']:= pathToDemoSDK;
+    LazarusIDE.ActiveProject.CustomSessionData.Values['NdkPath']:= pathToDemoNDK;
+    LazarusIDE.ActiveProject.CustomSessionData.Values['SdkPath']:= pathToDemoSDK;
+    LazarusIDE.ActiveProject.CustomData.Remove('NdkPath');
+    LazarusIDE.ActiveProject.CustomData.Remove('SdkPath');
   end;
 
   if (pathToDemoNDK = FPathToAndroidNDK) and (pathToDemoSDK = FPathToAndroidSDK) then Exit;

@@ -1826,8 +1826,8 @@ begin
   if FModuleType in [mtGDX, mtGUI, mtNoGUI] then    {-1:gdx 0: GUI; 1: NoGUI; 2: NoGUI EXE Console}
     AProject.CustomData.Values['Package']:= FPackagePrefaceName + '.' + LowerCase(FSmallProjName);
 
-  AProject.CustomData.Values['NdkPath']:= FPathToAndroidNDK;
-  AProject.CustomData.Values['SdkPath']:= FPathToAndroidSDK;
+  AProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;
+  AProject.CustomSessionData.Values['SdkPath']:= FPathToAndroidSDK;
 
   AProject.CustomData.Values['NdkApi']:= 'android-'+FNdkApi; //legacy
 
