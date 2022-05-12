@@ -975,6 +975,12 @@ begin
 
   AProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;
   AProject.CustomSessionData.Values['SdkPath']:= FPathToAndroidSDK;
+  if AProject.CustomData.Values['SdkPath']<>'' then
+  begin
+    // migrate old project ...
+    AProject.CustomData.Remove('NdkPath');
+    AProject.CustomData.Remove('SdkPath');
+  end;
   AProject.Modified:= True;
 
   buildTool := FBuildSystem;  // just a temporary string
