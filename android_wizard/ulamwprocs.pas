@@ -44,6 +44,10 @@ type
 
   function GetProjectLibraries(project: TLazProject): string;
   procedure SetProjectLibraries(project: TLazProject; Libraries:string);
+  function GetProjectUtilities(project: TLazProject): string;
+  procedure SetProjectUtilities(project: TLazProject; Utilities:string);
+  procedure SetProjectCustomOptions(project: TLazProject; customOptions:string);
+  function GetProjectCustomOptions(project: TLazProject): string;
 
   //
   // ALL
@@ -568,45 +572,39 @@ begin
 end;
 
 procedure SetProjectLibraries(project: TLazProject; Libraries: string);
-var
-  macroIndex: Integer;
-  macro: TLazBuildMacro;
 begin
   project.CustomSessionData.Values['Libraries'] := Libraries;
-
-  //macroIndex := project.LazCompilerOptions.BuildMacros.IndexOfIdentifier('LamwLibrary');
-  //if macroIndex<0 then
-  //  macro := project.LazCompilerOptions.BuildMacros.Add('LamwLibrary')
-  //else
-  //  macro := project.LazCompilerOptions.BuildMacros[macroIndex];
-  //macro.Values.Text := Libraries;
-
-  //project.LazCompilerOptions.Libraries := '$(LamwLibrary)';
 end;
 
-function GetUpdatedConditionals(Conditionals, Libraries: string
-  ): string;
-var
-  L: TStringList;
-  i: Integer;
+function GetProjectUtilities(project: TLazProject): string;
 begin
-  if pos('{lamw}LibraryPath', Conditionals)>0 then
-  begin
-    L := TStringList.Create;
-    L.Text := Conditionals;
-    for i:=0 to L.Count-1 do
-      if pos('{lamw}LibraryPath', L[i])>0 then
-      begin
-        L.Delete(i);
-        break;
-      end;
-    conditionals := L.Text;
-    L.Free;
-  end;
-  result := '{lamw}LibraryPath := ' + Libraries + ';' + LineEnding + Conditionals;
+  result := project.CustomSessionData.Values['Utilities'];
 end;
 
+procedure SetProjectUtilities(project: TLazProject; Utilities: string);
+begin
+  project.CustomSessionData.Values['Utilities'] := Utilities;
+end;
 
+procedure SetProjectCustomOptions(project: TLazProject; customOptions: string);
+var
+  fdPos: Integer;
+begin
+  fdPos := pos(' -FD', UpperCase(customOptions));
+  if fdPos>0 then
+  begin
+    SetProjectUtilities(Project, copy(customOptions, fdPos+1, Length(customOptions)));
+    customOptions:= copy(customOptions, 1, fdPos-1);
+  end;
+  Project.LazCompilerOptions.CustomOptions:= customOptions;
+end;
+
+function GetProjectCustomOptions(project: TLazProject): string;
+begin
+  result := Project.LazCompilerOptions.CustomOptions;
+  if pos('-FD', result)<1 then
+    result := result + ' ' + GetProjectUtilities(project);
+end;
 
 procedure CreateKeyToolInput(const FAndroidProjectName: string;
   overwrite: boolean);

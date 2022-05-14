@@ -2390,7 +2390,7 @@ begin
   customOptions_mips  := customOptions_mips  +' -FD' + pathToNdkToolchainsBinMips;
 
   {Others}
-  AProject.LazCompilerOptions.CustomOptions:= customOptions_default;
+  SetProjectCustomOptions(AProject, customOptions_default);
 
   auxList:= TStringList.Create;
   auxList.Add('<Libraries Value="'+libraries_x86+'"/>');

@@ -43,6 +43,7 @@ type
     FAndroidTheme: string;
     FBuildSystem: string;
     FOldLibraries: string;
+    FOldCustomOptions: string;
     procedure CleanupAllJControlsSource;
     procedure GetAllJControlsFromForms(jControlsList: TStrings);
     procedure AddSupportToFCLControls(chipArch: string);
@@ -280,7 +281,10 @@ begin
   begin
     // add libraries path
     FOldLibraries := Project.LazCompilerOptions.Libraries;
-    Project.LazCompilerOptions.Libraries := Project.CustomSessionData.Values['Libraries'];
+    Project.LazCompilerOptions.Libraries := GetProjectLibraries(Project);
+    // add utilities path
+    FOldCustomOptions := Project.LazCompilerOptions.CustomOptions;
+    Project.LazCompilerOptions.CustomOptions := GetProjectCustomOptions(Project);
   end;
   result := mrOk;
 end;
@@ -294,6 +298,7 @@ begin
   if Project.CustomData.Contains('LAMW') then
   begin
     Project.LazCompilerOptions.Libraries := FOldLibraries;
+    Project.LazCompilerOptions.CustomOptions := FOldCustomOptions;
   end;
 end;
 
@@ -3301,10 +3306,10 @@ begin
 
       SetProjectLibraries(LazarusIDE.ActiveProject, strResult);
 
-      LazarusIDE.ActiveProject.CustomSessionData.Values['NdkApi']:='android-'+strMaxNdk; //android-13 or android-14 or ... etc
+      LazarusIDE.ActiveProject.CustomData.Values['NdkApi']:='android-'+strMaxNdk; //android-13 or android-14 or ... etc
 
       //CustomOptions
-      strTemp:= LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions;  //path not already converted!!
+      strTemp:= GetProjectCustomOptions(LazarusIDE.ActiveProject); //path not already converted!!
 
       if localSys = 'win' then
         strCustom:= StringReplace(strTemp, '/', '\', [rfReplaceAll,rfIgnoreCase])
@@ -3320,7 +3325,7 @@ begin
 
       strResult:= TryChangePrebuildOSY(strResult); //LAMW 0.8
 
-      LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= strResult;
+      SetProjectCustomOptions(LazarusIDE.ActiveProject, strResult);
 
       //update custom ...
       LazarusIDE.ActiveProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;

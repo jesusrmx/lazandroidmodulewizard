@@ -494,7 +494,7 @@ begin
 
     // Custom options:
     sl.Delimiter := ' ';
-    sl.DelimitedText := FProj.LazCompilerOptions.CustomOptions;
+    sl.DelimitedText := GetProjectCustomOptions(FProj);
     for i := 0 to sl.Count - 1 do
     begin
       str := sl[i];
@@ -521,7 +521,7 @@ begin
         end;
       end;
     end;
-    FProj.LazCompilerOptions.CustomOptions := sl.DelimitedText;
+    SetProjectCustomOptions(FProj, sl.DelimitedText);
   finally
     sl.Free;
   end;

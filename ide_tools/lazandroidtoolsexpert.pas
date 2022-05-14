@@ -183,8 +183,10 @@ procedure TfrmLazAndroidToolsExpert.ChangeBuildMode(ABuildMode: TBuildMode);
 
 Var
   Project: TXMLDocument;
-  Child: TDOMNode;
-  NewLib, NewTargetCPU, NewCustomOptions: string;
+  Child, Node: TDOMNode;
+  NewLib, NewTargetCPU, NewCustomOptions, NewUtilities: string;
+  i: Integer;
+  L: TStringList;
 begin
 
   with TStringList.Create do
@@ -193,6 +195,14 @@ begin
       NewLib:= GetValue(Strings[0]);
       NewTargetCPU:= GetValue(Strings[1]);
       NewCustomOptions:= GetValue(Strings[2]);
+      i := pos('-FD', NewCustomOptions);
+      if i>0 then
+      begin
+        NewUtilities := copy(NewCustomOptions, i, Length(NewCustomOptions));
+        NewCustomOptions := Trim(Copy(NewCustomOptions, 1, i-1));
+      end
+      else
+        NewUtilities := '';
     finally
       Free;
   end;
@@ -204,16 +214,68 @@ begin
     begin
       with Child.FindNode('CodeGeneration').FindNode('TargetCPU') do
         Attributes.Item[0].NodeValue:= NewTargetCPU;
-      with Child.FindNode('SearchPaths').FindNode('Libraries') do
-        Attributes.Item[0].NodeValue:= NewLib;
       with Child.FindNode('Other').FindNode('CustomOptions') do
         Attributes.Item[0].NodeValue:= NewCustomOptions;
       with Child.FindNode('Target').FindNode('Filename') do
         Attributes.Item[0].NodeValue:= GetOutput(ABuildMode);
+      // Libraries node is removed from lpi file
+      Node := Child.FindNode('SearchPaths').FindNode('Libraries');
+      if Node<>nil then
+        Node.Free;
     end;
     WriteXMLFile(Project, JNIProjectPath + DirectorySeparator + 'controls.lpi');
   finally
     Project.Free;
+  end;
+
+  if ((NewLib<>'') or (NewUtilities<>'')) and FileExists(JNIProjectPath + DirectorySeparator + 'controls.lps') then
+  begin
+    L := TStringList.Create;
+    ReadXMLFile(Project, JNIProjectPath + DirectorySeparator + 'controls.lps');
+    try
+      Child:= Project.DocumentElement.FindNode('ProjectSession');
+      if Assigned(Child) then
+      begin
+
+        // collect custom session data items
+        Node := child.FindNode('CustomSessionData');
+        if Assigned(Node) then
+        begin
+          Node := Node.FirstChild;
+          while Node<>nil do
+          begin
+            L.Add(Node.Attributes[0].NodeValue,'=',Node.Attributes[1].NodeValue);
+            Node := Node.NextSibling;
+          end;
+          // remove custom session data node and childs
+          child.FindNode('CustomSessionData').Free;
+        end;
+
+        // add/update library and/or utilities items
+        if NewLib<>'' then
+          L.Values['Libraries'] := NewLib;
+        if NewUtilities<>'' then
+          L.Values['Utilities'] := NewUtilities;
+
+        // recreate CustomSessionData node
+        node := Project.CreateElement('CustomSessionData');
+        child.AppendChild(node);
+        child := Node;
+        TDOMElement(child).SetAttribute('Count', IntToStr(L.Count));
+        for i:=0 to L.Count-1 do
+        begin
+          Node := Project.CreateElement('Item'+IntToStr(i));
+          TDomElement(Node).SetAttribute('Name', L.Names[i]);
+          TDomElement(Node).SetAttribute('Value', L.ValueFromIndex[i]);
+          child.AppendChild(Node);
+        end;
+
+      end;
+      WriteXMLFile(Project, JNIProjectPath + DirectorySeparator + 'controls.lps');
+    finally
+      Project.Free;
+      L.Free;
+    end;
   end;
 end;
 

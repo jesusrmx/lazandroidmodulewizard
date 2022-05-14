@@ -1319,7 +1319,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_armV6.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'armeabi'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_armV6.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_armV6.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'arm';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_armV6.txt', 0));
            end;
@@ -1328,7 +1328,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_armV7a.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'armeabi-v7a'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_armV7a.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_armV7a.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'arm';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_armV7a.txt', 0));
            end;
@@ -1337,7 +1337,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_armV7a_VFPv3.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'armeabi-v7a'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_armV7a_VFPv3.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_armV7a_VFPv3.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'arm';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_armV7a_VFPv3.txt', 0));
            end;
@@ -1346,7 +1346,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_x86.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'x86'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_x86.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_x86.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'i386';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_x86.txt', 0));
            end;
@@ -1355,7 +1355,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_mipsel.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'mips'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_mipsel.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_mipsel.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'mipsel';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_mipsel.txt', 0));
            end
@@ -1364,7 +1364,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_arm64.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'arm64-v8a'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_arm64.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_arm64.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'aarch64';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_arm64.txt', 0));
            end;
@@ -1373,7 +1373,7 @@ begin
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_x86_64.txt') then
            begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename:=  '..'+PathDelim+'libs'+PathDelim+'x86_64'+PathDelim+cfname[high(cfname)];
-             LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions:= GetBuildMode('build_x86_64.txt', 2);
+             SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_x86_64.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'x86_64';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_x86_64.txt', 0));
            end;
