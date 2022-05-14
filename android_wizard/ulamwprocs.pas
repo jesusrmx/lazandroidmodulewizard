@@ -5,7 +5,8 @@ unit ulamwprocs;
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Controls, Dialogs, LamwSettings;
+  Classes, SysUtils, FileUtil, Controls, Dialogs, LamwSettings, ProjectIntf,
+  CompOptsIntf;
 
 //tk min and max API versions for build.xml
 const
@@ -39,6 +40,10 @@ type
   function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool: string; var FCandidateSdkBuild: string): boolean;
   function GetMaxSDKPlatform(FPathToAndroidSDK: string; out outBuildTool:string): Integer;
   function GetInstructionChip(FInstructionSet, ProjTargetFilename: string): string;
+
+
+  function GetProjectLibraries(project: TLazProject): string;
+  procedure SetProjectLibraries(project: TLazProject; Libraries:string);
 
   //
   // ALL
@@ -556,6 +561,52 @@ begin
   result := '.sh';
   {$ENDIF}
 end;
+
+function GetProjectLibraries(project: TLazProject): string;
+begin
+  result := project.CustomSessionData.Values['Libraries'];
+end;
+
+procedure SetProjectLibraries(project: TLazProject; Libraries: string);
+var
+  macroIndex: Integer;
+  macro: TLazBuildMacro;
+begin
+  project.CustomSessionData.Values['Libraries'] := Libraries;
+
+  //macroIndex := project.LazCompilerOptions.BuildMacros.IndexOfIdentifier('LamwLibrary');
+  //if macroIndex<0 then
+  //  macro := project.LazCompilerOptions.BuildMacros.Add('LamwLibrary')
+  //else
+  //  macro := project.LazCompilerOptions.BuildMacros[macroIndex];
+  //macro.Values.Text := Libraries;
+
+  //project.LazCompilerOptions.Libraries := '$(LamwLibrary)';
+end;
+
+function GetUpdatedConditionals(Conditionals, Libraries: string
+  ): string;
+var
+  L: TStringList;
+  i: Integer;
+begin
+  if pos('{lamw}LibraryPath', Conditionals)>0 then
+  begin
+    L := TStringList.Create;
+    L.Text := Conditionals;
+    for i:=0 to L.Count-1 do
+      if pos('{lamw}LibraryPath', L[i])>0 then
+      begin
+        L.Delete(i);
+        break;
+      end;
+    conditionals := L.Text;
+    L.Free;
+  end;
+  result := '{lamw}LibraryPath := ' + Libraries + ';' + LineEnding + Conditionals;
+end;
+
+
 
 procedure CreateKeyToolInput(const FAndroidProjectName: string;
   overwrite: boolean);

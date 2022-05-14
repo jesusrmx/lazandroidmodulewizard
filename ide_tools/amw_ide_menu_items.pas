@@ -5,7 +5,7 @@ unit amw_ide_menu_items; //By Thierrydijoux!
 interface
 
 uses
-  Classes, SysUtils, FileUtil, Dialogs, IDECommands, MenuIntf, Forms,
+  Classes, SysUtils, FileUtil, Dialogs, IDECommands, MenuIntf, Forms, ulamwprocs,
   uformsettingspaths{, lazandroidtoolsexpert}, ufrmEditor, ufrmCompCreate,
   uFormBuildFPCCross, {uFormGetFPCSource,} uimportjavastuff, uimportjavastuffchecked,
   uimportcstuff, process, Laz2_DOM, laz2_XMLRead, uformimportlamwstuff,
@@ -71,7 +71,7 @@ begin
   if Assigned(Project) and (Project.CustomData.Values['LAMW'] <> '' ) then
   begin
      linkLibrariesPath:='';                       //C:\adt32\ndk10e\platforms\android-15\arch-x86\usr\lib\
-     aux:= Project.LazCompilerOptions.Libraries;  //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
+     aux:= GetProjectLibraries(Project);  //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
      p:= Pos(';', aux);
      if p > 0 then
      begin
@@ -685,7 +685,7 @@ begin
      if FormImportCStuff.ShowModal = mrOK then
      begin
        linkLibrariesPath:='';                       //C:\adt32\ndk10e\platforms\android-15\arch-x86\usr\lib\
-       aux:= Project.LazCompilerOptions.Libraries; //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
+       aux:= GetProjectLibraries(Project); //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
        p:= Pos(';', aux);
        if p > 0 then
        begin

@@ -12,7 +12,7 @@ uses
     {$define Emulator}
     XWindow,
   {$endif}
-  Classes, SysUtils, ProjectIntf, Forms, LamwSettings, LCLVersion;
+  Classes, SysUtils, ProjectIntf, Forms, LamwSettings, LCLVersion, ulamwprocs;
 
 type
 
@@ -470,7 +470,7 @@ begin
   try
     // Libraries
     sl.Delimiter := ';';
-    sl.DelimitedText := FProj.LazCompilerOptions.Libraries;
+    sl.DelimitedText := GetProjectLibraries(FProj);
     for i := 0 to sl.Count - 1 do
     begin
       if not DirectoryExists(sl[i]) then
@@ -490,7 +490,7 @@ begin
         sl[i] := str;
       end;
     end;
-    FProj.LazCompilerOptions.Libraries := sl.DelimitedText;
+    SetProjectLibraries(FProj, sl.DelimitedText);
 
     // Custom options:
     sl.Delimiter := ' ';

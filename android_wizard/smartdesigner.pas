@@ -42,13 +42,16 @@ type
     FNdkApi: string;
     FAndroidTheme: string;
     FBuildSystem: string;
-
+    FOldLibraries: string;
     procedure CleanupAllJControlsSource;
     procedure GetAllJControlsFromForms(jControlsList: TStrings);
     procedure AddSupportToFCLControls(chipArch: string);
     function GetEventSignature(const nativeMethod: string): string;
     function GetPackageNameFromAndroidManifest(pathToAndroidManifest: string): string;
     function GetCorrectTemplateFileName(const Path, FileName: String): String; //by kordal
+    function OnProjectBuilding(Sender: TObject): TModalResult;
+    procedure OnProjectBuildingFinished(Sender: TObject;
+      BuildSuccessful: Boolean);
     function TryAddJControl(ControlsJava: TStringList; jclassname: string; out nativeAdded: boolean): boolean;
     procedure UpdateProjectLpr(oldModuleName: string; newModuleName: string);
     procedure InitSmartDesignerHelpers;
@@ -266,6 +269,32 @@ begin
      Init4Project(AProject);
   end;
   Result := mrOK;
+end;
+
+function TLamwSmartDesigner.OnProjectBuilding(Sender: TObject): TModalResult;
+var
+  Project: TLazProject;
+begin
+  Project := LazarusIDE.ActiveProject;
+  if Project.CustomData.Contains('LAMW') then
+  begin
+    // add libraries path
+    FOldLibraries := Project.LazCompilerOptions.Libraries;
+    Project.LazCompilerOptions.Libraries := Project.CustomSessionData.Values['Libraries'];
+  end;
+  result := mrOk;
+end;
+
+procedure TLamwSmartDesigner.OnProjectBuildingFinished(Sender: TObject;
+  BuildSuccessful: Boolean);
+var
+  Project: TLazProject;
+begin
+  Project := LazarusIDE.ActiveProject;
+  if Project.CustomData.Contains('LAMW') then
+  begin
+    Project.LazCompilerOptions.Libraries := FOldLibraries;
+  end;
 end;
 
 function TLamwSmartDesigner.GetPackageNameFromAndroidManifest(pathToAndroidManifest: string): string;
@@ -1499,7 +1528,7 @@ begin
             else
             begin
               pathToNdkApiPlatforms:='';
-              aux:= LazarusIDE.ActiveProject.LazCompilerOptions.Libraries; //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
+              aux:= GetProjectLibraries(LazarusIDE.ActiveProject); //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
               p:= Pos(';', aux);
               pathToNdkApiPlatforms:= Trim(Copy(aux, 1, p-1));
               //need by linker!
@@ -1990,7 +2019,7 @@ begin
      else
      begin
        pathToNdkApiPlatforms:='';
-       aux:= LazarusIDE.ActiveProject.LazCompilerOptions.Libraries; //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
+       aux:= GetProjectLibraries(LazarusIDE.ActiveProject); //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
        p:= Pos(';', aux);
        pathToNdkApiPlatforms:= Trim(Copy(aux, 1, p-1));
        //need by linker!
@@ -2597,7 +2626,7 @@ begin
     // end tk
 
     linkLibrariesPath:='';
-    aux:= LazarusIDE.ActiveProject.LazCompilerOptions.Libraries;  //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
+    aux:= GetProjectLibraries(LazarusIDE.ActiveProject);  //C:\adt32\ndk10e\platforms\android-15\arch-arm\usr\lib\; .....
     p:= Pos(';', aux);
     if p > 0 then
     begin
@@ -2796,6 +2825,8 @@ begin
   LazarusIDE.AddHandlerOnProjectOpened(@OnProjectOpened);
   LazarusIDE.AddHandlerOnSavingAll(@OnProjectSavingAll);
   GlobalDesignHook.AddHandlerAddClicked(@AddClicked);
+  LazarusIDE.AddHandlerOnProjectBuilding(@OnProjectBuilding);
+  LazarusIDE.AddHandlerOnProjectBuildingFinished(@OnProjectBuildingFinished);
 end;
 
 //F /libraries
@@ -3244,7 +3275,7 @@ begin
       LazarusIDE.ActiveProject.Modified:= True;
 
       //Libraries
-      strTemp:= LazarusIDE.ActiveProject.LazCompilerOptions.Libraries;   //path already converted!!!
+      strTemp:= GetProjectLibraries(LazarusIDE.ActiveProject);   //path already converted!!!
 
       strLibrary:= StringReplace(strTemp, pathToDemoNDKConverted,
                                          FPathToAndroidNDK,
@@ -3268,7 +3299,8 @@ begin
 
       strResult:= TryChangeNdkPlatformsApi(strResult, FMaxNdk);
 
-      LazarusIDE.ActiveProject.LazCompilerOptions.Libraries:= strResult;
+      SetProjectLibraries(LazarusIDE.ActiveProject, strResult);
+
       LazarusIDE.ActiveProject.CustomSessionData.Values['NdkApi']:='android-'+strMaxNdk; //android-13 or android-14 or ... etc
 
       //CustomOptions

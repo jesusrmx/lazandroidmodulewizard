@@ -2294,27 +2294,27 @@ begin
   end;
 
   AProject.LazCompilerOptions.TargetCPU:= 'arm';    {-P}
-  AProject.LazCompilerOptions.Libraries:= libraries_arm;  { -Fl}
+  SetProjectLibraries(AProject, libraries_arm);
 
   if Pos('mips', auxStr) > 0 then
   begin
      AProject.LazCompilerOptions.TargetCPU:= 'mipsel';    {-P}
-     AProject.LazCompilerOptions.Libraries:= libraries_mips;  { -Fl}
+     SetProjectLibraries(AProject, libraries_mips);  { -Fl}
   end
   else if Pos('x86_64', auxStr) > 0 then
   begin
      AProject.LazCompilerOptions.TargetCPU:= 'x86_64';    {-P}
-     AProject.LazCompilerOptions.Libraries:= libraries_x86_64;  { -Fl}
+     SetProjectLibraries(AProject, libraries_x86_64);  { -Fl}
   end
   else if Pos('x86', auxStr) > 0 then
   begin
      AProject.LazCompilerOptions.TargetCPU:= 'i386';    {-P}
-     AProject.LazCompilerOptions.Libraries:= libraries_x86;  { -Fl}
+     SetProjectLibraries(AProject, libraries_x86);  { -Fl}
   end
   else if Pos('arm64', auxStr) > 0 then
   begin
     AProject.LazCompilerOptions.TargetCPU:= 'aarch64';    {-P}
-    AProject.LazCompilerOptions.Libraries:= libraries_aarch64; { -Fl}
+    SetProjectLibraries(AProject, libraries_aarch64); { -Fl}
   end;
 
   {Parsing}
