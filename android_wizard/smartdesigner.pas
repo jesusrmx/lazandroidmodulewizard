@@ -35,7 +35,7 @@ type
     FPathToGradle: string;
     FPathToSmartDesigner: string;
     FChipArchitecture: string;
-    FNDKIndex: string;
+    FNDKIndex: Integer;
     FMaxNdk: integer;
     FNDKVersion: integer;
     FMinSdkControl: integer;
@@ -106,6 +106,7 @@ type
                  var NewParent: TComponent): boolean;
 
   public
+    constructor Create;
     destructor Destroy; override;
     procedure Init;
     procedure Init4Project(AProject: TLazProject);
@@ -260,6 +261,12 @@ begin
       end;
 
   end;
+end;
+
+constructor TLamwSmartDesigner.Create;
+begin
+  inherited Create;
+  FNDKIndex := -1;
 end;
 
 function TLamwSmartDesigner.OnProjectOpened(Sender: TObject;
@@ -2906,14 +2913,11 @@ begin
 
    ndkApi:= IntToStr(FMaxNdk);
 
-   if FNDKIndex = '' then
-      FNDKIndex := LamwGlobalSettings.GetNDK;
-
-
-   if FNDKIndex = '' then FNDKIndex:= '5';
+   if FNDKIndex = -1 then
+      FNDKIndex := StrToIntDef(LamwGlobalSettings.GetNDK, 5);
 
    x:='';
-   if StrToInt(FNDKIndex) > 4 then
+   if FNDKIndex > 4 then
      x:='.x';
 
    if (Length(FPrebuildOSYS)=0) then
@@ -3269,10 +3273,8 @@ begin
   lpiFileName := LazarusIDE.ActiveProject.ProjectInfoFile; //full path to 'controls.lpi';
   CopyFile(lpiFileName, lpiFileName+'.bak2');
 
-  if FNDKIndex = '' then
-    FNDKIndex := LamwGlobalSettings.GetNDK;
-
-  if  FNDKIndex = '' then FNDKIndex:= '5';
+  if FNDKIndex = -1 then
+    FNDKIndex := StrToIntDef(LamwGlobalSettings.GetNDK, 5);
 
   if (pathToDemoNDK <> '') and (FPathToAndroidNDK <> '') then
   begin
@@ -3295,7 +3297,7 @@ begin
       strMaxNdk:= IntToStr(FMaxNdk);
 
       strResult:= TryChangePrebuildOSY(strResult); //LAMW 0.8
-      if StrToInt(FNDKIndex) > 4 then  //LAMW 0.8
+      if FNDKIndex > 4 then  //LAMW 0.8
       begin
          strResult:= TryChangeTo49x(strResult)
       end
