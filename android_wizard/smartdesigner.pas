@@ -574,7 +574,7 @@ begin
 
   auxStr := LazarusIDE.ActiveProject.CustomData.Values['ThemeColor'];
   if auxStr='' then auxStr := 'InvalidThemeColor'; // fake invalid ThemeColor dir
-  CreateColorsXml(LamwGlobalSettings.PathToJavaTemplates, androidProjectName, auxStr, false);
+  CreateColorsXml(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, auxStr, false);
 
   FSupport:= (LazarusIDE.ActiveProject.CustomData.Values['Support']='TRUE');
 
@@ -584,7 +584,7 @@ begin
      FSupport:= True;
   end;
 
-  CreateStylesXml(LamwGlobalSettings.PathToJavaTemplates, androidProjectName, FAndroidTheme, false);
+  CreateStylesXml(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, FAndroidTheme, false);
 
   {%Region /fold MinApi}
   if Pos('AppCompat',  FAndroidTheme) > 0 then
