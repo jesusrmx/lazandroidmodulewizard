@@ -36,8 +36,8 @@ type
   function GetAppName(className: string): string;
   function GetFolderFromApi(api: integer): string;
   function GetPluginVersion(buildTool: string): string;
-  function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; var FCandidateSdkBuild:string): string;
-  function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool: string; var FCandidateSdkBuild: string): boolean;
+  function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; var FCandidateSdkBuild:string; setCandidate:boolean=false): string;
+  function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool: string; var FCandidateSdkBuild: string; setCandidate:boolean=false): boolean;
   function GetMaxSDKPlatform(FPathToAndroidSDK: string; out outBuildTool:string): Integer;
   function GetInstructionChip(FInstructionSet, ProjTargetFilename: string): string;
 
@@ -407,20 +407,21 @@ begin
 
 end;
 
-function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer; var
-  FCandidateSdkBuild: string): string;
+function GetBuildTool(FPathToAndroidSDK: string; sdkApi: integer;
+  var FCandidateSdkBuild: string; setCandidate: boolean): string;
 var
   tempOutBuildTool: string;
 begin
   Result:= '';
-  if HasBuildTools(FPathToAndroidSDK, sdkApi, tempOutBuildTool, FCandidateSdkBuild) then
+  if HasBuildTools(FPathToAndroidSDK, sdkApi, tempOutBuildTool, FCandidateSdkBuild, setCandidate) then
   begin
      Result:= tempOutBuildTool;  //25.0.3    //***
   end;
 end;
 
 function HasBuildTools(FPathToAndroidSDK: string; platform: integer; out
-  outBuildTool: string; var FCandidateSdkBuild: string): boolean;
+  outBuildTool: string; var FCandidateSdkBuild: string; setCandidate: boolean
+  ): boolean;
 var
   lisDir: TStringList;
   numberAsString, auxStr: string;
@@ -455,6 +456,8 @@ begin
              end;
              if  platform <= builderNumber then
              begin
+               if setCandidate then
+                FCandidateSdkBuild := auxStr;
                outBuildTool:= auxStr; //25.0.3
                Result:= True;
                break;

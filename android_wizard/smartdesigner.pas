@@ -1047,7 +1047,7 @@ begin
       manifestTargetApi:= StrToInt(sdkManifestTargetApi)
   else manifestTargetApi:= 29;
 
-  buildTool:=  GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild);
+  buildTool:=  GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild, true);
 
   if manifestTargetApi < 29 then
   begin
@@ -1059,12 +1059,12 @@ begin
        if ( IsAllCharNumber(PChar(queryValue)) AND (queryValue <> '29') ) then
           begin
              manifestTargetApi:= StrToInt(queryValue);
-             buildTool:= GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild);
+             buildTool:= GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild, true);
        end
        else
        begin
          manifestTargetApi:= 29;
-         buildTool:= GetBuildTool(FPathToAndroidSDK, 29, FCandidateSdkBuild);
+         buildTool:= GetBuildTool(FPathToAndroidSDK, 29, FCandidateSdkBuild, true);
        end;  ;
      end; //if input...
 
@@ -1078,7 +1078,7 @@ begin
     end
     else
     begin
-       buildTool:= GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild);
+       buildTool:= GetBuildTool(FPathToAndroidSDK, manifestTargetApi, FCandidateSdkBuild, true);
     end
   end;
 
