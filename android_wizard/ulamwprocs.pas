@@ -577,6 +577,7 @@ end;
 procedure SetProjectLibraries(project: TLazProject; Libraries: string);
 begin
   project.CustomSessionData.Values['Libraries'] := Libraries;
+  project.LazCompilerOptions.Libraries := '';
 end;
 
 function GetProjectUtilities(project: TLazProject): string;
