@@ -28,6 +28,7 @@ type
   function ReplaceChar(const query: string; oldchar, newchar: char): string;
   // end tk
 
+  function StringToModuleType(mtStr: string; default:TModuleType=mtLibrary): TModuleType;
   function GetVerAsNumber(aVers: string): integer;
   function TryUndoFakeVersion(grVer: string): string;
   function TryGradleCompatibility(plugin: string; gradleVers: string; out outGradleVer: string) : boolean;
@@ -40,6 +41,7 @@ type
   function HasBuildTools(FPathToAndroidSDK: string; platform: integer;  out outBuildTool: string; var FCandidateSdkBuild: string; setCandidate:boolean=false): boolean;
   function GetMaxSDKPlatform(FPathToAndroidSDK: string; out outBuildTool:string): Integer;
   function GetInstructionChip(FInstructionSet, ProjTargetFilename: string): string;
+  function GetInstructionSet(instructionChip: string; default:string='x86'): string;
 
   procedure UpdateLibrariesAndCustomOptions(AProject: TLazProject; FAndroidProjectName, FPathToAndroidNDK, FNdkApi, FPrebuildOSYS, FInstructionSet, FFPUSet: string; FModuleType: TModuleType; FNdkIndex:Integer);
 
@@ -175,6 +177,18 @@ begin
   Result := query;
   for i := 1 to Length(Result) do
     if Result[i] = oldchar then Result[i] := newchar;
+end;
+
+function StringToModuleType(mtStr: string; default: TModuleType): TModuleType;
+begin
+  case lowercase(mtStr) of
+    'gdx':                  result := mtGDX;
+    'gui':                  result := mtGUI;
+    'nogui':                result := mtNoGUI;
+    'noguiconsoleapp':      result := mtNoGUIConsole;
+    'noguigenericlibrary':  result := mtLibrary;
+    else                    result := default;
+  end;
 end;
 
 function GetVerAsNumber(aVers: string): integer;
@@ -532,6 +546,19 @@ begin
   begin
     result:= ExtractFileDir(ProjTargetFilename);
     result:= ExtractFileName(result);
+  end;
+end;
+
+function GetInstructionSet(instructionChip: string; default: string): string;
+begin
+  case instructionChip of
+   'armeabi':     result := 'armv6';
+   'armeabi-v7a': result := 'armv7a';
+   'x86':         result := 'x86';
+   'x86_64':      result := 'x86_64';
+   'mips':        result := 'mipsel';
+   'arm64-v8a':   result := 'armv8';
+   else           result := default;
   end;
 end;
 
