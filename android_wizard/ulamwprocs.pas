@@ -602,7 +602,7 @@ var
   pathToNdkToolchainsBinAarch64: string;
 
   auxStr, auxInstr: string;
-  osys: string;      {windows or linux-x86 or linux-x86_64}
+  osys, destDir: string;      {windows or linux-x86 or linux-x86_64}
 
   auxList: TStringList;
 begin
@@ -909,75 +909,61 @@ begin
   {Others}
   SetProjectCustomOptions(AProject, customOptions_default);
 
+  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
+    destDir := FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator
+  else
+    destDir := FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator;
+
+  ForceDirectories(destDir);
+
   auxList:= TStringList.Create;
   auxList.Add('<Libraries Value="'+libraries_x86+'"/>');
   auxList.Add('<TargetCPU Value="i386"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_x86+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86.txt')
-  else
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86.txt');
+  auxList.SaveToFile(destDir+'build_x86.txt');
 
   auxList.Clear;
   auxList.Add('<Libraries Value="'+libraries_x86_64+'"/>');
   auxList.Add('<TargetCPU Value="x86_64"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_x86_64+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86_64.txt')
-  else
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_x86_64.txt');
+  auxList.SaveToFile(destDir+'build_x86_64.txt');
 
   auxList.Clear;
   auxList.Add('<Libraries Value="'+libraries_mips+'"/>');
   auxList.Add('<TargetCPU Value="mipsel"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_mips+'"/>');
   //auxList.Add('<TargetProcessor Value=""/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_mipsel.txt')
-  else
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_mipsel.txt');
+  auxList.SaveToFile(destDir+'build_mipsel.txt');
 
   auxList.Clear;
   auxList.Add('<Libraries Value="'+libraries_arm+'"/>');
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV6+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV6"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV6.txt')
-  else
-    auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV6.txt');
+  auxList.SaveToFile(destDir+'build_armV6.txt');
 
   auxList.Clear;
   auxList.Add('<Libraries Value="'+libraries_arm+'"/>');
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV7a+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV7A"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-     auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a.txt')
-  else
-     auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a.txt');
+  auxList.SaveToFile(destDir+'build_armV7a.txt');
 
   auxList.Clear;
   auxList.Add('<Libraries Value="'+libraries_arm+'"/>');
   auxList.Add('<TargetCPU Value="arm"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armV7a_VFPv3+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMV7A"/>');  //commented until lazarus fix bug for missing ARMV7A  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-     auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a_VFPv3.txt')
-  else
-     auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_armV7a_VFPv3.txt');
+  auxList.SaveToFile(destDir+'build_armV7a_VFPv3.txt');
 
   auxList.Clear;
   auxList.Add('<Libraries Value="'+libraries_aarch64+'"/>');
   auxList.Add('<TargetCPU Value="aarch64"/>');
   auxList.Add('<CustomOptions Value="'+customOptions_armv8+'"/>');
   //auxList.Add('<TargetProcessor Value="ARMv8"/>');  //commented until lazarus fix bug for missing ARMv8  //again thanks to Stephano!
-  if FModuleType in [mtGDX, mtGUI, mtNoGUI] then
-     auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'jni'+DirectorySeparator+'build-modes'+DirectorySeparator+'build_arm64.txt')
-  else
-     auxList.SaveToFile(FAndroidProjectName+DirectorySeparator+'build-modes'+DirectorySeparator+'build_arm64.txt');
+  auxList.SaveToFile(destDir+'build_arm64.txt');
 
   auxList.Free;
 end;
