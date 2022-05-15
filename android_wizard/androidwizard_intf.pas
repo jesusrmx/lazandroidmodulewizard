@@ -1780,7 +1780,7 @@ begin
     else
       AProject.CustomData.Values['Support'] := 'FALSE';
   end
-  else if  FModuleType = mtGUI then
+  else if  FModuleType = mtNoGUI then
     AProject.CustomData.Values['LAMW'] := 'NoGUI'
   else if FModuleType = mtNoGUIConsole then
     AProject.CustomData.Values['LAMW'] := 'NoGUIConsoleApp'    // FModuleType =2
