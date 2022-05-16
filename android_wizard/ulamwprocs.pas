@@ -872,7 +872,7 @@ begin
      customOptions_default:= customOptions_default + ' -Cp'+ UpperCase(FInstructionSet);
   end;
 
-  customOptions_armV6 := '-Xd'+' -Cf'+ FFPUSet+ ' -CpARMV6';
+  customOptions_armV6 := '-Xd'+' -CfSoft -CpARMV6';   // TODO: check: uforkworkspace always set FPUSet Soft for ARMV6
   customOptions_armV7a:= '-Xd'+' -CfSoft -CpARMV7A';
   customOptions_armV7a_VFPv3:= '-Xd'+' -CfVFPv3 -CpARMV7A';
   customOptions_x86   := '-Xd';
