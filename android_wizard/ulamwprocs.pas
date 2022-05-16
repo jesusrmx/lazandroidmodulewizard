@@ -3090,7 +3090,7 @@ begin
 
   // copy the attribute string
   SetLength(result, last-start+1);
-  Move(last^, result[1], last-start+1);
+  Move(start^, result[1], last-start+1);
 end;
 
 procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string;
