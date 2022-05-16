@@ -983,7 +983,7 @@ begin
   if  (FAndroidTheme = '') or (Pos('AppCompat', FAndroidTheme) <= 0) then
     LamwGlobalSettings.QueryPaths:= False;  //dont query Path to Gradle
 
-  FPathToGradle:= LamwGlobalSettings.PathToGradle;  //C:\adt32\gradle-3.3\
+  FPathToGradle:= ExcludeTrailingPathDelimiter(LamwGlobalSettings.PathToGradle);  //C:\adt32\gradle-3.3\
   LamwGlobalSettings.QueryPaths:= True; // reset to default...
 
   if FPathToGradle <> '' then
