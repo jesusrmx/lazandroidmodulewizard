@@ -1861,10 +1861,7 @@ begin
     strList.Add('}');
     strList.Add(' ');
 
-    if Updating then
-      // TODO: is this correct?
-      gradleCompatibleAsNumber := GetVerAsNumber(gradleCompatible);
-
+    gradleCompatibleAsNumber := GetVerAsNumber(gradleCompatible);
     if  gradleCompatibleAsNumber < 5000 then
     begin
       strList.Add('task wrapper(type: Wrapper) {');
