@@ -562,15 +562,16 @@ var
   versionCode : string;
   versionName , instructionChip: string;
   xmlAndroidManifest: TXMLDocument;
-  androidProjectName: string;
+  androidProjectName, packagePrefaceName: string;
 begin
 
   androidProjectName := ExcludeTrailingPathDelimiter(FPathToAndroidProject);
+  packagePrefaceName := ChangeFileExt(FPackageName, '');
 
   if FBuildSystem = 'Gradle' then
     CreateGradleProperties(androidProjectName, FAndroidTheme, FPathToJavaJDK, false);
 
-  CreateJavaSrcDir(androidProjectName, FPackageName, FSmallProjName, auxStr{dummy});
+  CreateJavaSrcDir(androidProjectName, packagePrefaceName, FSmallProjName, auxStr{dummy});
 
   CreateDrawables(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, false);
 
@@ -623,8 +624,8 @@ begin
 
   // First create the manifest if it doesn't exists
   CreateAndroidManifestXML(androidProjectName, LamwGlobalSettings.PathToJavaTemplates,
-    FPackageName, FSmallProjName, 'App'{TODO: FMainActivity}, IntToStr(sdkManifMInApiNumber), IntToStr(targetApi),
-    FSupport, false);
+    packagePrefaceName, FSmallProjName, 'App'{TODO: FMainActivity},
+    IntToStr(sdkManifMInApiNumber), IntToStr(targetApi), FSupport, false);
 
   if sdkManifMinApiNumber < minsdkApi then begin
     minApiStr := IntToStr(minsdkApi);
@@ -658,7 +659,7 @@ begin
   if FBuildSystem = 'Ant' then
   begin
     CreateBuildXML(androidProjectName, FPathToAndroidSDK, FAndroidTheme, IntToStr(targetApi),
-      FPackageName, FSmallProjName, false);
+      packagePrefaceName, FSmallProjName, false);
 
     UpdateAntProperties(androidProjectName);
 
@@ -693,7 +694,7 @@ begin
     begin
       CreateBuildGradle(androidProjectName, FPathToAndroidSDK, 0, FGradleVersion,
         FAndroidTheme, instructionChip, IntToStr(minsdkApi), IntToStr(targetApi), StrToIntDef(versionCode, 1),
-        versionName, FSupport, FPackageName, FSmallProjName, true, buildTool, false);
+        versionName, FSupport, packagePrefaceName, FSmallProjName, true, buildTool, false);
 
       UpdateGradleProperties(androidProjectName, FAndroidTheme, FPathToJavaJDK);
     end;
