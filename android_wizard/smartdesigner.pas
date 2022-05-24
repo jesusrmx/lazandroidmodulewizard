@@ -572,6 +572,8 @@ begin
 
   CreateJavaSrcDir(androidProjectName, FPackageName, FSmallProjName, auxStr{dummy});
 
+  CreateDrawables(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, false);
+
   auxStr := LazarusIDE.ActiveProject.CustomData.Values['ThemeColor'];
   if auxStr='' then auxStr := 'InvalidThemeColor'; // fake invalid ThemeColor dir
   CreateColorsXml(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, auxStr, false);
@@ -585,6 +587,8 @@ begin
   end;
 
   CreateStylesXml(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, FAndroidTheme, false);
+
+  CreateStringsXml(androidProjectName, FSmallProjName, false);
 
   {%Region /fold MinApi}
   if Pos('AppCompat',  FAndroidTheme) > 0 then
@@ -637,6 +641,10 @@ begin
     minApiStr := ''; // no changes
     defApiStr := '';
   end;
+
+  CreateTargetStylesXml(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, FAndroidTheme, IntToStr(minsdkApi), IntToStr(targetApi), false);
+
+  CreateActivityAppXml(androidProjectName, LamwGlobalSettings.PathToJavaTemplates, false);
 
   // Now the manifest exists, update it according to several improvements
   UpdateAndroidManifestXML(androidProjectName, FAndroidTheme, FSupport, minApiStr, IntToStr(targetApi), defApiStr, [umcUpdateAndroidX, umcMinApi]);

@@ -1258,7 +1258,7 @@ begin
             CreateColorsXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidThemeColor);
             CreateStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme);
             CreateStringsXml(FAndroidProjectName, FSmallProjName);
-            CreateTargetStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme, FMinApi, FTARgetApi);
+            CreateTargetStylesXml(FAndroidProjectName, FPathToJavaTemplates, FAndroidTheme, FMinApi, FTargetApi);
             CreateActivityAppXml(FAndroidProjectName, FPathToJavaTemplates);
             {%EndRegion}
           end;
