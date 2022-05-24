@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools"
     package="dummyPackage"
     android:versionCode="1"
@@ -49,7 +48,7 @@
                   android:normalScreens="true"
                   android:largeScreens="true"
                   android:anyDensity="true"/>
-                   
+
     <application
         android:requestLegacyExternalStorage="true"
         android:usesCleartextTraffic="true"
