@@ -985,7 +985,11 @@ begin
   if FPackageName = '' then
   begin
     FPackageName := GetPackageNameFromAndroidManifest(FPathToAndroidProject);
-    AProject.CustomData['Package'] := FPackageName;
+    if AProject.CustomData['Package'] <> FPackageName then
+    begin
+      AProject.Modified := True;
+      AProject.CustomData['Package'] := FPackageName;
+    end;
   end;
   FPathToJavaSource:= FPathToAndroidProject + 'src' + PathDelim + AppendPathDelim(ReplaceChar(FPackageName, '.', PathDelim));
 
@@ -1020,23 +1024,34 @@ begin
     if not IsSdkToolsAntEnable(FPathToAndroidSDK) then
     begin
        FBuildSystem := 'Gradle';
-       AProject.CustomData['BuildSystem']:= FBuildSystem;
-       AProject.Modified := true;
+       if AProject.CustomData['BuildSystem'] <> FBuildSystem then
+       begin
+        AProject.CustomData['BuildSystem']:= FBuildSystem;
+        AProject.Modified := true;
+       end;
     end;
   end;
 
   if isBrandNew then
     exit;
 
-  AProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;
-  AProject.CustomSessionData.Values['SdkPath']:= FPathToAndroidSDK;
+  if AProject.CustomSessionData.Values['NdkPath'] <> FPathToAndroidNDK then
+  begin
+    AProject.CustomSessionData.Values['NdkPath']:= FPathToAndroidNDK;
+    AProject.Modified := true;
+  end;
+  if AProject.CustomSessionData.Values['SdkPath'] <> FPathToAndroidSDK then
+  begin
+    AProject.CustomSessionData.Values['SdkPath']:= FPathToAndroidSDK;
+    AProject.Modified := true;
+  end;
   if AProject.CustomData.Values['SdkPath']<>'' then
   begin
     // migrate old project ...
     AProject.CustomData.Remove('NdkPath');
     AProject.CustomData.Remove('SdkPath');
+    AProject.Modified:= True;
   end;
-  AProject.Modified:= True;
 
   buildTool := FBuildSystem;  // just a temporary string
   if FBuildSystem = '' then

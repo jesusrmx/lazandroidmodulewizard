@@ -874,7 +874,7 @@ begin
 
   customOptions_armV6 := '-Xd'+' -CfSoft -CpARMV6';   // TODO: check: uforkworkspace always set FPUSet Soft for ARMV6
   customOptions_armV7a:= '-Xd'+' -CfSoft -CpARMV7A';
-  customOptions_armV7a_VFPv3:= '-Xd'+' -CfVFPv3 -CpARMV7A';
+  customOptions_armV7a_VFPv3:= '-Xd'+' -CfVFPV3 -CpARMV7A';
   customOptions_x86   := '-Xd';
   customOptions_x86_64:= '-Xd';
   customOptions_mips  := '-Xd';
@@ -1010,8 +1010,16 @@ end;
 
 procedure SetProjectLibraries(project: TLazProject; Libraries: string);
 begin
-  project.CustomSessionData.Values['Libraries'] := Libraries;
-  project.LazCompilerOptions.Libraries := '';
+  if project.CustomSessionData.Values['Libraries'] <> Libraries then
+  begin
+    project.Modified := true;
+    project.CustomSessionData.Values['Libraries'] := Libraries;
+  end;
+  if project.LazCompilerOptions.Libraries <> '' then
+  begin
+    project.Modified := true;
+    project.LazCompilerOptions.Libraries := '';
+  end;
 end;
 
 function GetProjectUtilities(project: TLazProject): string;
@@ -1021,7 +1029,11 @@ end;
 
 procedure SetProjectUtilities(project: TLazProject; Utilities: string);
 begin
-  project.CustomSessionData.Values['Utilities'] := Utilities;
+  if project.CustomSessionData.Values['Utilities'] <> Utilities then
+  begin
+    project.Modified := true;
+    project.CustomSessionData.Values['Utilities'] := Utilities;
+  end;
 end;
 
 procedure SetProjectCustomOptions(project: TLazProject; customOptions: string);
@@ -1034,7 +1046,11 @@ begin
     SetProjectUtilities(Project, copy(customOptions, fdPos+1, Length(customOptions)));
     customOptions:= copy(customOptions, 1, fdPos-1);
   end;
-  Project.LazCompilerOptions.CustomOptions:= customOptions;
+  if Project.LazCompilerOptions.CustomOptions <> customOptions then
+  begin
+    project.Modified := true;
+    Project.LazCompilerOptions.CustomOptions:= customOptions;
+  end;
 end;
 
 function GetProjectCustomOptions(project: TLazProject): string;
