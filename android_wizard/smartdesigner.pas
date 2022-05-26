@@ -978,9 +978,6 @@ begin
   FPathToAndroidProject := ExtractFilePath(AProject.MainFile.Filename);
   FPathToAndroidProject := Copy(FPathToAndroidProject, 1, RPosEX(PathDelim, FPathToAndroidProject, Length(FPathToAndroidProject) - 1));
 
-  tempStr:= Copy(FPathToAndroidProject, 1, Length(FPathToAndroidProject)-1);
-  p:= LastDelimiter(PathDelim, tempStr) + 1;
-  FSmallProjName:= Copy(tempStr,  p, Length(tempStr));
   FPackageName := AProject.CustomData['Package'];
   if FPackageName = '' then
   begin
@@ -991,6 +988,22 @@ begin
       AProject.CustomData['Package'] := FPackageName;
     end;
   end;
+
+  FSmallProjName := '';
+  // First try to get FSmallProjName from FPackageName
+  if FPackageName<>'' then begin
+    p := LastDelimiter('.', FPackageName);
+    if p>0 then
+      FSmallProjName := copy(FPackageName, p+1, Length(FPackageName));
+  end;
+  // if FSmallProjName is still unset, get it from the project directory name
+  if FSmallProjName='' then
+  begin
+    tempStr:= Copy(FPathToAndroidProject, 1, Length(FPathToAndroidProject)-1);
+    p:= LastDelimiter(PathDelim, tempStr) + 1;
+    FSmallProjName:= Copy(tempStr,  p, Length(tempStr));
+  end;
+
   FPathToJavaSource:= FPathToAndroidProject + 'src' + PathDelim + AppendPathDelim(ReplaceChar(FPackageName, '.', PathDelim));
 
   if  (FAndroidTheme = '') or (Pos('AppCompat', FAndroidTheme) <= 0) then
