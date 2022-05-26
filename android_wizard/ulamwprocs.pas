@@ -28,6 +28,13 @@ type
   function ReplaceChar(const query: string; oldchar, newchar: char): string;
   // end tk
 
+  // Patch a value in filePath using a series of keyHints which is a '/' separated
+  // string of fields that help to uniquely locating the patch point, the last
+  // field should identify the key whose value is to be patched, valueType indicates
+  // what kind of value will be reeplaced with newValue, 0 means it's a single or
+  // double quoted string.
+  function PatchFile(const filePath, keyHints: string; valueType:Integer; newValue:string): boolean;
+
   function StringToModuleType(mtStr: string; default:TModuleType=mtLibrary): TModuleType;
   function GetVerAsNumber(aVers: string): integer;
   function TryUndoFakeVersion(grVer: string): string;
@@ -131,7 +138,6 @@ type
   procedure CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates, FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi, FTargetApi:string; FSupport:boolean; overwrite:boolean=true);
   procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string; FSupport:boolean; FMinApi, FTargetApi, DefApi:string; Checks: TUpdateManifestChecks);
 
-  function  GetBuildGradleValue(FilePath: string; ValuePath:string; out line,pos,len:Integer; out value:string): boolean;
 implementation
 
 {$ifdef unix}
@@ -182,6 +188,65 @@ begin
   Result := query;
   for i := 1 to Length(Result) do
     if Result[i] = oldchar then Result[i] := newchar;
+end;
+
+function PatchFile(const filePath, keyHints: string; valueType: Integer;
+  newValue: string): boolean;
+var
+  F: TFileStream;
+  M:TMemoryStream;
+  p, n: pchar;
+  arr: TStringArray;
+  i, aLen: Integer;
+  ch, quote: char;
+  aPos: Int64;
+begin
+
+  aPos := -1;
+  aLen := 0;
+
+  M := TMemoryStream.Create;
+  M.LoadFromFile(filePath);
+  p := M.Memory;
+  ch := (p+M.Size-1)^; // save the last byte
+  (p+M.Size-1)^ := #0; // make sure that there is null ending
+  arr := keyHints.Split('/');
+  for i:=0 to Length(arr)-1 do begin
+    n := strpos(p, pchar(arr[i]));
+    if n=nil then exit;
+    p := n + Length(arr[i]);
+  end;
+
+  case valueType of
+    0: // looking for a single/double quoted string
+      begin
+        while (p^<>#0) and (p^ in [' ', #9]) do inc(p);
+        if not (p^ in ['''','"']) then exit;
+        quote := p^; inc(p); n := p;
+        while not(n^ in [quote,#0]) do inc(n);
+        aPos := (p-M.Memory);
+        alen := (n-p);
+      end;
+  end;
+
+  p := M.Memory;
+  (p+M.Size-1)^ := ch; // restore the last byte
+
+  result := (aPos>0) and (aLen>0);
+  if result then begin
+    F := TFileStream.Create(filePath, fmCreate);
+    try
+      p := M.Memory;
+      F.Write(p^, aPos);
+      F.Write(newValue[1], Length(newValue));
+      inc(p, aPos + alen);
+      F.Write(p^, M.Size-aPos-aLen);
+    finally
+      F.Free;
+    end;
+  end;
+
+  M.Free;
 end;
 
 function StringToModuleType(mtStr: string; default: TModuleType): TModuleType;
@@ -3208,11 +3273,6 @@ begin
 
   if changed then
     strList.SaveToFile(dest);
-end;
-
-function GetBuildGradleValue(FilePath: string; ValuePath: string; out line,
-  pos, len: Integer; out value: string): boolean;
-begin
 end;
 
 initialization

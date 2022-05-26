@@ -134,7 +134,6 @@ TLamwProjectOptions = class(TAbstractIDEOptionsEditor)
  procedure SpeedButton1Click(Sender: TObject);
  procedure SpeedButton2Click(Sender: TObject);
  procedure SpeedButtonHintThemeClick(Sender: TObject);
-private
  { private declarations }
 const
  Drawable: array [0..4] of record
@@ -1307,6 +1306,7 @@ procedure TLamwProjectOptions.TryChangeChipset();
 var
   index: integer;
   cfname:TStringArray;
+  instructionChip: string;
 begin
   if cbChipset.Text <> '' then
   begin
@@ -1315,6 +1315,7 @@ begin
        // The target chipset has changed, update project's custom options and libraries
        index:= cbChipset.ItemIndex;
        cfname:=LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename.Split(PathDelim);
+       instructionChip := 'armeabi-v7a'; // a default
        case index of
          0: begin  //ARMv6
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_armV6.txt') then
@@ -1324,6 +1325,7 @@ begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'arm';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_armV6.txt', 0));
            end;
+           instructionChip := 'armeabi';
          end;
          1: begin  //ARMv7a+Soft
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_armV7a.txt') then
@@ -1333,6 +1335,7 @@ begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'arm';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_armV7a.txt', 0));
            end;
+           instructionChip := 'armeabi-v7a';
          end;
          2: begin //ARMv7a+VFPv3
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_armV7a_VFPv3.txt') then
@@ -1342,6 +1345,7 @@ begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'arm';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_armV7a_VFPv3.txt', 0));
            end;
+           instructionChip := 'armeabi-v7a';
          end;
          3: begin //x86
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_x86.txt') then
@@ -1351,6 +1355,7 @@ begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'i386';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_x86.txt', 0));
            end;
+           instructionChip := 'x86';
          end;
          4: begin //Mipsel
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_mipsel.txt') then
@@ -1359,7 +1364,8 @@ begin
              SetProjectCustomOptions(LazarusIDE.ActiveProject, GetBuildMode('build_mipsel.txt', 2));
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'mipsel';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_mipsel.txt', 0));
-           end
+           end;
+           instructionChip := 'mips';
          end;
          5: begin //Aarch64    //build_arm64.txt
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_arm64.txt') then
@@ -1369,6 +1375,7 @@ begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'aarch64';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_arm64.txt', 0));
            end;
+           instructionChip := 'arm64-v8a';
          end;
          6: begin  //x86_64
            if FileExists(FProjectPath + 'jni' + PathDelim + 'build-modes' +PathDelim+ 'build_x86_64.txt') then
@@ -1378,10 +1385,18 @@ begin
              LazarusIDE.ActiveProject.LazCompilerOptions.TargetCPU:= 'x86_64';
              SetProjectLibraries(LazarusIDE.ActiveProject, GetBuildMode('build_x86_64.txt', 0));
            end;
+           instructionChip := 'x86_64';
          end;
        end;
-       // if the buildsystem is gradle update build.gradle
-
+       if FBuildSystem='Gradle' then
+       begin
+         // build.gradle needs to be updated with the new chipset value either a
+         // build.gradle parser needs to be implemented so the unchanged values
+         // are re-used or all parameters to CreateBuildGradle() needs to be
+         // collected. Here a practical approach is used, simply patch the file
+         // with the new value.
+         PatchFile(FProjectPath + 'build.gradle', 'android {/splits {/abi {/include', 0, instructionChip);
+       end;
     end;
   end;
 end;
