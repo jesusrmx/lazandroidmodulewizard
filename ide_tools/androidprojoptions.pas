@@ -68,9 +68,9 @@ implementation
 
 uses
 
-  {$if (lcl_fullversion > 1090000) }
+  //{$if (lcl_fullversion > 1090000) }
   IDEOptEditorIntf,
-  {$endif}
+  //{$endif}
   laz2_XMLWrite, FileUtil, CodeToolManager, CodeTree, LinkScanner,
   CodeAtom, Graphics, ExtDlgs, AndroidWizard_intf, LamwDesigner, LamwSettings,
   FPCanvas, FPimage, FPReadPNG, FPWritePNG, strutils;
@@ -1312,6 +1312,7 @@ begin
   begin
     if cbChipset.Text <> FChipSetTarget then
     begin
+       // The target chipset has changed, update project's custom options and libraries
        index:= cbChipset.ItemIndex;
        cfname:=LazarusIDE.ActiveProject.LazCompilerOptions.TargetFilename.Split(PathDelim);
        case index of
@@ -1379,6 +1380,8 @@ begin
            end;
          end;
        end;
+       // if the buildsystem is gradle update build.gradle
+
     end;
   end;
 end;
@@ -1846,11 +1849,9 @@ begin
 
   TryChangeChipset();
 
-  if CheckBoxSupport.Checked then
-    LazarusIDE.ActiveProject.CustomData['Support']:='TRUE'
-  else
-    LazarusIDE.ActiveProject.CustomData['Support']:='FALSE';
-
+  if CheckBoxSupport.Checked then s:='TRUE'
+  else                            s:='FALSE';
+  SetProjectCustomData(LazarusIDE.ActiveProject, 'Support', s);
 
   with FManifest do
   begin

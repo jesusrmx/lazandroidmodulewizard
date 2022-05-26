@@ -43,6 +43,9 @@ type
   function GetInstructionChip(FInstructionSet, ProjTargetFilename: string): string;
   function GetInstructionSet(instructionChip: string; default:string='x86'): string;
 
+  // Project interaction
+  procedure SetProjectCustomData(AProject: TLazProject; anOption, aValue: string);
+
   procedure UpdateLibrariesAndCustomOptions(AProject: TLazProject; FAndroidProjectName, FPathToAndroidNDK, FNdkApi, FPrebuildOSYS, FInstructionSet, FFPUSet: string; FModuleType: TModuleType; FNdkIndex:Integer);
 
   function GetProjectLibraries(project: TLazProject): string;
@@ -127,6 +130,8 @@ type
   procedure CreateJCommonsJava(FPathToJavaTemplates, FFullJavaSrcPath, FPackagePrefaceName, FSmallProjName, FAndroidTheme: string; overwrite:boolean=true);
   procedure CreateAndroidManifestXML(FAndroidProjectName, FPathToJavaTemplates, FPackagePrefaceName, FSmallProjName, FMainActivity, FMinApi, FTargetApi:string; FSupport:boolean; overwrite:boolean=true);
   procedure UpdateAndroidManifestXML(FAndroidProjectName, FAndroidTheme: string; FSupport:boolean; FMinApi, FTargetApi, DefApi:string; Checks: TUpdateManifestChecks);
+
+  function  GetBuildGradleValue(FilePath: string; ValuePath:string; out line,pos,len:Integer; out value:string): boolean;
 implementation
 
 {$ifdef unix}
@@ -559,6 +564,20 @@ begin
    'mips':        result := 'mipsel';
    'arm64-v8a':   result := 'armv8';
    else           result := default;
+  end;
+end;
+
+// Updates a project CustomData value, if the value has changed, the project is set to modified
+procedure SetProjectCustomData(AProject: TLazProject; anOption, aValue: string
+  );
+var
+  curValue: String;
+begin
+  curValue := AProject.CustomData[anOption];
+  if curValue<>aValue then
+  begin
+    AProject.CustomData[anOption] := aValue;
+    AProject.Modified := true;
   end;
 end;
 
@@ -3189,6 +3208,11 @@ begin
 
   if changed then
     strList.SaveToFile(dest);
+end;
+
+function GetBuildGradleValue(FilePath: string; ValuePath: string; out line,
+  pos, len: Integer; out value: string): boolean;
+begin
 end;
 
 initialization
