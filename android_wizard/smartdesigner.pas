@@ -92,6 +92,7 @@ type
 
     function TryGetNDKRelease(pathNDK: string): string;
     function GetNDKVersion(ndkRelease: string): integer;
+    function GetUpdatedChipArchitecture: string;
 
   protected
     function OnProjectOpened(Sender: TObject; AProject: TLazProject): TModalResult;
@@ -379,6 +380,19 @@ begin
     end
     else Result:= 10; //r10e
 
+end;
+
+function TLamwSmartDesigner.GetUpdatedChipArchitecture: string;
+var
+  aux: String;
+begin
+  result:= 'x86';
+  aux := LowerCase(LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions);
+  if Pos('-cparmv6', aux) > 0 then result:= 'armeabi'
+  else if Pos('-cparmv7a', aux) > 0 then result:= 'armeabi-v7a'
+  else if Pos('-xpaarch64', aux) > 0 then result:= 'arm64-v8a'
+  else if Pos('-xpx86_64', aux) > 0 then result:= 'x86_64'
+  else if Pos('-xpmipsel', aux) > 0 then result:= 'mips';
 end;
 
 function TLamwSmartDesigner.TryGetNDKRelease(pathNDK: string): string;
@@ -944,13 +958,7 @@ begin
     FNDKVersion:= GetNDKVersion(ndkRelease); //18
   end;
 
-  FChipArchitecture:= 'x86';
-  aux := LowerCase(LazarusIDE.ActiveProject.LazCompilerOptions.CustomOptions);
-  if Pos('-cparmv6', aux) > 0 then FChipArchitecture:= 'armeabi'
-  else if Pos('-cparmv7a', aux) > 0 then FChipArchitecture:= 'armeabi-v7a'
-  else if Pos('-xpaarch64', aux) > 0 then FChipArchitecture:= 'arm64-v8a'
-  else if Pos('-xpx86_64', aux) > 0 then FChipArchitecture:= 'x86_64'
-  else if Pos('-xpmipsel', aux) > 0 then FChipArchitecture:= 'mips';
+  FChipArchitecture := GetUpdatedChipArchitecture;
 
   instructionSet := GetInstructionSet(FChipArchitecture);
 
@@ -2624,6 +2632,7 @@ begin
   if FStartModuleVarName = '' then UpdateStartModuleVarName;
   //LAMW 0.8
 
+  FChipArchitecture := GetUpdatedChipArchitecture;
   AddSupportToFCLControls(FChipArchitecture);
 
   if LamwGlobalSettings.CanUpdateJavaTemplate then
