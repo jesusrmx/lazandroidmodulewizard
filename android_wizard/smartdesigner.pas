@@ -3207,6 +3207,8 @@ begin
 
   if (FPathToAndroidSDK <> '') and (pathToDemoSDK <> '') then
   begin
+    PatchFile(FPathToAndroidProject+'build.xml', 'location=', 0, FPathToAndroidSDK, true);
+    {
     if FileExists(FPathToAndroidProject+'build.xml') then
     begin
       strList.LoadFromFile(FPathToAndroidProject+'build.xml');
@@ -3217,6 +3219,7 @@ begin
       strList.Text := strResult;
       strList.SaveToFile(FPathToAndroidProject+'build.xml');
     end;
+    }
   end
   else
     ShowMessage('Sorry.. Project "build.xml" Path  to SDK not fixed... [Please, change it by hand!]');

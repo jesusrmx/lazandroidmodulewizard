@@ -33,7 +33,7 @@ type
   // field should identify the key whose value is to be patched, valueType indicates
   // what kind of value will be reeplaced with newValue, 0 means it's a single or
   // double quoted string.
-  function PatchFile(const filePath, keyHints: string; valueType:Integer; newValue:string): boolean;
+  function PatchFile(const filePath, keyHints: string; valueType:Integer; newValue:string; backup:boolean=false): boolean;
 
   function StringToModuleType(mtStr: string; default:TModuleType=mtLibrary): TModuleType;
   function GetVerAsNumber(aVers: string): integer;
@@ -191,7 +191,7 @@ begin
 end;
 
 function PatchFile(const filePath, keyHints: string; valueType: Integer;
-  newValue: string): boolean;
+  newValue: string; backup: boolean): boolean;
 var
   F: TFileStream;
   M:TMemoryStream;
@@ -234,6 +234,8 @@ begin
 
   result := (aPos>0) and (aLen>0);
   if result then begin
+    if backup then
+      M.SaveToFile(filePath+'.bak2');
     F := TFileStream.Create(filePath, fmCreate);
     try
       p := M.Memory;
