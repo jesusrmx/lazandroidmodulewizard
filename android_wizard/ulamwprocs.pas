@@ -2779,24 +2779,26 @@ var
 begin
 
   FPathToJavaSrc:= FAndroidProjectName + DirectorySeparator + 'src';
-
-  if not DirectoryExists(FPathToJavaSrc) then
-  begin
-    ForceDirectories(FPathToJavaSrc);
-
-    FFullJavaSrcPath:= FPathToJavaSrc;
-    L := TStringList.Create;
-    L.Clear;
-    L.StrictDelimiter:= True;
-    L.Delimiter:= '.';
-    L.DelimitedText:= FPackageName + '.' + LowerCase(FSmallProjName);
-    for i:= 0 to L.Count -1 do
-    begin
-       FFullJavaSrcPath:= FFullJavaSrcPath + DirectorySeparator + L.Strings[i];
-       CreateDir(FFullJavaSrcPath);
-    end;
-    L.Free;
-  end;
+  FFullJavaSrcPath := FPathToJavaSrc + DirectorySeparator +
+    StringReplace(FPackageName + '.' + LowerCase(FSmallProjName), '.', DirectorySeparator, [rfReplaceAll]);
+  ForceDirectories(FFullJavaSrcPath);
+  //if not DirectoryExists(FPathToJavaSrc) then
+  //begin
+  //  ForceDirectories(FPathToJavaSrc);
+  //
+  //  FFullJavaSrcPath:= FPathToJavaSrc;
+  //  L := TStringList.Create;
+  //  L.Clear;
+  //  L.StrictDelimiter:= True;
+  //  L.Delimiter:= '.';
+  //  L.DelimitedText:= FPackageName + '.' + LowerCase(FSmallProjName);
+  //  for i:= 0 to L.Count -1 do
+  //  begin
+  //     FFullJavaSrcPath:= FFullJavaSrcPath + DirectorySeparator + L.Strings[i];
+  //     CreateDir(FFullJavaSrcPath);
+  //  end;
+  //  L.Free;
+  //end;
 end;
 
 procedure CreateDrawables(FAndroidProjectName, FPathToJavaTemplates: string;
