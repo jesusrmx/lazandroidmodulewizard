@@ -3237,6 +3237,8 @@ begin
 
       //Libraries
       strTemp:= GetProjectLibraries(LazarusIDE.ActiveProject);   //path already converted!!!
+      if strTemp='' then // means it's an old unconverted project
+        strTemp := LazarusIDE.ActiveProject.LazCompilerOptions.Libraries;
 
       strLibrary:= StringReplace(strTemp, pathToDemoNDKConverted,
                                          FPathToAndroidNDK,
