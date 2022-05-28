@@ -968,6 +968,9 @@ begin
 
   FNdkApi:= AProject.CustomData['NdkApi']; //android-22
   tempStr:= SplitStr(FNdkApi, '-');   //now  FNdkApi = 22 !
+  if FNdkApi=''  then
+    // this is an old project, we need a NDK api or library path will be invalid
+    FNdkApi := IntToStr(FNDKVersion);
 
   isBrandNew:= False;
 
@@ -3084,7 +3087,7 @@ begin
 
   if (FPathToAndroidSDK <> '') and (pathToDemoSDK <> '') then
   begin
-    PatchFile(FPathToAndroidProject+'build.xml', 'location=', 0, FPathToAndroidSDK, true);
+    PatchFile(FPathToAndroidProject+'build.xml', 'location=', 0, ExcludeTrailingPathDelimiter(FPathToAndroidSDK), true);
     {
     if FileExists(FPathToAndroidProject+'build.xml') then
     begin

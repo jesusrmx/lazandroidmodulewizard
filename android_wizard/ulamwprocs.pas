@@ -2468,7 +2468,7 @@ begin
 
     strList.Add('<?xml version="1.0" encoding="UTF-8"?>');
     strList.Add('<project name="'+FSmallProjName+'" default="help">');
-    strList.Add('<property name="sdk.dir" location="'+FPathToAndroidSDK+'"/>');
+    strList.Add('<property name="sdk.dir" location="'+ExcludeTrailingPathDelimiter(FPathToAndroidSDK)+'"/>');
 
     if (Pos('AppCompat', FAndroidTheme) > 0) and (intTargetApi < 21) then
       strList.Add('<property name="target" value="android-21"/>')
