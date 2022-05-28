@@ -1095,7 +1095,8 @@ begin
 
   if AProject.CustomData['Theme'] = '' then
   begin
-    AProject.CustomData['Theme']:= 'DeviceDefault';
+    FAndroidTheme := 'DeviceDefault';
+    AProject.CustomData['Theme']:= FAndroidTheme;
     AProject.Modified:= True;
   end;
 
