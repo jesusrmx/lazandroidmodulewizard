@@ -664,10 +664,8 @@ begin
   // Now the manifest exists, update it according to several improvements
   UpdateAndroidManifestXML(androidProjectName, FAndroidTheme, FSupport, minApiStr, IntToStr(targetApi), defApiStr, [umcUpdateAndroidX, umcMinApi]);
 
-
   sdkManifestTarqet:= GetTargetFromManifest();
 
-  //
   UpdateAndroidManifestXML(androidProjectName, '', false, '', IntToStr(targetApi), sdkManifestTarqet, [umcAndroidExported, umcTargetApi]);
 
   if FBuildSystem = 'Ant' then
@@ -675,7 +673,7 @@ begin
     CreateBuildXML(androidProjectName, FPathToAndroidSDK, FAndroidTheme, IntToStr(targetApi),
       packagePrefaceName, FSmallProjName, false);
 
-    UpdateAntProperties(androidProjectName);
+    UpdateAntProperties(androidProjectName, FSmallProjName);
 
     CreateProjectProperties(androidProjectName, FAndroidTheme, IntToStr(targetApi), false);
   end;
@@ -3023,15 +3021,8 @@ end;
 
 procedure TLamwSmartDesigner.TryChangeDemoProjecAntBuildScripts();
 var
-  strList: TStringList;
   pathToAntBin, pathToJavaJDK, androidProjectName, antBuildMode: string;
-  linuxDirSeparator: string;
-  linuxPathToJavaJDK: string;
-  linuxAndroidProjectName:  string;
-  linuxPathToAntBin: string;
-  linuxPathToAndroidSdk: string;
-  tempStr, linuxPathToAdbBin, packageName: string;
-
+  packageName, packagePrefaceName: string;
 begin
 
   pathToAntBin:= Copy(LamwGlobalSettings.PathToAntBin, 1, Length(LamwGlobalSettings.PathToAntBin)-1); //paths have trailing path
@@ -3039,131 +3030,17 @@ begin
 
   antBuildMode:= 'debug';
   packageName:= LazarusIDE.ActiveProject.CustomData.Values['Package'];
+  packagePrefaceName := ChangeFileExt(packageName, '');
 
   pathToJavaJDK:= Copy(LamwGlobalSettings.PathToJavaJDK, 1, Length(LamwGlobalSettings.PathToJavaJDK)-1); //paths have trailing path
 
-  androidProjectName:= FPathToAndroidProject; //paths have trailing path
+  androidProjectName:= ExcludeTrailingPathDelimiter(FPathToAndroidProject); //paths have trailing path
 
-  strList:= TStringList.Create;
-
-  {$IFDEF WINDOWS}
-  strList.Add('set Path=%PATH%;'+pathToAntBin); //<--- thanks to andersonscinfo !  [set path=%path%;C:\and32\ant\bin]
-  strList.Add('set JAVA_HOME='+pathToJavaJDK);  //set JAVA_HOME=C:\Program Files (x86)\Java\jdk1.7.0_21
-  strList.Add('cd '+androidProjectName);
-  strList.Add('call ant clean -Dtouchtest.enabled=true debug');
-  strList.Add('if errorlevel 1 pause');
-  strList.SaveToFile(androidProjectName+'ant-build-debug.bat');
-
-  strList.Clear;
-  strList.Add('set Path=%PATH%;'+pathToAntBin);
-  strList.Add('set JAVA_HOME='+pathToJavaJDK);
-  strList.Add('cd '+androidProjectName);
-  strList.Add('call ant clean release');
-  strList.Add('if errorlevel 1 pause');
-  strList.SaveToFile(androidProjectName+'ant-build-release.bat');
-
-  strList.Clear;
-  strList.Add('cd '+androidProjectName+'bin');
-  strList.Add(FPathToAndroidSDK+'platform-tools'+
-             DirectorySeparator+'adb install -r '+FSmallProjName+'-'+antBuildMode+'.apk');
-  strList.Add('cd ..');
-  strList.Add('pause');
-  strList.SaveToFile(androidProjectName+'adb-install.bat');
-  {$ENDIF}
-
-  linuxDirSeparator:= DirectorySeparator;
-  linuxPathToJavaJDK:= pathToJavaJDK;
-  linuxAndroidProjectName:= androidProjectName;
-  linuxPathToAntBin:= pathToAntBin;
-  linuxPathToAndroidSdk:= FPathToAndroidSDK;
-
-  //{$IFDEF WINDOWS}
-  //   linuxDirSeparator:= '/';
-  //   tempStr:= pathToJavaJDK;
-  //   SplitStr(tempStr, ':');
-  //   linuxPathToJavaJDK:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-  //
-  //   tempStr:= androidProjectName;
-  //   SplitStr(tempStr, ':');
-  //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-  //
-  //   tempStr:= pathToAntBin;
-  //   SplitStr(tempStr, ':');
-  //   linuxPathToAntBin:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-  //
-  //   tempStr:= FPathToAndroidSDK;
-  //   SplitStr(tempStr, ':');
-  //   linuxPathToAndroidSdk:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-  //
-  //   tempStr:= androidProjectName;
-  //   SplitStr(tempStr, ':');
-  //   linuxAndroidProjectName:= StringReplace(tempStr, '\', '/', [rfReplaceAll]);
-  //{$ENDIF}
-
-  {$IFNDEF WINDOWS}
-  strList.Clear;
-  if pathToAntBin <> '' then
-    strList.Add('export PATH='+linuxPathToAntBin+':$PATH');
-
-  strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);
-  strList.Add('cd '+linuxAndroidProjectName);
-  strList.Add('ant -Dtouchtest.enabled=true debug');
-  SaveShellScript(strList, androidProjectName+'ant-build-debug.sh');
-  {$ENDIF}
-
-  //MacOs
-  {$IFDEF DARWIN}
-  strList.Clear;
-  if pathToAntBin <> '' then
-  begin
-     strList.Add('export PATH='+linuxPathToAntBin+':$PATH');        //export PATH=/usr/bin/ant:PATH
-     strList.Add('export JAVA_HOME=${/usr/libexec/java_home}');     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-     strList.Add('export PATH=${JAVA_HOME}/bin:$PATH');
-     strList.Add('cd '+linuxAndroidProjectName);
-     strList.Add('ant -Dtouchtest.enabled=true debug');
-     SaveShellScript(strList, androidProjectName+'ant-build-debug-macos.sh');
-  end;
-  {$ENDIF}
-
-  {$IFNDEF WINDOWS}
-  strList.Clear;
-  if pathToAntBin <> '' then
-     strList.Add('export PATH='+linuxPathToAntBin+':$PATH'); //export PATH=/usr/bin/ant:PATH
-
-  strList.Add('export JAVA_HOME='+linuxPathToJavaJDK);     //export JAVA_HOME=/usr/lib/jvm/java-6-openjdk
-  strList.Add('cd '+linuxAndroidProjectName);
-  strList.Add('ant clean release');
-  SaveShellScript(strList, androidProjectName+'ant-build-release.sh');
-
-  linuxPathToAdbBin:= linuxPathToAndroidSdk+'platform-tools';
-
-  //linux install - thanks to Stephano!
-  strList.Clear;
-  strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+packageName);
-  (*
-  strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r bin'+linuxDirSeparator+FSmallProjName+'-'+antBuildMode+'.apk');
-  *)
-
-  tempStr:= androidProjectName;
-  //{$ifdef windows}
-  //tempStr:= StringReplace(androidProjectName,PathDelim,linuxDirSeparator, [rfReplaceAll]);
-  //tempStr:= Copy(tempStr, 3, MaxInt); //drop C:
-  //{$endif}
-
-  strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb install -r ' + tempStr + 'bin' + linuxDirSeparator+FSmallProjName+'-'+antBuildMode+'.apk');
-  //strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb logcat &');
-  SaveShellScript(strList, androidProjectName+'adb-install.sh');
-
-  strList.Clear;
-  strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb uninstall '+packageName);
-  SaveShellScript(strList, androidProjectName+'adb-uninstall.sh');
-
-  strList.Clear;
-  strList.Add(linuxPathToAdbBin+linuxDirSeparator+'adb logcat &');
-  SaveShellScript(strList, androidProjectName+'logcat.sh');
-  {$ENDIF}
-
-  strList.Free;
+  CreateAntBuildDebug(androidProjectName, pathToJavaJDK, pathToAntBin, true);
+  CreateAntBuildRelease(androidProjectName, pathToJavaJDK, pathToAntBin, true);
+  CreateADbInstall(androidProjectName, FPathToAndroidSDK, packagePrefaceName, FSmallProjName, antBuildMode, true);
+  CreateADbUninstall(androidProjectName, FPathToAndroidSDK, packagePrefaceName, FSmallProjName, true);
+  CreateLogCat(androidProjectName, FPathToAndroidSDK, true);
 end;
 
 procedure TLamwSmartDesigner.TryChangeDemoProjecPaths();

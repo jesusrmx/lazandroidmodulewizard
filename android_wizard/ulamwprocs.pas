@@ -69,6 +69,7 @@ type
   procedure CreateHowToGetYourSignedReleaseApk(const FAndroidProjectName,FSmallProjName: string; overwrite:boolean=false);
   procedure CreateAVDUtils(FAndroidProjectName, FPathToAndroidSDK,FMinApi: string);
 
+  procedure CreateADbInstall(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName, antBuildMode: string; overwrite:boolean=true);
   procedure CreateADbUninstall(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
   procedure CreateLogCat(FAndroidProjectName, FPathToAndroidSDK: string; overwrite:boolean=true);
   procedure CreateLogCatError(FAndroidProjectName, FPathToAndroidSDK: string; overwrite:boolean=true);
@@ -110,7 +111,7 @@ type
   procedure CreateBuildXML(FAndroidProjectName, FPathToAndroidSDK, FAndroidTheme, FTargetApi, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
   procedure CreateAntReadme(FAndroidProjectName, FAntBuildMode, FSmallProjName: string; overwrite:boolean=true);
   procedure CreateAntProperties(FAndroidProjectName, FSmallProjName: string; overwrite:boolean=true);
-  procedure UpdateAntProperties(FAndroidProjectName: string);
+  procedure UpdateAntProperties(FAndroidProjectName, FSmallProjName: string);
   procedure CreateProguardPoject(FAndroidProjectName: string; overwrite:boolean=true);
   procedure CreateProjectProperties(FAndroidProjectName, FAndroidTheme, FTargetApi: string; overwrite:boolean=true);
   procedure CreateAntBuildDebug(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin:string; overwrite:boolean=true);
@@ -1272,6 +1273,26 @@ begin
     strList.Add('tools emulator -avd avd_api_'+FMinApi + ' &');
   strList.Add('cd '+FAndroidProjectName);
   strList.SaveToFile(FAndroidProjectName+DirectorySeparator+'launch-avd-default.bat');
+end;
+
+procedure CreateADbInstall(FAndroidProjectName, FPathToAndroidSDK,
+  FPackagePrefaceName, FSmallProjName, antBuildMode: string; overwrite: boolean
+  );
+var
+  adbExe, aFile: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'adb-install'+ScriptExt, overwrite, aFile) then
+  begin
+    adbExe := FPathToAndroidSDK+'platform-tools'+DirectorySeparator+'adb';
+    strList.Add('cd '+FAndroidProjectName+DirectorySeparator+'bin');
+    strList.Add(adbExe + ' uninstall '+FPackagePrefaceName+'.'+FSmallProjName);
+    strList.Add(adbExe + ' install -r '+FSmallProjName+'-'+antBuildMode+'.apk');
+    {$ifdef Windows}
+    strList.Add('cd ..');
+    strList.Add('pause');
+    {$endif}
+    ScriptSave(aFile);
+  end;
 end;
 
 procedure CreateADbUninstall(FAndroidProjectName, FPathToAndroidSDK,
@@ -2587,16 +2608,24 @@ begin
   end;
 end;
 
-procedure UpdateAntProperties(FAndroidProjectName: string);
+procedure UpdateAntProperties(FAndroidProjectName, FSmallProjName: string);
+var
+  aFile: String;
 begin
-  PrepareStrList;
-  strList.LoadFromFile(FAndroidProjectName+PathDelim+'ant.properties');
-  if Pos('java.source=1.8', strList.Text) <= 0 then
+  aFile := FAndroidProjectName+PathDelim+'ant.properties';
+  if FileExists(aFile) then
   begin
-    strList.Insert(0,'java.target=1.8');
-    strList.Insert(0,'java.source=1.8');
-    strList.SaveToFile(FAndroidProjectName+'ant.properties');
-  end;
+    PrepareStrList;
+    strList.LoadFromFile(aFile);
+    if Pos('java.source=1.8', strList.Text) <= 0 then
+    begin
+      strList.Insert(0,'java.target=1.8');
+      strList.Insert(0,'java.source=1.8');
+      strList.SaveToFile(aFile);
+    end;
+  end
+  else
+    CreateAntProperties(FAndroidProjectName, FSmallProjName);
 end;
 
 procedure CreateProguardPoject(FAndroidProjectName: string; overwrite: boolean);
