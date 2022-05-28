@@ -3087,7 +3087,7 @@ begin
 
   if (FPathToAndroidSDK <> '') and (pathToDemoSDK <> '') then
   begin
-    PatchFile(FPathToAndroidProject+'build.xml', 'location=', 0, ExcludeTrailingPathDelimiter(FPathToAndroidSDK), true);
+    PatchFile(FPathToAndroidProject+'build.xml', 'location=', pfvtQuotedString, ExcludeTrailingPathDelimiter(FPathToAndroidSDK), true);
     {
     if FileExists(FPathToAndroidProject+'build.xml') then
     begin

@@ -20,6 +20,7 @@ type
   // parts of LAMW
   TheThing = class
   end;
+  TPFValueType = (pfvtQuotedString, pfvtSimpleInteger);
 
   TUpdateManifestChecks = set of (umcUpdateAndroidX, umcMinApi, umcTargetApi, umcAndroidExported);
 
@@ -31,9 +32,8 @@ type
   // Patch a value in filePath using a series of keyHints which is a '/' separated
   // string of fields that help to uniquely locating the patch point, the last
   // field should identify the key whose value is to be patched, valueType indicates
-  // what kind of value will be reeplaced with newValue, 0 means it's a single or
-  // double quoted string.
-  function PatchFile(const filePath, keyHints: string; valueType:Integer; newValue:string; backup:boolean=false): boolean;
+  // what kind of value will be reeplaced with newValue
+  function PatchFile(const filePath, keyHints: string; valueType:TPFValueType; newValue:string; backup:boolean=false): boolean;
 
   function StringToModuleType(mtStr: string; default:TModuleType=mtLibrary): TModuleType;
   function GetVerAsNumber(aVers: string): integer;
@@ -191,7 +191,7 @@ begin
     if Result[i] = oldchar then Result[i] := newchar;
 end;
 
-function PatchFile(const filePath, keyHints: string; valueType: Integer;
+function PatchFile(const filePath, keyHints: string; valueType: TPFValueType;
   newValue: string; backup: boolean): boolean;
 var
   F: TFileStream;
@@ -207,49 +207,76 @@ begin
   aLen := 0;
 
   M := TMemoryStream.Create;
-  M.LoadFromFile(filePath);
-  p := M.Memory;
-  ch := (p+M.Size-1)^; // save the last byte
-  (p+M.Size-1)^ := #0; // make sure that there is null ending
-  arr := keyHints.Split('/');
-  for i:=0 to Length(arr)-1 do begin
-    n := strpos(p, pchar(arr[i]));
-    if n=nil then exit;
-    p := n + Length(arr[i]);
-  end;
+  try
+    M.LoadFromFile(filePath);
 
-  case valueType of
-    0: // looking for a single/double quoted string
-      begin
-        while (p^<>#0) and (p^ in [' ', #9]) do inc(p);
-        if not (p^ in ['''','"']) then exit;
-        quote := p^; inc(p); n := p;
-        while not(n^ in [quote,#0]) do inc(n);
-        aPos := (p-M.Memory);
-        alen := (n-p);
-      end;
-  end;
+    // save the last byte in orde to ensure that there is null ending
+    p := M.Memory;
+    ch := (p+M.Size-1)^;
+    (p+M.Size-1)^ := #0;
 
-  p := M.Memory;
-  (p+M.Size-1)^ := ch; // restore the last byte
-
-  result := (aPos>0) and (aLen>0);
-  if result then begin
-    if backup then
-      M.SaveToFile(filePath+'.bak2');
-    F := TFileStream.Create(filePath, fmCreate);
-    try
-      p := M.Memory;
-      F.Write(p^, aPos);
-      F.Write(newValue[1], Length(newValue));
-      inc(p, aPos + alen);
-      F.Write(p^, M.Size-aPos-aLen);
-    finally
-      F.Free;
+    // get any hints or reference requisites and
+    // find them, so the key is uniquely identified
+    arr := keyHints.Split('/');
+    for i:=0 to Length(arr)-1 do
+    begin
+      n := strpos(p, pchar(arr[i]));
+      if n=nil then exit;
+      p := n + Length(arr[i]);
     end;
-  end;
 
-  M.Free;
+    // skip blanks following the key
+    while (p^<>#0) and (p^ in [' ', #9]) do inc(p);
+
+    case valueType of
+
+      pfvtQuotedString: // looking for a single/double quoted string
+        begin
+          if not (p^ in ['''','"']) then exit;
+          quote := p^; inc(p); n := p;
+          while not(n^ in [quote,#0]) do inc(n);
+        end;
+
+      pfvtSimpleInteger:  // looking for a simple integer (\d+)
+        begin
+          n := p;
+          while n^ in ['0'..'9'] do inc(n);
+          if p=n then exit;
+        end;
+    end;
+
+    // calc values
+    aPos := (p-M.Memory);
+    alen := (n-p);
+
+    // restore the last byte
+    p := M.Memory;
+    (p+M.Size-1)^ := ch;
+
+    // patch the file
+    result := (aPos>0) and (aLen>0);
+    if result then
+    begin
+      if backup then
+        M.SaveToFile(filePath+'.bak2');
+      F := TFileStream.Create(filePath, fmCreate);
+      try
+        // write the first part (before the patched string)
+        p := M.Memory;
+        F.Write(p^, aPos);
+        // write the new value
+        F.Write(newValue[1], Length(newValue));
+        // write the last part (the rest after the patched string)
+        inc(p, aPos + alen);
+        F.Write(p^, M.Size-aPos-aLen);
+      finally
+        F.Free;
+      end;
+    end;
+
+  finally
+    M.Free;
+  end;
 end;
 
 function StringToModuleType(mtStr: string; default: TModuleType): TModuleType;
