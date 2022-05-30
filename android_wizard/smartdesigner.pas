@@ -92,7 +92,7 @@ type
 
     function TryGetNDKRelease(pathNDK: string): string;
     function GetNDKVersion(ndkRelease: string): integer;
-    function GetUpdatedChipArchitecture: string;
+    function GetUpdatedChipArchitecture(out fpuSet:string): string;
 
   protected
     function OnProjectOpened(Sender: TObject; AProject: TLazProject): TModalResult;
@@ -382,7 +382,8 @@ begin
 
 end;
 
-function TLamwSmartDesigner.GetUpdatedChipArchitecture: string;
+function TLamwSmartDesigner.GetUpdatedChipArchitecture(out fpuSet: string
+  ): string;
 var
   aux: String;
 begin
@@ -393,6 +394,10 @@ begin
   else if Pos('-xpaarch64', aux) > 0 then result:= 'arm64-v8a'
   else if Pos('-xpx86_64', aux) > 0 then result:= 'x86_64'
   else if Pos('-xpmipsel', aux) > 0 then result:= 'mips';
+
+  fpuSet := 'Soft';
+  if pos('vfpv3', aux)>0 then
+    fpuSet := 'VFPV3';
 end;
 
 function TLamwSmartDesigner.TryGetNDKRelease(pathNDK: string): string;
@@ -956,13 +961,9 @@ begin
     FNDKVersion:= GetNDKVersion(ndkRelease); //18
   end;
 
-  FChipArchitecture := GetUpdatedChipArchitecture;
+  FChipArchitecture := GetUpdatedChipArchitecture(fpuSet);
 
   instructionSet := GetInstructionSet(FChipArchitecture);
-
-  fpuSet := 'Soft';
-  if pos('vfpv3', aux)>0 then
-    fpuSet := 'VFPV3';
 
   FProjFile := AProject.MainFile;
 
@@ -2606,7 +2607,7 @@ var
   aux, PathToJavaTemplates, LibPath, linkLibrariesPath: string;
   AndroidTheme: string;
   compoundList: TStringList;
-  lprModuleName: string;
+  lprModuleName, fpuSet: string;
   hasControls: boolean;
   nativeMethodList, tempList: TStringList;
   FSupport:boolean;
@@ -2634,7 +2635,7 @@ begin
   if FStartModuleVarName = '' then UpdateStartModuleVarName;
   //LAMW 0.8
 
-  FChipArchitecture := GetUpdatedChipArchitecture;
+  FChipArchitecture := GetUpdatedChipArchitecture(fpuSet);
   AddSupportToFCLControls(FChipArchitecture);
 
   if LamwGlobalSettings.CanUpdateJavaTemplate then
