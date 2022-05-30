@@ -2414,6 +2414,11 @@ constructor TAndroidFileDescPascalUnitWithResource.Create;
 begin
   inherited Create;
 
+  // The change to enumeration made mtGDX to be the implicit default value
+  // we had to explicitly set mtGUI the default, as it was in the original code
+  ModuleType := mtGUI;
+
+  // the following code needs to be refactored ....
   if ModuleType in [mtGDX, mtGUI, mtNoGUI, mtNoGUIConsole] then
   begin
     Name:= 'AndroidDataModule';
