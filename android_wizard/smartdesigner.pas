@@ -3028,6 +3028,8 @@ var
   pathToAntBin, pathToJavaJDK, androidProjectName, antBuildMode: string;
   packageName, packagePrefaceName: string;
 begin
+  if FBuildSystem='Gradle' then
+    exit;
 
   pathToAntBin:= Copy(LamwGlobalSettings.PathToAntBin, 1, Length(LamwGlobalSettings.PathToAntBin)-1); //paths have trailing path
   if pathToAntBin = '' then Exit;
@@ -3088,7 +3090,8 @@ begin
 
   if (FPathToAndroidSDK <> '') and (pathToDemoSDK <> '') then
   begin
-    PatchFile(FPathToAndroidProject+'build.xml', 'location=', pfvtQuotedString, ExcludeTrailingPathDelimiter(FPathToAndroidSDK), true);
+    if (FBuildSystem<>'Gradle') and FileExists(FPathToAndroidProject+'build.xml') then
+      PatchFile(FPathToAndroidProject+'build.xml', 'location=', pfvtQuotedString, ExcludeTrailingPathDelimiter(FPathToAndroidSDK), true);
     {
     if FileExists(FPathToAndroidProject+'build.xml') then
     begin
