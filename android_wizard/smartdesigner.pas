@@ -24,6 +24,7 @@ type
     FPathToAndroidNDK: string;  //Included Path Delimiter!
 
     FPathToJavaJDK: string;
+    FPathToAntBin: string;
 
     FInstructionSet: string;
     FSmallProjName: string;
@@ -681,6 +682,10 @@ begin
     UpdateAntProperties(androidProjectName, FSmallProjName);
 
     CreateProjectProperties(androidProjectName, FAndroidTheme, IntToStr(targetApi), false);
+
+    CreateAntBuildDebug(androidProjectName, FPathToJavaJDK, FPathToAntBin, false);
+    CreateAntBuildRelease(androidProjectName, FPathToJavaJDK, FPathToAntBin, false);
+    CreateAntRun(androidProjectName, FPathToAndroidSDK, packagePrefaceName, FSmallProjName, false);
   end;
 
   if FBuildSystem = 'Gradle' then
@@ -942,7 +947,8 @@ begin
 
   FPathToAndroidSDK := LamwGlobalSettings.PathToAndroidSDK; //Included Path Delimiter!
   FPathToAndroidNDK := LamwGlobalSettings.PathToAndroidNDK; //Included Path Delimiter!
-  FPathToJavaJDK:=     LamwGlobalSettings.PathToJavaJDK;    //Included Path Delimiter!
+  FPathToJavaJDK:= LamwGlobalSettings.PathToJavaJDK;    //Included Path Delimiter!
+  FPathToAntBin:= ExcludeTrailingPathDelimiter(LamwGlobalSettings.PathToAntBin);
 
   FPrebuildOSYS:= LamwGlobalSettings.PrebuildOSYS;
   FPathToSmartDesigner:= LamwGlobalSettings.PathToSmartDesigner;

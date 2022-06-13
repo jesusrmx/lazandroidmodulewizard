@@ -117,6 +117,7 @@ type
   procedure CreateAntBuildDebug(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin:string; overwrite:boolean=true);
   procedure CreateAntBuildRelease(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin:string; overwrite:boolean=true);
   procedure CreateAntAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName: string; overwrite:boolean=true);
+  procedure CreateAntRun(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefacename, FSmallProjName: string; overwrite: boolean=true);
   procedure CreateAntJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName: string; overwrite:boolean=true);
 
   //
@@ -2795,6 +2796,27 @@ begin
                DirectorySeparator+'adb uninstall '+FPackagePrefaceName+'.'+LowerCase(FSmallProjName));
     strList.Add(FPathToAndroidSDK+'platform-tools'+
                DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-debug.apk');
+    {$IFDEF WINDOWS}
+    strList.Add('pause');
+    {$ENDIF}
+    ScriptSave(aFile);
+  end;
+end;
+
+procedure CreateAntRun(FAndroidProjectName, FPathToAndroidSDK,
+  FPackagePrefacename, FSmallProjName: string; overwrite: boolean);
+var
+  aFile,pkgName: string;
+begin
+  if NeedFile(FAndroidProjectName+PathDelim+'ant-run'+ScriptExt, overwrite, aFile) then
+  begin
+    pkgName := FPackagePrefaceName+'.'+LowerCase(FSmallProjName);
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb uninstall '+pkgName);
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb install -r '+FAndroidProjectName+DirectorySeparator+'bin'+DirectorySeparator+FSmallProjName+'-debug.apk');
+    strList.Add(FPathToAndroidSDK+'platform-tools'+
+               DirectorySeparator+'adb shell am start -n '+pkgName+'/.App');
     {$IFDEF WINDOWS}
     strList.Add('pause');
     {$ENDIF}

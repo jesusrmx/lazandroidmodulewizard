@@ -1510,7 +1510,7 @@ begin
           //CreateAAPT(FAndroidProjectName, FPathToAndroidSDK, FAntPackageName, FMinApi, FSmallProjName, FAntBuildMode);
           CreateAntBuildDebug(FAndroidProjectName, FPathToJavaJDK, FPathToAntBin);
           CreateAntBuildRelease(FAndroidProjectName,FPathToJavaJDK, FPathToAntBin);
-          CreateAntAdbInstallDebug(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName);
+          CreateAntRun(FAndroidProjectName, FPathToAndroidSDK, FPackagePrefaceName, FSmallProjName);
           CreateAntJarsignerVerify(FAndroidProjectName, FPathToJavaJDK, FSmallProjName);
           {%EndRegion}
           {$ENDIF FULL}
