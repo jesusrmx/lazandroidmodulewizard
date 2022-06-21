@@ -226,5 +226,14 @@ public class jsBottomNavigationView extends BottomNavigationView /*dummy*/ { //p
 		}		
 		this.setVisibility(android.view.View.VISIBLE);
    }
-  
+
+   public void CheckItem(int _item) {
+          //Log.i("libcontrols.so", "item="+_item);
+          MenuItem item = this.getMenu().findItem(_item);
+          if (item!=null) {
+             //Log.i("libcontrols.so", "Found MenuItem");
+             item.setChecked(true);
+          }
+   }
+
 }

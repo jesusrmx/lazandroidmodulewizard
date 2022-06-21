@@ -14,6 +14,8 @@ type
 
 {jVisualControl template}
 
+{ jsBottomNavigationView }
+
 jsBottomNavigationView = class(jVisualControl)
  private
     FOnClickItem: TOnClickNavigationViewItem;
@@ -62,6 +64,7 @@ jsBottomNavigationView = class(jVisualControl)
     procedure AddItem(_menu: jObject; _itemId: integer; _itemCaption: string; _drawableIdentifier: string); overload;
     procedure AddItemIcon(_menuItem: jObject; _drawableIdentifier: string);
 
+    procedure CheckItem(_itemId: Integer);
  published
     property BackgroundColor: TARGBColorBridge read FColor write SetColor;
     property GravityInParent: TLayoutGravity read FGravityInParent write SetLGravity;
@@ -106,6 +109,7 @@ procedure jsBottomNavigationView_SetFitsSystemWindows(env: PJNIEnv; _jsbottomnav
 procedure jsBottomNavigationView_SetBackgroundToPrimaryColor(env: PJNIEnv; _jsbottomnavigationview: JObject);
 procedure jsBottomNavigationView_BringToFront(env: PJNIEnv; _jsbottomnavigationview: JObject);
 
+procedure jsBottomNavigationView_CheckItem(env: PJNIEnv; _jsbottomnavigationview: JObject; _itemId:Integer);
 
 
 implementation
@@ -442,6 +446,12 @@ begin
   //in designing component state: set value here...
   if FInitialized then
      jsBottomNavigationView_AddItemIcon(FjEnv, FjObject, _menuItem ,_drawableIdentifier);
+end;
+
+procedure jsBottomNavigationView.CheckItem(_itemId: Integer);
+begin
+  if FInitialized then
+    jsBottomNavigationView_CheckItem(FJEnv, FJObject, _itemId);
 end;
 
 procedure jsBottomNavigationView.SetFitsSystemWindows(_value: boolean);
@@ -882,6 +892,20 @@ begin
   jCls:= env^.GetObjectClass(env, _jsbottomnavigationview);
   jMethod:= env^.GetMethodID(env, jCls, 'BringToFront', '()V');
   env^.CallVoidMethod(env, _jsbottomnavigationview, jMethod);
+  env^.DeleteLocalRef(env, jCls);
+end;
+
+procedure jsBottomNavigationView_CheckItem(env: PJNIEnv;
+  _jsbottomnavigationview: JObject; _itemId: Integer);
+var
+  jParams: array[0..0] of jValue;
+  jMethod: jMethodID=nil;
+  jCls: jClass=nil;
+begin
+  jParams[0].i:= _itemId;
+  jCls:= env^.GetObjectClass(env, _jsbottomnavigationview);
+  jMethod:= env^.GetMethodID(env, jCls, 'CheckItem', '(I)V');
+  env^.CallVoidMethodA(env, _jsbottomnavigationview, jMethod, @jParams);
   env^.DeleteLocalRef(env, jCls);
 end;
 
