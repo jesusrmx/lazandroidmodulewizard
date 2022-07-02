@@ -2670,6 +2670,22 @@ begin
       end;
     end;
 
+    // jcontrols created at runtime
+    aux := LazarusIDE.ActiveProject.Directory+pathDelim+'runtime.jcontrols';
+    if FileExists(aux) then
+    begin
+      compoundList.LoadFromFile(aux);
+      for j:= 0 to compoundList.Count-1 do
+      begin
+        aux := compoundList[j];
+        if (aux='') or (aux[1]='#') then
+          continue;
+        auxList.CommaText := aux;
+        for i:= 0 to auxList.Count-1 do
+          controlsList.Add(auxList[i]);
+      end;
+    end;
+
     //re-add all [updated] java code ...
 
     if (FSupport) or (Pos('AppCompat', AndroidTheme)>0) then  // refactored by jmpessoa: UNIQUE "Controls.java" !!!
