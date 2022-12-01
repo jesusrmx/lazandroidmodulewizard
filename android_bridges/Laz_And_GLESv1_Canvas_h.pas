@@ -18,6 +18,10 @@ unit Laz_And_GLESv1_Canvas_h;
 
 interface
 
+{$ifdef Darwin}
+{$linkframework OpenGL}
+{$endif}
+
 const
    //libname = 'libGLESv1_CM.so';
 

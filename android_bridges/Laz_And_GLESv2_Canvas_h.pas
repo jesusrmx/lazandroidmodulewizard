@@ -4,7 +4,10 @@ unit Laz_And_GLESv2_Canvas_h;
 
 interface
 
-     
+{$ifdef Darwin}
+{$linkframework OpenGL}
+{$endif}
+
 const
    //libname = 'libGLESv2.so';
 
