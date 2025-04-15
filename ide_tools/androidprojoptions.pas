@@ -513,7 +513,7 @@ var
     oldCompileSdkVersion: String;
   includeList, strList: TStringList;
   universalApk: Boolean;
-  i, p: Integer;
+  i, p, p2: Integer;
   aSupportLib: TSupportLib;
 begin
   {
@@ -625,29 +625,69 @@ begin
     strList.Text := tempStr;
   end;
 
-  p := Pos('compileSdkVersion ', strList.Text);
-  tempStr := Trim(Copy(strList.Text, p, Length('compileSdkVersion ') + 2));
+  //p := Pos('compileSdkVersion ', strList.Text);
+  //tempStr := Trim(Copy(strList.Text, p, Length('compileSdkVersion ') + 2));
+  ////compileSdkVersion 25
+  //
+  //p := Pos(' ', tempStr);
+  //oldCompileSdkVersion := Trim(Copy(tempStr, p + 1, 2));
+  //
+  //if FTargetSdkVersion <> StrToInt(oldCompileSdkVersion) then
+  //begin
+  //
+  //  tempStr := strList.Text;
+  //
+  //  findString:='compileSdkVersion ';
+  //  if (Pos(findString,tempStr)>0) then
+  //    tempStr := StringReplace(tempStr, findString+oldCompileSdkVersion, findString+IntToStr(FTargetSdkVersion), [rfIgnoreCase]);
+  //
+  //  for aSupportLib in SupportLibs do
+  //  begin
+  //    if (Pos(aSupportLib.Name,tempStr)>0) then
+  //      tempStr := StringReplace(tempStr, aSupportLib.Name+oldCompileSdkVersion, aSupportLib.Name(*+IntToStr(FTargetSdkVersion)*), [rfIgnoreCase]);
+  //  end;
+  //
+  //  strList.Text := tempStr;
+  //end;
+
+  p := Pos('compileSdkVersion ', strList.Text);  //0.8.6.2
+  if p > 0 then
+  begin
+    tempStr := Trim(Copy(strList.Text, p, Length('compileSdkVersion ') + 2));
   //compileSdkVersion 25
 
-  p := Pos(' ', tempStr);
-  oldCompileSdkVersion := Trim(Copy(tempStr, p + 1, 2));
-
-  if FTargetSdkVersion <> StrToInt(oldCompileSdkVersion) then
-  begin
-
-    tempStr := strList.Text;
-
+    p2 := Pos(' ', tempStr);
+    oldCompileSdkVersion:= Trim(Copy(tempStr, p2 + 1, 2));
     findString:='compileSdkVersion ';
-    if (Pos(findString,tempStr)>0) then
-      tempStr := StringReplace(tempStr, findString+oldCompileSdkVersion, findString+IntToStr(FTargetSdkVersion), [rfIgnoreCase]);
+  end
+  else
+  begin
+     p := Pos('compileSdk ', strList.Text);  //0.8.6.3
+   //compileSdk 25
 
-    for aSupportLib in SupportLibs do
+    p2 := Pos(' ', tempStr);
+    oldCompileSdkVersion:= Trim(Copy(tempStr, p2 + 1, 2));
+    findString:='compileSdk ';
+  end;
+
+  if IsAllCharNumber(PChar(oldCompileSdkVersion)) then
+  begin
+    if FTargetSdkVersion <> StrToInt(oldCompileSdkVersion) then
     begin
-      if (Pos(aSupportLib.Name,tempStr)>0) then
-        tempStr := StringReplace(tempStr, aSupportLib.Name+oldCompileSdkVersion, aSupportLib.Name(*+IntToStr(FTargetSdkVersion)*), [rfIgnoreCase]);
-    end;
 
-    strList.Text := tempStr;
+      tempStr := strList.Text;
+
+      if (Pos(findString,tempStr)>0) then
+        tempStr := StringReplace(tempStr, findString+oldCompileSdkVersion, findString+IntToStr(FTargetSdkVersion), [rfIgnoreCase]);
+
+      for aSupportLib in SupportLibs do
+      begin
+        if (Pos(aSupportLib.Name,tempStr)>0) then
+          tempStr := StringReplace(tempStr, aSupportLib.Name+oldCompileSdkVersion, aSupportLib.Name(*+IntToStr(FTargetSdkVersion)*), [rfIgnoreCase]);
+      end;
+
+      strList.Text := tempStr;
+    end;
   end;
 
   strList.SaveToFile(buildGradleFile);
