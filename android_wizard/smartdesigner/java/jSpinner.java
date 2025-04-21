@@ -305,9 +305,8 @@ public class jSpinner extends Spinner /*dummy*/ { //please, fix what GUI object 
         mStrList.clear();
         mTagList.clear();
         mSpAdapter.notifyDataSetChanged();
-        
-        mSelectedText  = "";    
-        mSelectedIndex = -1;
+
+        UpdateInternalIndexAndText(-1);
     }
 
     public void SetSelectedTextColor(int _color) {    	    
@@ -347,8 +346,10 @@ public class jSpinner extends Spinner /*dummy*/ { //please, fix what GUI object 
     public void SetSelection(int _index) {
     	if (mStrList.size() <= 0) return;
     	if ((_index < 0) || (_index >= mStrList.size())) return;
-    	    			    		    
-    	setSelection(_index);    	   		    	  
+
+    	setSelection(_index);
+
+    	UpdateInternalIndexAndText(_index);
     }
    
     public void SetTextFontSize(int _txtFontSize) {
@@ -416,15 +417,18 @@ public class jSpinner extends Spinner /*dummy*/ { //please, fix what GUI object 
     
     public void SetText(int _index) {
     	if (mStrList.size() <= 0) return;
-    	
+
     	SetSelection(_index);
     }
         
     public void SetSelectedIndex(int _index) {
     	if (mStrList.size() <= 0) return;
     	if ((_index < 0) || (_index >= mStrList.size())) return;
-    	
-    	setSelection(_index);    	
+
+    	setSelection(_index);
+
+    	UpdateInternalIndexAndText(_index);
+
     }
 
     public int GetSelectedIndex() {
@@ -504,6 +508,17 @@ public class jSpinner extends Spinner /*dummy*/ { //please, fix what GUI object 
 
    public void SetColorFilter(int _color) {
        this.getBackground().setColorFilter(_color, PorterDuff.Mode.SRC_ATOP);
+   }
+
+   private void UpdateInternalIndexAndText(int _index)
+   {
+           if ( _index < 0 || _index >= mStrList.size() ) {
+              mSelectedIndex = -1;
+              mSelectedText = "";
+           } else {
+              mSelectedIndex = _index;
+              mSelectedText = mStrList.get(_index);
+           }
    }
 
 }  //end class
