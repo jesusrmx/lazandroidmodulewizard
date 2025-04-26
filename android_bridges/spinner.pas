@@ -62,7 +62,7 @@ TOnItemSelected = procedure(Sender: TObject; itemCaption: string; itemIndex: int
     procedure SetLayoutAll(_idAnchor: integer);
     function GetSelectedItemPosition(): integer;
     function GetSelectedItem(): string;
-    procedure Add(_item: string); overload;
+    procedure Add(_item: string; runEvent:boolean=true); overload;
     procedure Clear;
     procedure SetSelectedTextColor(_color: integer);
     procedure SetDropListTextColor(_color: TARGBColorBridge {integer});
@@ -83,7 +83,7 @@ TOnItemSelected = procedure(Sender: TObject; itemCaption: string; itemIndex: int
     function GetSelectedIndex(): integer;
 
     procedure SetItem(_index: integer; _item: string; _strTag: string);  overload;
-    procedure Add(_item: string; _strTag: string);  overload;
+    procedure Add(_item: string; _strTag: string; runEvent:boolean=true);  overload;
     function GetItemTagString(_index: integer): string;
     procedure SetItemTagString(_index: integer; _strTag: string);
     procedure SetSelectedPaddingTop(_paddingTop: integer);
@@ -405,14 +405,14 @@ begin
    Result:= jni_func_out_t(FjEnv, FjObject, 'GetSelectedItem' );
 end;
 
-procedure jSpinner.Add(_item: string);
+procedure jSpinner.Add(_item: string; runEvent: boolean);
 begin
   if FItems = nil then exit;
 
   //in designing component state: set value here...
   if FInitialized then
   begin
-     jni_proc_ttz( FjEnv, FjObject, 'Add', _item, '0', true);
+     jni_proc_ttz( FjEnv, FjObject, 'Add', _item, '0', runEvent);
      FItems.Add(_item);
   end;
 end;
@@ -625,14 +625,14 @@ begin
      jSpinner_SetItem(FjEnv, FjObject, _index ,_item ,_strTag);
 end;
 
-procedure jSpinner.Add(_item: string; _strTag: string);
+procedure jSpinner.Add(_item: string; _strTag: string; runEvent: boolean);
 begin
   if FItems = nil then exit;
 
   //in designing component state: set value here...
   if FInitialized then
   begin
-     jni_proc_ttz( FjEnv, FjObject, 'Add', _item, _strTag, true);
+     jni_proc_ttz( FjEnv, FjObject, 'Add', _item, _strTag, runEvent);
      FItems.Add(_item);
   end;
 end;
