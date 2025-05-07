@@ -65,7 +65,13 @@ public class jAlarmManager  /*extends ...*/ {
 	   Intent intent = new Intent(_intentAction);	   
 	   //extras don't affect matching
 	   intent.putExtra(_extraName, _extraValue);	//http://stackoverflow.com/questions/11681095/cancel-an-alarmmanager-pendingintent-in-another-pendingintent?rq=1   
-	   return PendingIntent.getBroadcast(controls.activity, id , intent,  PendingIntent.FLAG_UPDATE_CURRENT); //	   
+           if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+              return PendingIntent.getBroadcast(controls.activity, id , intent,  PendingIntent.FLAG_IMMUTABLE);
+           }
+           else
+           {
+               return PendingIntent.getBroadcast(controls.activity, id , intent,  PendingIntent.FLAG_UPDATE_CURRENT);
+           }
 	   //about PendingIntent.FLAG_UPDATE_CURRENT:
 	   //there will be always a object available to so new object will not be created and the previous one will be assigned to this object
   }
