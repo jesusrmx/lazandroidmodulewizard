@@ -54,8 +54,11 @@ public class jBroadcastReceiver extends BroadcastReceiver {
    public void RegisterIntentActionFilter(String _intentAction) { //android.provider.Telephony.SMS_RECEIVED
 	   //intentFilter.addDataScheme("http");                      //com.example.appalarmmanagerdemo1.ALARM_RECEIVER
 	   //intentFilter.addDataScheme("ftp"); 
-	   //intentFilter.addAction(BluetoothDevice.ACTION_FOUND);	    	         	   
-	   controls.activity.registerReceiver(this, new IntentFilter(_intentAction));
+	   //intentFilter.addAction(BluetoothDevice.ACTION_FOUND);
+           if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU)
+              controls.activity.registerReceiver(this, new IntentFilter(_intentAction), Context.RECEIVER_EXPORTED);
+           else
+	      controls.activity.registerReceiver(this, new IntentFilter(_intentAction));
 	   //Log.i("receiver","Register ....");
    }
          	   	  	         
