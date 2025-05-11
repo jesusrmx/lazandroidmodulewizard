@@ -1965,6 +1965,7 @@ begin
       if PermissonGrid.Cells[1, i] <> '1' then
         Permissions.Delete(i - 1);
     MinSDKVersion := seMinSdkVersion.Value;
+    SetProjectCustomData(LazarusIDE.ActiveProject, 'MinSdk', IntToStr(MinSDKVersion));
     if TryStrToInt(seTargetSdkVersion.Text, i) then
       TargetSDKVersion := i;
     VersionCode := seVersionCode.Value;
