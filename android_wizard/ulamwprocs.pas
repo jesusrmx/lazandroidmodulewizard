@@ -405,6 +405,7 @@ begin
   else if (gradleVersNumber >= 4600) and (gradleVersNumber < 4920) then Result:= '3.2.1'
   else if (gradleVersNumber >= 4920) and (gradleVersNumber < 5110) then Result:= '3.3.2'
   else if (gradleVersNumber >= 7000) and (gradleVersNumber < 7999) then Result:= '7.0.0'
+  else if (gradleVersNumber >= 8000) and (gradleVersNumber < 8999) then Result:= '8.2.0'
   else Result:= '3.4.3'; //gradleVersNumber >= 5110)
 end;
 
@@ -1823,9 +1824,14 @@ begin
 
     strList.Add('apply plugin: ''com.android.application''');
     strList.Add('android {');
-    strList.Add('    lintOptions {');
-    strList.Add('       abortOnError false');
-    strList.Add('    }');
+    // TODO: Check this
+    if androidPluginNumber>8000 then begin
+      strList.Add('    namespace "' + strPack + '"');
+    end else begin
+      strList.Add('    lintOptions {');
+      strList.Add('       abortOnError false');
+      strList.Add('    }');
+    end;
 
     if (Length(instructionChip)>0) then
     begin
@@ -1850,11 +1856,16 @@ begin
     strList.Add('        sourceCompatibility 1.8');
     strList.Add('        targetCompatibility 1.8');
     strList.Add('    }');
-    if Pos('AppCompat', FAndroidTheme) > 0 then
-    begin
 
+    // compileSdkVersion / compileSdk
+    // TODO: check https://stackoverflow.com/a/67251145
+    if androidPluginNumber>=7000 then
+      strList.Add('    compileSdk '+compileSdkVersion)
+    else
       strList.Add('    compileSdkVersion '+compileSdkVersion);
 
+    if Pos('AppCompat', FAndroidTheme) > 0 then
+    begin
       if androidPluginNumber < 3000 then
       begin
         if Updating then
@@ -1868,7 +1879,6 @@ begin
     end
     else
     begin
-     strList.Add('    compileSdkVersion '+compileSdkVersion);
      if androidPluginNumber < 3000 then
         strList.Add('    buildToolsVersion "'+sdkBuildTools+'"');
      //else: each version of the Android Gradle Plugin now has a default version of the build tools
@@ -1878,7 +1888,6 @@ begin
 
     if Pos('AppCompat', FAndroidTheme) > 0 then
     begin
-
       if StrToInt(FMinApi) >= 14 then
          strList.Add('            minSdkVersion '+FMinApi)
       else
@@ -1888,7 +1897,6 @@ begin
         strList.Add('            targetSdkVersion '+ FTargetApi)  //compileSdkVersion
       else
         strList.Add('            targetSdkVersion '+compileSdkVersion);
-
     end
     else
     begin
@@ -1912,6 +1920,11 @@ begin
     if FVersionName = '' then  FVersionName:= '1.0';
     strList.Add('            versionCode ' + intToStr(FVersionCode));
     strList.Add('            versionName "' + FVersionName + '"');
+    if StrToInt(FMinApi) < 20 then
+      strList.Add('            multiDexEnabled true');  // ref: https://developer.android.com/build/multidex
+    if androidPluginNumber >= 4100 then
+      strList.Add('            ndk { debugSymbolLevel ''FULL'' }');  // ref: https://stackoverflow.com/a/63436935
+
     strList.Add('    }');
 
     if foundSignature then
@@ -1948,14 +1961,24 @@ begin
     strList.Add('    }');
     strList.Add('    buildTypes {');
     strList.Add('        debug {');
+    strList.Add('            minifyEnabled false');
     strList.Add('            debuggable true');
     strList.Add('            jniDebuggable true');
     strList.Add('        }');
     strList.Add('        release {');
+    strList.Add('            minifyEnabled true');
     strList.Add('            debuggable false');
     strList.Add('            jniDebuggable false');
     strList.Add('        }');
     strList.Add('    }');
+    if androidPluginNumber>8000 then begin
+      strList.Add('    buildFeatures {');
+      strList.Add('        aidl true');
+      strList.Add('    }');
+      strList.Add('    lint {');
+      strList.Add('        abortOnError false');
+      strList.Add('    }');
+    end;
     strList.Add('}');
     strList.Add('dependencies {');
 
@@ -1970,14 +1993,24 @@ begin
 
     if Pos('AppCompat', FAndroidTheme) > 0 then
     begin
-       innerSupported:= True;
-       for aAppCompatLib in AppCompatLibs do
-       begin
-         strList.Add('    '+directive+' '''+aAppCompatLib.Name+'''');
-         if aAppCompatLib.MinAPI > StrToInt(compileSdkVersion) then
-             ShowMessage('Warning: AppCompat theme need Android SDK >= ' +
-                          IntToStr(aAppCompatLib.MinAPI));
-       end;
+      innerSupported:= True;
+      if StrToInt(compileSdkVersion)>28 then begin
+        // TODO: Check this
+        strList.Add('    '+directive+' ''androidx.appcompat:appcompat:1.7.0''');
+        strList.Add('    '+directive+' ''com.google.android.material:material:1.12.0''');
+        if StrToInt(FMinApi) < 20 then
+          strList.Add('    '+directive+' ''androidx.multidex:multidex:2.0.1''');
+        // TODO: don't remember why it's needed ...
+        //strList.Add('    '+directive+' ''androidx.work:work-runtime:2.7.1''');
+
+      end else
+        for aAppCompatLib in AppCompatLibs do
+        begin
+          strList.Add('    '+directive+' '''+aAppCompatLib.Name+'''');
+          if aAppCompatLib.MinAPI > StrToInt(compileSdkVersion) then
+            ShowMessage('Warning: AppCompat theme need Android SDK >= ' +
+                IntToStr(aAppCompatLib.MinAPI));
+        end;
        //strList.Add('    '+directive+' ''com.google.android.gms:play-services-ads:11.0.4''');
     end else
      if FSupport and (not innerSupported) then
@@ -2003,7 +2036,14 @@ begin
 
     strList.Add('}');
     strList.Add(' ');
-    strList.Add('task run(type: Exec, dependsOn: '':installDebug'') {');
+    gradleCompatibleAsNumber := GetVerAsNumber(gradleCompatible);
+
+    // TODO: Check this. ref: https://docs.gradle.org/current/userguide/task_configuration_avoidance.html
+    if gradleCompatibleAsNumber >= 5100 then begin
+      strList.Add('tasks.register(''run'', Exec) {');
+      strList.Add(' dependsOn '':installDebug''');
+    end else
+      strList.Add('task run(type: Exec, dependsOn: '':installDebug'') {');
     strList.Add('	if (System.properties[''os.name''].toLowerCase().contains(''windows'')) {');
     strList.Add('	    commandLine ''cmd'', ''/c'', ''adb'', ''shell'', ''am'', ''start'', ''-n'', "'+strPack+'/.App"');
     strList.Add('	} else {');
@@ -2012,19 +2052,23 @@ begin
     strList.Add('}');
     strList.Add(' ');
 
-    gradleCompatibleAsNumber := GetVerAsNumber(gradleCompatible);
-    if  gradleCompatibleAsNumber < 5000 then
-    begin
-      strList.Add('task wrapper(type: Wrapper) {');
-      strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
-      strList.Add('}');
-    end
-    else
-    begin
-      strList.Add('wrapper {');
-      strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
-      strList.Add('}');
+    if gradleCompatibleAsNumber >= 8000 then begin
+      // TODO: don't use wrapper
+    end else begin
+      if  gradleCompatibleAsNumber < 5000 then
+      begin
+        strList.Add('task wrapper(type: Wrapper) {');
+        strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
+        strList.Add('}');
+      end
+      else
+      begin
+        strList.Add('wrapper {');
+        strList.Add('    gradleVersion = '''+ TryUndoFakeVersion(gradleCompatible)+'''');
+        strList.Add('}');
+      end;
     end;
+
     strList.Add('//how to use: look for "gradle_readme.txt"');
     strList.SaveToFile(aFile);
   end;
